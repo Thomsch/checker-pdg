@@ -1,6 +1,6 @@
 import org.checkerframework.checker.templatefora.qual.*;
 
-// Test basic subtyping relationships for the TemplateForA Checker.
+// Test basic subtyping relationships for the Dataflow Checker.
 class SubtypeTest {
     void allSubtypingRelationships(@TemplateforaUnknown int x, @TemplateforaBottom int y) {
         @TemplateforaUnknown int a = x;

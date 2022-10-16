@@ -5,7 +5,7 @@ import org.checkerframework.framework.test.CheckerFrameworkPerDirectoryTest;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- * Test runner for tests of the TemplateForA Checker.
+ * Test runner for tests of the Dataflow Checker.
  *
  * <p>Tests appear as Java files in the {@code tests/templatefora} folder. To add a new test case,
  * create a Java file in that directory. The file contains "// ::" comments to indicate expected
