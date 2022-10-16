@@ -1,4 +1,4 @@
-package org.checkerframework.checker.templatefora.qual;
+package org.checkerframework.checker.codechanges.qual;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

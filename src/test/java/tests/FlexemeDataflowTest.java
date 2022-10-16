@@ -1,6 +1,6 @@
 import java.io.File;
 import java.util.List;
-import org.checkerframework.checker.templatefora.DataflowChecker;
+import org.checkerframework.checker.codechanges.FlexemeDataflowChecker;
 import org.checkerframework.framework.test.CheckerFrameworkPerDirectoryTest;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -12,11 +12,11 @@ import org.junit.runners.Parameterized.Parameters;
  * errors and warnings; see
  * https://github.com/typetools/checker-framework/blob/master/checker/tests/README .
  */
-public class DataflowTest extends CheckerFrameworkPerDirectoryTest {
-    public DataflowTest(List<File> testFiles) {
+public class FlexemeDataflowTest extends CheckerFrameworkPerDirectoryTest {
+    public FlexemeDataflowTest(List<File> testFiles) {
         super(
                 testFiles,
-                DataflowChecker.class,
+                FlexemeDataflowChecker.class,
                 "templatefora",
                 "-Anomsgtext",
                 "-Astubs=stubs/",
@@ -25,6 +25,6 @@ public class DataflowTest extends CheckerFrameworkPerDirectoryTest {
 
     @Parameters
     public static String[] getTestDirs() {
-        return new String[] {"templatefora"};
+        return new String[] {"codechanges"};
     }
 }

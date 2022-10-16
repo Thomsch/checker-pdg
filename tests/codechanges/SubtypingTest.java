@@ -1,4 +1,4 @@
-import org.checkerframework.checker.templatefora.qual.*;
+import org.checkerframework.checker.codechanges.qual.*;
 
 // Test basic subtyping relationships for the Dataflow Checker.
 class SubtypeTest {
