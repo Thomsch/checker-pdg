@@ -1,6 +1,6 @@
 import java.io.File;
 import java.util.List;
-import org.checkerframework.checker.templatefora.TemplateforaChecker;
+import org.checkerframework.checker.templatefora.DataflowChecker;
 import org.checkerframework.framework.test.CheckerFrameworkPerDirectoryTest;
 import org.junit.runners.Parameterized.Parameters;
 
@@ -12,11 +12,11 @@ import org.junit.runners.Parameterized.Parameters;
  * errors and warnings; see
  * https://github.com/typetools/checker-framework/blob/master/checker/tests/README .
  */
-public class TemplateforaTest extends CheckerFrameworkPerDirectoryTest {
-    public TemplateforaTest(List<File> testFiles) {
+public class DataflowTest extends CheckerFrameworkPerDirectoryTest {
+    public DataflowTest(List<File> testFiles) {
         super(
                 testFiles,
-                TemplateforaChecker.class,
+                DataflowChecker.class,
                 "templatefora",
                 "-Anomsgtext",
                 "-Astubs=stubs/",

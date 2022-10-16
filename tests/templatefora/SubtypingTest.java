@@ -2,11 +2,11 @@ import org.checkerframework.checker.templatefora.qual.*;
 
 // Test basic subtyping relationships for the Dataflow Checker.
 class SubtypeTest {
-    void allSubtypingRelationships(@TemplateforaUnknown int x, @TemplateforaBottom int y) {
-        @TemplateforaUnknown int a = x;
-        @TemplateforaUnknown int b = y;
+    void allSubtypingRelationships(@DataflowUnknown int x, @DataflowBottom int y) {
+        @DataflowUnknown int a = x;
+        @DataflowUnknown int b = y;
         // :: error: assignment
-        @TemplateforaBottom int c = x; // expected error on this line
-        @TemplateforaBottom int d = y;
+        @DataflowBottom int c = x; // expected error on this line
+        @DataflowBottom int d = y;
     }
 }
