@@ -7,6 +7,6 @@ import org.checkerframework.common.basetype.BaseTypeChecker;
  */
 public class FlexemeDataflowChecker extends BaseTypeChecker {
     {
-        System.out.println("ELLOO");
+        System.out.println("Hi");
     }
 }
