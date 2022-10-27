@@ -11,7 +11,7 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
      * org.checkerframework.dataflow.cfg.node.LocalVariableNode} or {@link
      * org.checkerframework.dataflow.cfg.node.FieldAccessNode}.
      */
-    protected final Node liveVariable;
+    protected final Node reference;
 
     @Override
     public FlexemeDataflowValue leastUpperBound(FlexemeDataflowValue other) {
@@ -24,12 +24,12 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
      * @param n a node
      */
     public FlexemeDataflowValue(Node n) {
-        this.liveVariable = n;
+        this.reference = n;
     }
 
     @Override
     public int hashCode() {
-        return this.liveVariable.hashCode();
+        return this.reference.hashCode();
     }
 
     @Override
@@ -38,11 +38,11 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
             return false;
         }
         FlexemeDataflowValue other = (FlexemeDataflowValue) obj;
-        return this.liveVariable.equals(other.liveVariable);
+        return this.reference.equals(other.reference);
     }
 
     @Override
     public String toString() {
-        return this.liveVariable.toString();
+        return this.reference.getTree().getKind().toString();
     }
 }

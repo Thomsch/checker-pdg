@@ -2,6 +2,8 @@ package org.checkerframework.checker.codechanges;
 
 import org.checkerframework.dataflow.analysis.BackwardAnalysis;
 import org.checkerframework.dataflow.analysis.BackwardAnalysisImpl;
+import org.checkerframework.dataflow.analysis.ForwardAnalysis;
+import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizeLauncher;
 
 public class FlexemeDataflowPlayground {
@@ -15,9 +17,11 @@ public class FlexemeDataflowPlayground {
 
         // Run the analysis and create a PDF file
         FlexemeDataflowTransfer transfer = new FlexemeDataflowTransfer();
-        BackwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> backwardAnalysis = new BackwardAnalysisImpl<>(transfer);
+        ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> forwardAnalysis = new ForwardAnalysisImpl<>(transfer);
 
         CFGVisualizeLauncher cfgVisualizeLauncher = new CFGVisualizeLauncher();
-        cfgVisualizeLauncher.generateDOTofCFG(inputFile, outputDir, method, clazz, true, true, backwardAnalysis);
+        cfgVisualizeLauncher.generateDOTofCFG(inputFile, outputDir, method, clazz, true, true, forwardAnalysis);
+
+        System.out.println(forwardAnalysis.getRegularExitStore());
     }
 }
