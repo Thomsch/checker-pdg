@@ -36,7 +36,7 @@ public class FlexemeDataflowPlayground {
 
         visualize(inputFile, outputDir, method, clazz, true, false, forwardAnalysis);
 
-        System.out.println(forwardAnalysis.getRegularExitStore());
+//        System.out.println(forwardAnalysis.getRegularExitStore());
     }
 
     /**
