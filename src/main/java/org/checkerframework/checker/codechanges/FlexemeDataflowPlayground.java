@@ -1,5 +1,6 @@
 package org.checkerframework.checker.codechanges;
 
+import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.JavaCompiler;
 import com.sun.tools.javac.util.Context;
@@ -9,6 +10,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.*;
 import org.checkerframework.dataflow.cfg.CFGProcessor;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
+import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizeLauncher;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
@@ -20,6 +22,7 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.StringJoiner;
 
 public class FlexemeDataflowPlayground {
 
@@ -55,11 +58,16 @@ public class FlexemeDataflowPlayground {
             analysis.performAnalysis(cfg);
         }
 
+        UnderlyingAST underlyingAST = cfg.getUnderlyingAST();
+        UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
+
+        String cluster = makeClusterLabel(null, method1.getSimpleClassName(), method1.getMethodName(), method1.getMethod().getParameters());
+
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", outputDir);
         args.put("verbose", verbose);
 
-        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer();
+        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster);
         viz.init(args);
         Map<String, Object> res = viz.visualize(cfg, cfg.getEntryBlock(), analysis);
         viz.shutdown();
@@ -68,6 +76,16 @@ public class FlexemeDataflowPlayground {
             assert res.get("dotFileName") != null : "@AssumeAssertion(nullness): specification";
             producePDF((String) res.get("dotFileName"));
         }
+    }
+
+    private static String makeClusterLabel(String packageName, String className, String methodName, java.util.List<? extends VariableTree> parameters) {
+        StringJoiner sjParameters = new StringJoiner(",");
+
+        for (VariableTree parameter : parameters) {
+            sjParameters.add(parameter.getType().toString());
+        }
+
+        return packageName + "." + className + "." + methodName + "(" + sjParameters + ")";
     }
 
     protected static void producePDF(String file) {
@@ -108,6 +126,7 @@ public class FlexemeDataflowPlayground {
                                 public void write(int b) throws IOException {}
                             }));
             javac.compile(List.of(l), List.of(clas), List.of(cfgProcessor), List.nil());
+
         } catch (Throwable e) {
             // ok
         } finally {
@@ -125,7 +144,6 @@ public class FlexemeDataflowPlayground {
             printError(res.getErrMsg());
             System.exit(1);
         }
-
         return res.getCFG();
     }
 

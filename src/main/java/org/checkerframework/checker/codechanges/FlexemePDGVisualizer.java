@@ -1,21 +1,30 @@
 package org.checkerframework.checker.codechanges;
 
-import org.checkerframework.checker.nullness.qual.KeyFor;
+import com.sun.source.tree.Tree;
+import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.Block;
-import org.checkerframework.dataflow.cfg.block.ConditionalBlock;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.dataflow.cfg.visualize.AbstractCFGVisualizer;
-import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
-import org.checkerframework.dataflow.expression.*;
+import org.checkerframework.javacutil.TreeUtils;
 
-import java.util.*;
+import javax.lang.model.element.Element;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
+    private final String cluster;
+
+    public FlexemePDGVisualizer(String cluster) {
+        super();
+        this.cluster = cluster;
+    }
+
     @Override
     public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         StringBuilder sbDotNodes = new StringBuilder();
@@ -60,9 +69,26 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
     @Override
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
-//        TODO: Add new node in the graph.
-//        cluster="CommandLine.Infrastructure.EnumerableExtensions.IndexOf<TSource>(System.Collections.Generic.IEnumerable<TSource>, System.Func<TSource, bool>)", label=Entry, span="10-10"
-        return lineSeparator + "n" + t.getUid() + " [cluster=\"TODO:Method Name\", label=\"" + t.getTree().toString() + "\", span=\"TODO-TODO\"];";
+        Tree tree = t.getTree();
+        Element e = TreeUtils.elementFromTree(tree);
+        //        CompilationUnitTree cut;
+//
+//        JavaParserUtil.parseCompilationUnit(null).
+//
+//        cut.getLineMap().getLineNumber()
+
+//        TODO: Ignore temporary variables by looking at their name.
+//        TODO: Remove duplicate nodes for same code statement.
+//        TODO: Retrieve the line number via one of the util functions
+
+        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") " + t.getInSource());
+
+        JCTree jct = ((JCTree) t.getTree());
+
+
+
+        //        cluster="CommandLine.Infrastructure.EnumerableExtensions.IndexOf<TSource>(System.Collections.Generic.IEnumerable<TSource>, System.Func<TSource, bool>)", label=Entry, span="10-10"
+        return lineSeparator + "n" + t.getUid() + " [cluster=\"" + cluster + "\", label=\"" + t.getTree().toString() + "\", span=\"" + jct.getStartPosition() + "-" + jct.getPreferredPosition() + "\"];";
     }
 
     @Override
