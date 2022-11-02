@@ -74,6 +74,7 @@ public class FlexemeDataflowPlayground {
         args.put("verbose", verbose);
 
         CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster, this.lineMap);
+//        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new DOTCFGVisualizer<>();
         viz.init(args);
         Map<String, Object> res = viz.visualize(cfg, cfg.getEntryBlock(), analysis);
         viz.shutdown();

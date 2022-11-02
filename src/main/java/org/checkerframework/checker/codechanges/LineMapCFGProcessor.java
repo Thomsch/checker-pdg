@@ -11,6 +11,7 @@ import javax.annotation.processing.SupportedAnnotationTypes;
 public class LineMapCFGProcessor extends CFGProcessor {
 
     private LineMap lineMap;
+    private CompilationUnitTree root;
 
     public LineMapCFGProcessor(String clas, String method) {
         super(clas, method);
@@ -19,10 +20,15 @@ public class LineMapCFGProcessor extends CFGProcessor {
     @Override
     protected TreePathScanner<?, ?> createTreePathScanner(CompilationUnitTree root) {
         lineMap = root.getLineMap();
+        this.root = root;
         return super.createTreePathScanner(root);
     }
 
     public LineMap getLineMap() {
         return lineMap;
+    }
+
+    public CompilationUnitTree getRoot() {
+        return root;
     }
 }

@@ -2,36 +2,50 @@ package org.checkerframework.checker.codechanges;
 
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
-import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
-import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.dataflow.cfg.node.NodeVisitor;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
-import org.checkerframework.dataflow.util.NodeUtils;
-import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 import javax.lang.model.element.Element;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
     private final String cluster;
     private final LineMap lineMap;
 
+    private String lastStatementInBlock;
+    private List<Edge> cfgEdges;
+
     public FlexemePDGVisualizer(String cluster, LineMap lineMap) {
         super();
         this.cluster = cluster;
         this.lineMap = lineMap;
+        cfgEdges = new ArrayList<>();
+        lastStatementInBlock = null;
     }
+     private class Edge {
+         private final String from;
+         private final String to;
+
+         public Edge(String from, String to) {
+             this.from = from;
+             this.to = to;
+         }
+
+         public String getFrom() {
+             return from;
+         }
+
+         public String getTo() {
+             return to;
+         }
+     }
 
     @Override
     public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
@@ -70,7 +84,14 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 //            sbDotNodes.append(System.lineSeparator() + "B");
 //            }
 //            sbDotNodes.append(System.lineSeparator());
+            lastStatementInBlock = null;
         }
+
+        sbDotNodes.append(System.lineSeparator());
+        for (Edge edge : cfgEdges) {
+            sbDotNodes.append(edge.from + " -> " + edge.to + System.lineSeparator());
+        }
+
         return sbDotNodes.toString();
 //        return super.visualizeNodes(blocks, cfg, analysis);
     }
@@ -78,22 +99,39 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     @Override
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         Tree tree = t.getTree();
+
+        if (tree == null) {
+            return "";
+        }
+
         Element e = TreeUtils.elementFromTree(tree);
         JCTree jct = ((JCTree) t.getTree());
 
         // No if or while constructs bubble here.
 
+        long lineStart = lineMap.getLineNumber(jct.getStartPosition());
+        long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
+
+        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") (" + jct.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
+
         if (!t.getClass().getSimpleName().equals("AssignmentNode")) {
             return "";
         }
 
-        long lineStart = lineMap.getLineNumber(jct.getStartPosition());
-        long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
+        System.out.println("Keep");
 
-        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
+        addStatementEdge("n" + t.getUid());
+
 
         //        cluster="CommandLine.Infrastructure.EnumerableExtensions.IndexOf<TSource>(System.Collections.Generic.IEnumerable<TSource>, System.Func<TSource, bool>)", label=Entry, span="10-10"
         return lineSeparator + "n" + t.getUid() + " [cluster=\"" + cluster + "\", label=\"" + t.getTree().toString() + "\", span=\"" + lineStart + "-" + lineEnd + "\"];";
+    }
+
+    private void addStatementEdge(String to) {
+        if(lastStatementInBlock != null) {
+            cfgEdges.add(new Edge(lastStatementInBlock, to));
+        }
+        lastStatementInBlock = to;
     }
 
     @Override
