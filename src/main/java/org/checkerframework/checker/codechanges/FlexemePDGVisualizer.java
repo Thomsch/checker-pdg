@@ -124,7 +124,11 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
 
         //        cluster="CommandLine.Infrastructure.EnumerableExtensions.IndexOf<TSource>(System.Collections.Generic.IEnumerable<TSource>, System.Func<TSource, bool>)", label=Entry, span="10-10"
-        return lineSeparator + "n" + t.getUid() + " [cluster=\"" + cluster + "\", label=\"" + t.getTree().toString() + "\", span=\"" + lineStart + "-" + lineEnd + "\"];";
+        return lineSeparator + formatNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
+    }
+
+    private String formatNode(String uid, String label, long lineStart, long lineEnd) {
+        return "n" + uid + " [cluster=\"" + cluster + "\", label=\"" + label + "\", span=\"" + lineStart + "-" + lineEnd + "\"];";
     }
 
     private void addStatementEdge(String to) {
@@ -141,7 +145,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
     @Override
     public String visualizeSpecialBlock(SpecialBlock sbb) {
-        return "";
+        return formatNode(String.valueOf(sbb.getUid()), sbb.getSpecialType().name(), 0,0);
     }
 
     @Override
