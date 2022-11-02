@@ -1,5 +1,6 @@
 package org.checkerframework.checker.codechanges;
 
+import com.sun.source.tree.LineMap;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.JavaCompiler;
@@ -26,7 +27,9 @@ import java.util.StringJoiner;
 
 public class FlexemeDataflowPlayground {
 
-    public static void main(String[] args) {
+    private LineMap lineMap;
+
+    public void run() {
         /* Configuration: change as appropriate */
         String inputFile = "tests/codechanges/Test.java"; // input file name and path
         String outputDir = "build/tmp"; // output directory
@@ -38,15 +41,18 @@ public class FlexemeDataflowPlayground {
         ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> forwardAnalysis = new ForwardAnalysisImpl<>(transfer);
 
         visualize(inputFile, outputDir, method, clazz, true, false, forwardAnalysis);
+    }
 
-//        System.out.println(forwardAnalysis.getRegularExitStore());
+    public static void main(String[] args) {
+        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground();
+        playground.run();
     }
 
     /**
      * Visualizes the PDG in Flexeme's format
      * Copied from {@link CFGVisualizeLauncher} because it only supports {@link DOTCFGVisualizer}.
      */
-    public static void visualize(String inputFile,
+    public void visualize(String inputFile,
                                  String outputDir,
                                  String method,
                                  String clas,
@@ -67,7 +73,7 @@ public class FlexemeDataflowPlayground {
         args.put("outdir", outputDir);
         args.put("verbose", verbose);
 
-        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster);
+        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster, this.lineMap);
         viz.init(args);
         Map<String, Object> res = viz.visualize(cfg, cfg.getEntryBlock(), analysis);
         viz.shutdown();
@@ -78,7 +84,7 @@ public class FlexemeDataflowPlayground {
         }
     }
 
-    private static String makeClusterLabel(String packageName, String className, String methodName, java.util.List<? extends VariableTree> parameters) {
+    private String makeClusterLabel(String packageName, String className, String methodName, java.util.List<? extends VariableTree> parameters) {
         StringJoiner sjParameters = new StringJoiner(",");
 
         for (VariableTree parameter : parameters) {
@@ -88,7 +94,7 @@ public class FlexemeDataflowPlayground {
         return packageName + "." + className + "." + methodName + "(" + sjParameters + ")";
     }
 
-    protected static void producePDF(String file) {
+    protected void producePDF(String file) {
         try {
             String command = "dot -Tpdf \"" + file + "\" -o \"" + file + ".pdf\"";
             Process child = Runtime.getRuntime().exec(new String[] {"/bin/sh", "-c", command});
@@ -99,10 +105,9 @@ public class FlexemeDataflowPlayground {
         }
     }
 
-    protected static ControlFlowGraph generateMethodCFG(String file, String clas, final String method) {
+    protected ControlFlowGraph generateMethodCFG(String file, String clas, final String method) {
 
-        CFGProcessor cfgProcessor = new CFGProcessor(clas, method);
-
+        LineMapCFGProcessor cfgProcessor = new LineMapCFGProcessor(clas, method);
         Context context = new Context();
         Options.instance(context).put("compilePolicy", "ATTR_ONLY");
         JavaCompiler javac = new JavaCompiler(context);
@@ -133,6 +138,7 @@ public class FlexemeDataflowPlayground {
             System.setErr(err);
         }
 
+        lineMap = cfgProcessor.getLineMap();
         CFGProcessor.CFGProcessResult res = cfgProcessor.getCFGProcessResult();
 
         if (res == null) {
@@ -152,7 +158,7 @@ public class FlexemeDataflowPlayground {
      *
      * @param string error message
      */
-    protected static void printError(@Nullable String string) {
+    protected void printError(@Nullable String string) {
         System.err.println("ERROR: " + string);
     }
 }

@@ -1,5 +1,6 @@
 package org.checkerframework.checker.codechanges;
 
+import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -19,10 +20,12 @@ import java.util.Set;
 
 public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
     private final String cluster;
+    private final LineMap lineMap;
 
-    public FlexemePDGVisualizer(String cluster) {
+    public FlexemePDGVisualizer(String cluster, LineMap lineMap) {
         super();
         this.cluster = cluster;
+        this.lineMap = lineMap;
     }
 
     @Override
@@ -71,24 +74,18 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         Tree tree = t.getTree();
         Element e = TreeUtils.elementFromTree(tree);
-        //        CompilationUnitTree cut;
-//
-//        JavaParserUtil.parseCompilationUnit(null).
-//
-//        cut.getLineMap().getLineNumber()
 
 //        TODO: Ignore temporary variables by looking at their name.
 //        TODO: Remove duplicate nodes for same code statement.
-//        TODO: Retrieve the line number via one of the util functions
-
-        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") " + t.getInSource());
 
         JCTree jct = ((JCTree) t.getTree());
+        long lineStart = lineMap.getLineNumber(jct.getStartPosition());
+        long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
 
-
+        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
 
         //        cluster="CommandLine.Infrastructure.EnumerableExtensions.IndexOf<TSource>(System.Collections.Generic.IEnumerable<TSource>, System.Func<TSource, bool>)", label=Entry, span="10-10"
-        return lineSeparator + "n" + t.getUid() + " [cluster=\"" + cluster + "\", label=\"" + t.getTree().toString() + "\", span=\"" + jct.getStartPosition() + "-" + jct.getPreferredPosition() + "\"];";
+        return lineSeparator + "n" + t.getUid() + " [cluster=\"" + cluster + "\", label=\"" + t.getTree().toString() + "\", span=\"" + lineStart + "-" + lineEnd + "\"];";
     }
 
     @Override
