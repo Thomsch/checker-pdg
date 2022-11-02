@@ -2,14 +2,19 @@ package org.checkerframework.checker.codechanges;
 
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
+import com.sun.source.tree.TreeVisitor;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
+import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
+import org.checkerframework.dataflow.cfg.node.NodeVisitor;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
+import org.checkerframework.dataflow.util.NodeUtils;
+import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
 
 import javax.lang.model.element.Element;
@@ -74,11 +79,14 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         Tree tree = t.getTree();
         Element e = TreeUtils.elementFromTree(tree);
-
-//        TODO: Ignore temporary variables by looking at their name.
-//        TODO: Remove duplicate nodes for same code statement.
-
         JCTree jct = ((JCTree) t.getTree());
+
+        // No if or while constructs bubble here.
+
+        if (!t.getClass().getSimpleName().equals("AssignmentNode")) {
+            return "";
+        }
+
         long lineStart = lineMap.getLineNumber(jct.getStartPosition());
         long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
 
