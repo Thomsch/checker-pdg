@@ -9,6 +9,7 @@ class Test {
         int a = x;
         int b = y;
 
+        // This is a comment
         if (a == 3) {
             a = y;
             y++;
