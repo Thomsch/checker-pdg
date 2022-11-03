@@ -1,5 +1,6 @@
 package org.checkerframework.checker.codechanges;
 
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
@@ -8,7 +9,9 @@ import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Options;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.checkerframework.dataflow.analysis.*;
+import org.checkerframework.dataflow.analysis.Analysis;
+import org.checkerframework.dataflow.analysis.ForwardAnalysis;
+import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.CFGProcessor;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST;
@@ -28,6 +31,7 @@ import java.util.StringJoiner;
 public class FlexemeDataflowPlayground {
 
     private LineMap lineMap;
+    private CompilationUnitTree compilationUnitTree;
 
     public void run() {
         /* Configuration: change as appropriate */
@@ -73,7 +77,7 @@ public class FlexemeDataflowPlayground {
         args.put("outdir", outputDir);
         args.put("verbose", verbose);
 
-        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster, this.lineMap);
+        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster, this.lineMap, this.compilationUnitTree);
 //        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new DOTCFGVisualizer<>();
         viz.init(args);
         Map<String, Object> res = viz.visualize(cfg, cfg.getEntryBlock(), analysis);
@@ -140,6 +144,8 @@ public class FlexemeDataflowPlayground {
         }
 
         lineMap = cfgProcessor.getLineMap();
+        compilationUnitTree = cfgProcessor.getRoot();
+
         CFGProcessor.CFGProcessResult res = cfgProcessor.getCFGProcessResult();
 
         if (res == null) {

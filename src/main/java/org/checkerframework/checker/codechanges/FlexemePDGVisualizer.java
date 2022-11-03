@@ -1,5 +1,6 @@
 package org.checkerframework.checker.codechanges;
 
+import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree;
@@ -7,6 +8,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.Block;
+import org.checkerframework.dataflow.cfg.block.ConditionalBlock;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
@@ -18,16 +20,21 @@ import java.util.*;
 public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
     private final String cluster;
     private final LineMap lineMap;
+    private final CompilationUnitTree compilationUnitTree;
 
     private String lastStatementInBlock;
     private List<Edge> cfgEdges;
 
-    public FlexemePDGVisualizer(String cluster, LineMap lineMap) {
+    private Map<Block, BlockFlow> statementFlowMap;
+
+    public FlexemePDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree) {
         super();
         this.cluster = cluster;
         this.lineMap = lineMap;
-        cfgEdges = new ArrayList<>();
-        lastStatementInBlock = null;
+        this.compilationUnitTree = compilationUnitTree;
+        this.cfgEdges = new ArrayList<>();
+        this.lastStatementInBlock = null;
+        this.statementFlowMap = new HashMap<>();
     }
      private class Edge {
          private final String from;
@@ -47,6 +54,32 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
          }
      }
 
+    /**
+     * Records the in and out flow node for a {@link Block}.
+     * The inNode is the first node in the CFG to enter the block.
+     * The outNodes are the last in the block before flowing to nodes in another block.
+     */
+    private class BlockFlow {
+        private final String inNode;
+        private String outNode;
+
+         private BlockFlow(String inNode) {
+             this.inNode = inNode;
+         }
+
+         public String getInNode() {
+             return inNode;
+         }
+
+         public String getOutNode() {
+             return outNode;
+         }
+
+         public void setOutNode(String outNode) {
+             this.outNode = outNode;
+         }
+     }
+
     @Override
     public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         StringBuilder sbDotNodes = new StringBuilder();
@@ -54,6 +87,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
         // Definition of all nodes including their labels.
         for (Block v : blocks) {
+
 //            sbDotNodes.append("    ").append(v.getUid()).append(" [");
 //            if (v.getType() == Block.BlockType.CONDITIONAL_BLOCK) {
 //                sbDotNodes.append("shape=polygon sides=8 ");
@@ -66,7 +100,6 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 //            if (verbose) {
 //                sbDotNodes.append(getProcessOrderSimpleString(processOrder.get(v))).append(getSeparator());
 //            }
-
 
             String strBlock = visualizeBlock(v, analysis);
 //            if (strBlock.length() == 0) {
@@ -85,6 +118,39 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 //            }
 //            sbDotNodes.append(System.lineSeparator());
             lastStatementInBlock = null;
+        }
+        sbDotNodes.append(System.lineSeparator());
+
+        BlockFlow entryFlow = new BlockFlow(null);
+        entryFlow.setOutNode("n" + cfg.getEntryBlock().getUid());
+        statementFlowMap.putIfAbsent(cfg.getEntryBlock(), entryFlow);
+        statementFlowMap.putIfAbsent(cfg.getRegularExitBlock(), new BlockFlow("n" + cfg.getRegularExitBlock().getUid()));
+
+        for (Block v : blocks) {
+            System.out.println(v);
+            BlockFlow blockFlow = statementFlowMap.get(v);
+
+            if (blockFlow == null) {
+                System.out.println(v + " is null");
+                continue;
+            }
+
+            if (v.getType() == Block.BlockType.CONDITIONAL_BLOCK) {
+                ConditionalBlock cv = (ConditionalBlock) v;
+                System.out.println("Nodes" + cv.getNodes());
+            }
+
+            for (Block successor : v.getSuccessors()) {
+                System.out.println("Succ " + v + " is " + successor);
+
+                if (successor.getType().equals(Block.BlockType.CONDITIONAL_BLOCK)) {
+                    ConditionalBlock conditionalSuccessor = (ConditionalBlock) successor;
+                    sbDotNodes.append(blockFlow.outNode + " -> " + statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode + System.lineSeparator());
+                    sbDotNodes.append(blockFlow.outNode + " -> " + statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode + System.lineSeparator());
+                } else {
+                    sbDotNodes.append(blockFlow.outNode + " -> " + statementFlowMap.get(successor).inNode + System.lineSeparator());
+                }
+            }
         }
 
         sbDotNodes.append(System.lineSeparator());
@@ -114,16 +180,17 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
         System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") (" + jct.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
 
-        if (!t.getClass().getSimpleName().equals("AssignmentNode")) {
-            return "";
-        }
+        // If there is no Block in the map, add it starting at this node.
+        statementFlowMap.putIfAbsent(t.getBlock(), new BlockFlow("n" + t.getUid()));
 
-        System.out.println("Keep");
+        // Every node is potentially the last "real" node.
+        BlockFlow blockFlow = statementFlowMap.get(t.getBlock());
+        blockFlow.setOutNode("n" + t.getUid());
+
+//        System.out.println("Keep");
 
         addStatementEdge("n" + t.getUid());
 
-
-        //        cluster="CommandLine.Infrastructure.EnumerableExtensions.IndexOf<TSource>(System.Collections.Generic.IEnumerable<TSource>, System.Func<TSource, bool>)", label=Entry, span="10-10"
         return lineSeparator + formatNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
     }
 
