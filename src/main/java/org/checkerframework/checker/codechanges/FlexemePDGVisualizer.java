@@ -4,6 +4,7 @@ import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
@@ -36,6 +37,33 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         this.lastStatementInBlock = null;
         this.statementFlowMap = new HashMap<>();
     }
+
+    enum EdgeType {
+        CONTROL(0, "black", "solid"), DATA(1, "darkseagreen4", "dashed"), CALL(2, "black", "dotted"), NAME(3, "darkorchid", "bold"), EXIT(0, "blue", "bold");
+
+        private int key;
+        private final String color;
+        private final String style;
+
+        EdgeType(int key, String color, String style) {
+            this.key = key;
+            this.color = color;
+            this.style = style;
+        }
+
+        public String getStyle() {
+            return style;
+        }
+
+        public String getColor() {
+            return color;
+        }
+
+        public int getKey() {
+            return key;
+        }
+    }
+
      private class Edge {
          private final String from;
          private final String to;
@@ -119,12 +147,17 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 //            sbDotNodes.append(System.lineSeparator());
             lastStatementInBlock = null;
         }
-        sbDotNodes.append(System.lineSeparator());
+        sbDotNodes.append(lineSeparator);
 
         BlockFlow entryFlow = new BlockFlow(null);
         entryFlow.setOutNode("n" + cfg.getEntryBlock().getUid());
         statementFlowMap.putIfAbsent(cfg.getEntryBlock(), entryFlow);
-        statementFlowMap.putIfAbsent(cfg.getRegularExitBlock(), new BlockFlow("n" + cfg.getRegularExitBlock().getUid()));
+        BlockFlow exitFlow = new BlockFlow("n" + cfg.getRegularExitBlock().getUid());
+        exitFlow.setOutNode("n" + cfg.getEntryBlock().getUid()); // Add Exit -> Entry edge
+        statementFlowMap.putIfAbsent(cfg.getRegularExitBlock(), exitFlow);
+
+        sbDotNodes.append(makePdgEdge(exitFlow.inNode, exitFlow.outNode, EdgeType.EXIT));
+        sbDotNodes.append(lineSeparator);
 
         for (Block v : blocks) {
             System.out.println(v);
@@ -145,21 +178,38 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
                 if (successor.getType().equals(Block.BlockType.CONDITIONAL_BLOCK)) {
                     ConditionalBlock conditionalSuccessor = (ConditionalBlock) successor;
-                    sbDotNodes.append(blockFlow.outNode + " -> " + statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode + System.lineSeparator());
-                    sbDotNodes.append(blockFlow.outNode + " -> " + statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode + System.lineSeparator());
+                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, EdgeType.CONTROL));
+                    sbDotNodes.append(System.lineSeparator());
+                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, EdgeType.CONTROL));
+                    sbDotNodes.append(System.lineSeparator());
                 } else {
-                    sbDotNodes.append(blockFlow.outNode + " -> " + statementFlowMap.get(successor).inNode + System.lineSeparator());
+                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(successor).inNode, EdgeType.CONTROL));
+                    sbDotNodes.append(System.lineSeparator());
                 }
             }
         }
 
         sbDotNodes.append(System.lineSeparator());
         for (Edge edge : cfgEdges) {
-            sbDotNodes.append(edge.from + " -> " + edge.to + System.lineSeparator());
+            sbDotNodes.append(makePdgEdge(edge.from, edge.to, EdgeType.CONTROL));
+            sbDotNodes.append(System.lineSeparator());
         }
 
         return sbDotNodes.toString();
 //        return super.visualizeNodes(blocks, cfg, analysis);
+    }
+
+    private String makePdgEdge(@NonNull final String from, @NonNull final String to,@NonNull final EdgeType type) {
+        final StringBuilder sb = new StringBuilder(from + " -> " + to + " ");
+
+        sb.append("[");
+        sb.append("key=").append(type.key);
+        sb.append(", style=").append(type.style);
+        if(type.color != "black") {
+            sb.append(", color=").append(type.color);
+        }
+        sb.append("];");
+        return sb.toString();
     }
 
     @Override
