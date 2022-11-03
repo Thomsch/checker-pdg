@@ -2,7 +2,8 @@ package org.checkerframework.checker.codechanges;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Store;
-import org.checkerframework.dataflow.cfg.node.*;
+import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
+import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.javacutil.BugInCF;
@@ -12,21 +13,23 @@ import java.util.*;
 public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     private final Map<String, FlexemeDataflowValue> lastUse;
     private final Set<Edge> edges;
+    private final List<LocalVariableNode> parameters;
 
     /** Create a new LiveVarStore. */
     public FlexemeDataflowStore(List<LocalVariableNode> parameters) {
         lastUse = new HashMap<>();
         edges = new LinkedHashSet<>();
-
+        this.parameters = parameters;
         parameters.forEach(this::addParameter);
     }
 
     /**
      * Create a new FlexemeDataflowStore.
      */
-    public FlexemeDataflowStore(Map<String, FlexemeDataflowValue> lastUse, Set<Edge> edges) {
+    public FlexemeDataflowStore(Map<String, FlexemeDataflowValue> lastUse, Set<Edge> edges, List<LocalVariableNode> parameters) {
         this.lastUse = lastUse;
         this.edges = edges;
+        this.parameters = parameters;
     }
 
     public void addParameter(LocalVariableNode node) {
@@ -107,7 +110,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
 
     @Override
     public FlexemeDataflowStore copy() {
-        return new FlexemeDataflowStore(new HashMap<>(lastUse), new HashSet<>(edges));
+        return new FlexemeDataflowStore(new HashMap<>(lastUse), new HashSet<>(edges), parameters);
     }
 
     @Override
@@ -121,7 +124,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
                 new HashSet<>(this.edges.size() + other.edges.size());
         edgesLub.addAll(this.edges);
         edgesLub.addAll(other.edges);
-        return new FlexemeDataflowStore(lastUseLub, edgesLub);
+        return new FlexemeDataflowStore(lastUseLub, edgesLub, parameters);
     }
 
     /** It should not be called since it is not used by the backward analysis. */
@@ -175,5 +178,13 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
         sb.append("Edges: ");
         sb.append(edges.toString());
         return sb.toString();
+    }
+
+    public Set<Edge> getEdges() {
+        return this.edges;
+    }
+
+    public List<LocalVariableNode> getParameters() {
+        return this.parameters;
     }
 }

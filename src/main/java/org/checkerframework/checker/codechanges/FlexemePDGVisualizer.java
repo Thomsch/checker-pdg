@@ -195,6 +195,22 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
             sbDotNodes.append(System.lineSeparator());
         }
 
+        // Visualize dataflow
+        FlexemeDataflowStore dataflowStore = analysis.getResult().getStoreAfter(cfg.getRegularExitBlock());
+        Set<org.checkerframework.checker.codechanges.Edge> edges = dataflowStore.getEdges();
+
+        for (org.checkerframework.checker.codechanges.Edge edge : edges) {
+            Node from = edge.getFrom().reference;
+
+            long fromUuid;
+            if (from.getBlock() == null) {
+                fromUuid = cfg.getEntryBlock().getUid();
+            } else {
+                fromUuid = edge.getFrom().reference.getUid();
+            }
+            sbDotNodes.append(makePdgEdge("n" + fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA));
+        }
+
         return sbDotNodes.toString();
 //        return super.visualizeNodes(blocks, cfg, analysis);
     }
