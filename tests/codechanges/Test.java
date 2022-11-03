@@ -13,9 +13,13 @@ class Test {
         int a = x;
         int b = y;
 
-        //bar(a, b); // Calling a method crashes everything.
+        //bar(a, b); // Unsupported.
         // This is a comment
-        if (a == 3) {
+        if (a == 3 || a == 2) {
+            if(b < 0) {
+                boolean c = true && false;
+            }
+
             a = y;
             y++;
         }
