@@ -11,11 +11,16 @@ import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.ConditionalBlock;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
+import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
+import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
+import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
 import org.checkerframework.javacutil.TreeUtils;
+import org.checkerframework.javacutil.TypesUtils;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.type.TypeMirror;
 import java.util.*;
 
 public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
@@ -208,19 +213,45 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
             } else {
                 fromUuid = edge.getFrom().reference.getUid();
             }
-            sbDotNodes.append(makePdgEdge("n" + fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA));
+
+            String label = "undefined";
+
+            if (from instanceof LocalVariableNode) {
+                LocalVariableNode lvnFrom = ((LocalVariableNode) from);
+                TypeMirror type = lvnFrom.getType();
+
+                label = TypesUtils.getTypeElement(type).getQualifiedName().toString();
+                // The type parameters do not seem accessible at this point even though, I can see them in 'sym' field of the MethodCFG in the debugger.
+
+            } else if (from instanceof FieldAccessNode) {
+                FieldAccessNode fanFrom = ((FieldAccessNode) from);
+                label = fanFrom.getFieldName();
+            } else if (from instanceof VariableDeclarationNode) {
+                VariableDeclarationNode vdnFrom = ((VariableDeclarationNode) from);
+                label = vdnFrom.getName();
+            }
+
+            sbDotNodes.append(makePdgEdge("n" + fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA, label));
         }
 
         return sbDotNodes.toString();
 //        return super.visualizeNodes(blocks, cfg, analysis);
     }
 
-    private String makePdgEdge(@NonNull final String from, @NonNull final String to,@NonNull final EdgeType type) {
+    private String makePdgEdge(@NonNull final String from, @NonNull final String to, @NonNull final EdgeType type) {
+        return makePdgEdge(from, to, type, null);
+    }
+    private String makePdgEdge(@NonNull final String from, @NonNull final String to, @NonNull final EdgeType type, @Nullable final String label) {
         final StringBuilder sb = new StringBuilder(from + " -> " + to + " ");
 
         sb.append("[");
         sb.append("key=").append(type.key);
         sb.append(", style=").append(type.style);
+
+        if(label != null) {
+            sb.append(", label=\"").append(label).append("\"");
+        }
+
         if(type.color != "black") {
             sb.append(", color=").append(type.color);
         }

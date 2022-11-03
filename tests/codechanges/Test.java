@@ -1,4 +1,5 @@
 import org.checkerframework.checker.codechanges.qual.*;
+import java.util.List;
 
 // Test basic subtyping relationships for the Dataflow Checker.
 class Test {
@@ -9,9 +10,10 @@ class Test {
         int omega = w + z;
     }
 
-    void test(int x, int y) {
+    void test(int x, int y, List<String> o) {
         int a = x;
         int b = y;
+        List<String> oh = o;
 
         //bar(a, b); // Unsupported.
         // This is a comment
