@@ -11,3 +11,4 @@ build
 
 # checker-qual
 codechanges-checker-qual/src
+/tests/codechanges/*.class
