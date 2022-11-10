@@ -10,7 +10,7 @@ class Test {
         int omega = w + z;
     }
 
-    void test(int x, int y, List<String> o) {
+    int test(int x, int y, List<String> o) {
         int a = x;
         int b = y;
         List<String> oh = o;
@@ -28,5 +28,6 @@ class Test {
 
         b = x;
         a = y;
+        return a + b;
     }
 }
