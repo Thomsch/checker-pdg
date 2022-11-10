@@ -5,6 +5,7 @@ import com.sun.source.tree.LineMap;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.main.JavaCompiler;
+import com.sun.tools.javac.main.Option;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
 import com.sun.tools.javac.util.Options;
@@ -129,6 +130,7 @@ public class FlexemeDataflowPlayground {
         LineMapCFGProcessor cfgProcessor = new LineMapCFGProcessor(clas, method);
         Context context = new Context();
         Options.instance(context).put("compilePolicy", "ATTR_ONLY");
+        Options.instance(context).put(Option.D, "build");
         JavaCompiler javac = new JavaCompiler(context);
 
         JavaFileObject l;
