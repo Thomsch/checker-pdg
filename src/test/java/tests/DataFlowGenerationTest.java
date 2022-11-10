@@ -6,10 +6,10 @@ import org.junit.Test;
 public class DataFlowGenerationTest {
     @Test
     public void sample() {
-        String inputFile = "src/test/resources/Test.java";
+        String inputFile = "src/test/resources/BasicTests.java";
         String outputDir = "build/tmp";
-        String method = "test";
-        String clazz = "Test";
+        String method = "sample";
+        String clazz = "BasicTests";
 
         FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
         playground.run();
@@ -17,10 +17,10 @@ public class DataFlowGenerationTest {
 
     @Test
     public void exception() {
-        String inputFile = "src/test/resources/ExceptionTest.java";
+        String inputFile = "src/test/resources/BasicTests.java";
         String outputDir = "build/tmp";
         String method = "exceptionTest";
-        String clazz = "Test";
+        String clazz = "BasicTests";
 
         FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
         playground.run();

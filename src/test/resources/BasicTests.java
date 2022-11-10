@@ -1,8 +1,6 @@
-import org.checkerframework.checker.codechanges.qual.*;
 import java.util.List;
 
-// Test basic subtyping relationships for the Dataflow Checker.
-class Test {
+class BasicTests {
 
     float f = 3;
 
@@ -10,7 +8,7 @@ class Test {
         int omega = w + z;
     }
 
-    int test(int x, int y, List<String> o) {
+    int sample(int x, int y, List<String> o) {
         int a = x;
         int b = y;
         List<String> oh = o;
@@ -29,5 +27,15 @@ class Test {
         b = x;
         a = y;
         return a + b;
+    }
+
+    void exceptionTest(int x) {
+        int a = x;
+
+        try {
+            int b = a / x;
+        } catch (Exception e) {
+            int c = x;
+        }
     }
 }
