@@ -6,11 +6,21 @@ import org.junit.Test;
 public class DataFlowGenerationTest {
     @Test
     public void sample() {
-        /* Configuration: change as appropriate */
-        String inputFile = "src/test/resources/Test.java"; // input file name and path
-        String outputDir = "build/tmp"; // output directory
-        String method = "test"; // name of the method to analyze
-        String clazz = "Test"; // name of the class to consider
+        String inputFile = "src/test/resources/Test.java";
+        String outputDir = "build/tmp";
+        String method = "test";
+        String clazz = "Test";
+
+        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        playground.run();
+    }
+
+    @Test
+    public void exception() {
+        String inputFile = "src/test/resources/ExceptionTest.java";
+        String outputDir = "build/tmp";
+        String method = "exceptionTest";
+        String clazz = "Test";
 
         FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
         playground.run();

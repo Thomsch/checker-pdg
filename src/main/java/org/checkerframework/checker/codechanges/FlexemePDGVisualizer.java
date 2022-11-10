@@ -10,6 +10,7 @@ import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.ConditionalBlock;
+import org.checkerframework.dataflow.cfg.block.ExceptionBlock;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
@@ -185,8 +186,22 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                     ConditionalBlock conditionalSuccessor = (ConditionalBlock) successor;
                     sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, EdgeType.CONTROL));
                     sbDotNodes.append(System.lineSeparator());
+
                     sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, EdgeType.CONTROL));
                     sbDotNodes.append(System.lineSeparator());
+                } else if (successor.getType().equals(Block.BlockType.EXCEPTION_BLOCK)) {
+                    ExceptionBlock exceptionSuccessor = (ExceptionBlock) successor;
+                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(exceptionSuccessor.getSuccessor()).inNode, EdgeType.CONTROL));
+
+                    sbDotNodes.append(System.lineSeparator());
+                    for (Map.Entry<TypeMirror, Set<Block>> entry : exceptionSuccessor.getExceptionalSuccessors().entrySet()) {
+
+                        for (Block block : entry.getValue()) {
+                            sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(block).inNode, EdgeType.CONTROL));
+                            sbDotNodes.append(System.lineSeparator());
+                        }
+                    }
+
                 } else {
                     sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(successor).inNode, EdgeType.CONTROL));
                     sbDotNodes.append(System.lineSeparator());
