@@ -30,16 +30,33 @@ import java.util.StringJoiner;
 
 public class FlexemeDataflowPlayground {
 
-    private LineMap lineMap;
-    private CompilationUnitTree compilationUnitTree;
+    private final String inputFile;
+    private final String outputDir;
+    private final String method;
+    private final String clazz;
 
-    public void run() {
+    public FlexemeDataflowPlayground(String inputFile, String outputDir, String method, String clazz) {
+        this.inputFile = inputFile;
+        this.outputDir = outputDir;
+        this.method = method;
+        this.clazz = clazz;
+    }
+
+    public static void main(String[] args) {
         /* Configuration: change as appropriate */
         String inputFile = "tests/codechanges/Test.java"; // input file name and path
         String outputDir = "build/tmp"; // output directory
         String method = "test"; // name of the method to analyze
         String clazz = "Test"; // name of the class to consider
 
+        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        playground.run();
+    }
+
+    private LineMap lineMap;
+    private CompilationUnitTree compilationUnitTree;
+
+    public void run() {
         // Run the analysis and create a PDF file
         FlexemeDataflowTransfer transfer = new FlexemeDataflowTransfer();
         ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> forwardAnalysis = new ForwardAnalysisImpl<>(transfer);
@@ -47,10 +64,7 @@ public class FlexemeDataflowPlayground {
         visualize(inputFile, outputDir, method, clazz, true, false, forwardAnalysis);
     }
 
-    public static void main(String[] args) {
-        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground();
-        playground.run();
-    }
+
 
     /**
      * Visualizes the PDG in Flexeme's format
