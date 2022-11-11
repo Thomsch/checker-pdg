@@ -25,4 +25,15 @@ public class DataFlowGenerationTest {
         FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
         playground.run();
     }
+
+    @Test
+    public void anonymous() {
+        String inputFile = "src/test/resources/BasicTests.java";
+        String outputDir = "build/tmp";
+        String method = "anonymous";
+        String clazz = "BasicTests";
+
+        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        playground.run();
+    }
 }

@@ -162,6 +162,9 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         exitFlow.setOutNode("n" + cfg.getEntryBlock().getUid()); // Add Exit -> Entry edge
         statementFlowMap.putIfAbsent(cfg.getRegularExitBlock(), exitFlow);
 
+        BlockFlow exceptionalExit = new BlockFlow("n" + cfg.getExceptionalExitBlock().getUid());
+        statementFlowMap.putIfAbsent(cfg.getExceptionalExitBlock(), exceptionalExit);
+
         sbDotNodes.append(makePdgEdge(exitFlow.inNode, exitFlow.outNode, EdgeType.EXIT));
         sbDotNodes.append(lineSeparator);
 
@@ -179,6 +182,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                 System.out.println("Nodes" + cv.getNodes());
             }
 
+            //  Create edges from block -> successor
             for (Block successor : v.getSuccessors()) {
                 System.out.println("Succ " + v + " is " + successor);
 
@@ -192,21 +196,29 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                 } else if (successor.getType().equals(Block.BlockType.EXCEPTION_BLOCK)) {
                     ExceptionBlock exceptionSuccessor = (ExceptionBlock) successor;
                     sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(exceptionSuccessor.getSuccessor()).inNode, EdgeType.CONTROL));
-
                     sbDotNodes.append(System.lineSeparator());
+
                     for (Map.Entry<TypeMirror, Set<Block>> entry : exceptionSuccessor.getExceptionalSuccessors().entrySet()) {
 
                         for (Block block : entry.getValue()) {
+//                            if (block.getType().equals(Block.BlockType.SPECIAL_BLOCK) && ((SpecialBlock) block).getSpecialType().equals(EXCEPTIONAL_EXIT)) {
+//                                sbDotNodes.append(makePdgEdge());
+//                                sbDotNodes.append(System.lineSeparator());
+//                                // TODO: Actually it needs to point to Exceptional exit block
+//                            }
+
                             sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(block).inNode, EdgeType.CONTROL));
                             sbDotNodes.append(System.lineSeparator());
                         }
                     }
 
+                } else if (successor.getType().equals(Block.BlockType.SPECIAL_BLOCK)) {
+                    // No outgoing edge from these blocks.
                 } else {
-                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(successor).inNode, EdgeType.CONTROL));
-                    sbDotNodes.append(System.lineSeparator());
+                        sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(successor).inNode, EdgeType.CONTROL));
+                        sbDotNodes.append(System.lineSeparator());
+                    }
                 }
-            }
         }
 
         sbDotNodes.append(System.lineSeparator());
