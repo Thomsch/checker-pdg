@@ -33,6 +33,11 @@ dependencies {
         implementation "org.checkerframework:checker-qual:${versions.checkerFramework}"
     }
 
+    // Logging
+    implementation 'org.slf4j:slf4j-api:2.0.3'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.3'
+
+
     compileOnly "com.google.errorprone:javac:9+181-r4173-1"
 
     // Testing
