@@ -43,6 +43,15 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
 
     @Override
     public String toString() {
-        return this.reference.getTree().getKind().toString();
+        StringBuilder s = new StringBuilder(reference.toString());
+        s.append("[");
+        s.append(reference.getClass().getSimpleName());
+
+        if (this.reference.getTree() != null) {
+            s.append(",");
+            s.append(this.reference.getTree().getKind());
+        }
+        s.append("]");
+        return s.toString();
     }
 }
