@@ -2,25 +2,21 @@ package org.checkerframework.checker.codechanges;
 
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
-import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.block.Block;
-import org.checkerframework.dataflow.cfg.block.ConditionalBlock;
-import org.checkerframework.dataflow.cfg.block.ExceptionBlock;
-import org.checkerframework.dataflow.cfg.block.SpecialBlock;
+import org.checkerframework.dataflow.cfg.block.*;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
-import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.TypesUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import java.util.*;
 
@@ -31,6 +27,8 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
     private String lastStatementInBlock;
     private List<Edge> cfgEdges;
+
+    Logger logger = LoggerFactory.getLogger(FlexemePDGVisualizer.class);
 
     private Map<Block, BlockFlow> statementFlowMap;
 
@@ -70,23 +68,31 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         }
     }
 
-     private class Edge {
-         private final String from;
-         private final String to;
+    private class Edge {
+        private final String from;
+        private final String to;
 
-         public Edge(String from, String to) {
-             this.from = from;
-             this.to = to;
-         }
+        public Edge(String from, String to) {
+            this.from = from;
+            this.to = to;
+        }
 
-         public String getFrom() {
-             return from;
-         }
+        public String getFrom() {
+            return from;
+        }
 
-         public String getTo() {
-             return to;
-         }
-     }
+        public String getTo() {
+            return to;
+        }
+
+        @Override
+        public String toString() {
+            return "Edge{" +
+                    "from='" + from + '\'' +
+                    ", to='" + to + '\'' +
+                    '}';
+        }
+    }
 
     /**
      * Records the in and out flow node for a {@link Block}.
@@ -97,148 +103,57 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         private final String inNode;
         private String outNode;
 
-         private BlockFlow(String inNode) {
-             this.inNode = inNode;
-         }
+        private BlockFlow(String inNode) {
+            this.inNode = inNode;
+        }
 
-         public String getInNode() {
-             return inNode;
-         }
+        public String getInNode() {
+            return inNode;
+        }
 
-         public String getOutNode() {
-             return outNode;
-         }
+        public String getOutNode() {
+            return outNode;
+        }
 
-         public void setOutNode(String outNode) {
-             this.outNode = outNode;
-         }
-     }
+        public void setOutNode(String outNode) {
+            this.outNode = outNode;
+        }
+    }
 
+    /**
+     * Visualizes the nodes
+     *
+     * @param blocks   the set of all the blocks in a control flow graph
+     * @param cfg      the control flow graph
+     * @param analysis the current analysis
+     * @return
+     */
     @Override
     public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
-        StringBuilder sbDotNodes = new StringBuilder();
-        IdentityHashMap<Block, List<Integer>> processOrder = getProcessOrder(cfg);
+        String dotNodes = makeStatementNodes(blocks, analysis);
 
-        // Definition of all nodes including their labels.
-        for (Block v : blocks) {
+        // Intra-block edges
+        StringBuilder sbDotIntraEdges = makeIntraBlockDotEdges(blocks);
 
-//            sbDotNodes.append("    ").append(v.getUid()).append(" [");
-//            if (v.getType() == Block.BlockType.CONDITIONAL_BLOCK) {
-//                sbDotNodes.append("shape=polygon sides=8 ");
-//            } else if (v.getType() == Block.BlockType.SPECIAL_BLOCK) {
-//                sbDotNodes.append("shape=oval ");
-//            } else {
-//                sbDotNodes.append("shape=rectangle ");
-//            }
-//            sbDotNodes.append("label=\"");
-//            if (verbose) {
-//                sbDotNodes.append(getProcessOrderSimpleString(processOrder.get(v))).append(getSeparator());
-//            }
+        // Inter-block edges
+        StringBuilder sbDotInterEdges = makeInterBlockDotEdges(blocks, cfg);
 
-            String strBlock = visualizeBlock(v, analysis);
-//            if (strBlock.length() == 0) {
-//                if (v.getType() == Block.BlockType.CONDITIONAL_BLOCK) {
-//                    // The footer of the conditional block.
-//                    sbDotNodes.append("\"];");
-//                } else {
-//                    // The footer of the block which has no content and is not a special or conditional block.
-//                    sbDotNodes.append("?? empty ??\"];");
-//                }
-//            } else {
-//                sbDotNodes.append(strBlock).append("\"];");
-//            sbDotNodes.append("A" + System.lineSeparator());
-            sbDotNodes.append(strBlock);
-//            sbDotNodes.append(System.lineSeparator() + "B");
-//            }
-//            sbDotNodes.append(System.lineSeparator());
-            lastStatementInBlock = null;
-        }
-        sbDotNodes.append(lineSeparator);
+        // Special edges (i.e., the blue control edge from exit->entry
+        StringBuilder sbDotSpecialEdges = makeExitEntryDotEdge(cfg);
 
-        BlockFlow entryFlow = new BlockFlow(null);
-        entryFlow.setOutNode("n" + cfg.getEntryBlock().getUid());
-        statementFlowMap.putIfAbsent(cfg.getEntryBlock(), entryFlow);
-        BlockFlow exitFlow = new BlockFlow("n" + cfg.getRegularExitBlock().getUid());
-        exitFlow.setOutNode("n" + cfg.getEntryBlock().getUid()); // Add Exit -> Entry edge
-        statementFlowMap.putIfAbsent(cfg.getRegularExitBlock(), exitFlow);
-
-        BlockFlow exceptionalExit = new BlockFlow("n" + cfg.getExceptionalExitBlock().getUid());
-        statementFlowMap.putIfAbsent(cfg.getExceptionalExitBlock(), exceptionalExit);
-
-        sbDotNodes.append(makePdgEdge(exitFlow.inNode, exitFlow.outNode, EdgeType.EXIT));
-        sbDotNodes.append(lineSeparator);
-
-        for (Block v : blocks) {
-            System.out.println(v);
-            BlockFlow blockFlow = statementFlowMap.get(v);
-
-            if (blockFlow == null) {
-                System.out.println(v + " is null");
-                continue;
-            }
-
-            if (v.getType() == Block.BlockType.CONDITIONAL_BLOCK) {
-                ConditionalBlock cv = (ConditionalBlock) v;
-                System.out.println("Nodes" + cv.getNodes());
-            }
-
-            //  Create edges from block -> successor
-            for (Block successor : v.getSuccessors()) {
-                System.out.println("Succ " + v + " is " + successor);
-
-                if (successor.getType().equals(Block.BlockType.CONDITIONAL_BLOCK)) {
-                    ConditionalBlock conditionalSuccessor = (ConditionalBlock) successor;
-                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, EdgeType.CONTROL));
-                    sbDotNodes.append(System.lineSeparator());
-
-                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, EdgeType.CONTROL));
-                    sbDotNodes.append(System.lineSeparator());
-                } else if (successor.getType().equals(Block.BlockType.EXCEPTION_BLOCK)) {
-                    ExceptionBlock exceptionSuccessor = (ExceptionBlock) successor;
-                    sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(exceptionSuccessor.getSuccessor()).inNode, EdgeType.CONTROL));
-                    sbDotNodes.append(System.lineSeparator());
-
-                    for (Map.Entry<TypeMirror, Set<Block>> entry : exceptionSuccessor.getExceptionalSuccessors().entrySet()) {
-
-                        for (Block block : entry.getValue()) {
-//                            if (block.getType().equals(Block.BlockType.SPECIAL_BLOCK) && ((SpecialBlock) block).getSpecialType().equals(EXCEPTIONAL_EXIT)) {
-//                                sbDotNodes.append(makePdgEdge());
-//                                sbDotNodes.append(System.lineSeparator());
-//                                // TODO: Actually it needs to point to Exceptional exit block
-//                            }
-
-                            sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(block).inNode, EdgeType.CONTROL));
-                            sbDotNodes.append(System.lineSeparator());
-                        }
-                    }
-
-                } else if (successor.getType().equals(Block.BlockType.SPECIAL_BLOCK)) {
-                    // No outgoing edge from these blocks.
-                } else {
-                        sbDotNodes.append(makePdgEdge(blockFlow.outNode, statementFlowMap.get(successor).inNode, EdgeType.CONTROL));
-                        sbDotNodes.append(System.lineSeparator());
-                    }
-                }
-        }
-
-        sbDotNodes.append(System.lineSeparator());
-        for (Edge edge : cfgEdges) {
-            sbDotNodes.append(makePdgEdge(edge.from, edge.to, EdgeType.CONTROL));
-            sbDotNodes.append(System.lineSeparator());
-        }
-
-        // Visualize dataflow
+        // Dataflow edges
         FlexemeDataflowStore dataflowStore = analysis.getResult().getStoreAfter(cfg.getRegularExitBlock());
         Set<org.checkerframework.checker.codechanges.Edge> edges = dataflowStore.getEdges();
+        StringBuilder sbDotDataflowEdges = new StringBuilder();
 
         for (org.checkerframework.checker.codechanges.Edge edge : edges) {
             Node from = edge.getFrom().reference;
 
-            long fromUuid;
+            String fromUuid;
             if (from.getBlock() == null) {
-                fromUuid = cfg.getEntryBlock().getUid();
+                fromUuid = "b" + cfg.getEntryBlock().getUid();
             } else {
-                fromUuid = edge.getFrom().reference.getUid();
+                fromUuid = "n" + edge.getFrom().reference.getUid();
             }
 
             String label = "undefined";
@@ -256,75 +171,224 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
             } else if (from instanceof VariableDeclarationNode) {
                 VariableDeclarationNode vdnFrom = ((VariableDeclarationNode) from);
                 label = vdnFrom.getName();
+            } else {
+                logger.error("Unsupported 'from' dataflow edge: {}", from);
             }
 
-            sbDotNodes.append(makePdgEdge("n" + fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA, label));
+            logger.info("{}: {}", edge, label);
+
+            sbDotDataflowEdges.append(formatPdgEdge(fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA, label));
         }
 
-        return sbDotNodes.toString();
-//        return super.visualizeNodes(blocks, cfg, analysis);
+        return dotNodes + lineSeparator + sbDotIntraEdges + sbDotInterEdges + sbDotSpecialEdges + sbDotDataflowEdges;
     }
 
-    private String makePdgEdge(@NonNull final String from, @NonNull final String to, @NonNull final EdgeType type) {
-        return makePdgEdge(from, to, type, null);
+    private StringBuilder makeIntraBlockDotEdges(Set<Block> blocks) {
+        StringBuilder sbDotIntraEdges = new StringBuilder();
+        for (Block block : blocks) {
+            // Make edges for this block (if applicable)
+            if (block.getType() == Block.BlockType.REGULAR_BLOCK) {
+                RegularBlock regularBlock = ((RegularBlock) block);
+                Node from = null;
+                for (Node node : regularBlock.getNodes()) {
+                    if (from != null) {
+                        sbDotIntraEdges.append(formatPdgEdge("n" + from.getUid(), "n" + node.getUid(), EdgeType.CONTROL));
+                    }
+                    from = node;
+                }
+
+            }
+        }
+        return sbDotIntraEdges;
     }
-    private String makePdgEdge(@NonNull final String from, @NonNull final String to, @NonNull final EdgeType type, @Nullable final String label) {
+
+    private StringBuilder makeExitEntryDotEdge(ControlFlowGraph cfg) {
+        StringBuilder sb = new StringBuilder();
+
+        String from = statementFlowMap.get(cfg.getRegularExitBlock()).outNode;
+        String to = statementFlowMap.get(cfg.getEntryBlock()).inNode;
+
+        sb.append(formatPdgEdge(from, to, EdgeType.EXIT));
+        return sb;
+    }
+
+    private StringBuilder makeInterBlockDotEdges(Set<Block> blocks, ControlFlowGraph cfg) {
+
+        // Build the block flow map which keeps track of which node represents the block on the dot graph.
+        for (Block block : blocks) {
+            switch (block.getType()){
+                case REGULAR_BLOCK:
+                    final BlockFlow flow = new BlockFlow("n" + block.getNodes().get(0).getUid());
+                    Node lastNode = block.getLastNode();
+                    if (lastNode != null) {
+                        flow.setOutNode("n" + lastNode.getUid());
+                    } else {
+                        logger.error("Block {} has no last node", block);
+                    }
+                    statementFlowMap.put(block, flow);
+                    break;
+
+                case SPECIAL_BLOCK:
+                    // TODO Refactor
+                    final BlockFlow specialFlow = new BlockFlow("b" + block.getUid());
+                    if (block.equals(cfg.getEntryBlock())) {
+                        specialFlow.setOutNode("b" + block.getUid());
+                    } else if (block.equals(cfg.getRegularExitBlock())) {
+                        specialFlow.setOutNode("b" + block.getUid());
+                    } else if (block.equals(cfg.getExceptionalExitBlock())) {
+                        specialFlow.setOutNode("b" + block.getUid()); // Add Exceptional Exit -> Exit edge
+                    } else {
+                        logger.error("Special block {} not supported", block);
+                    }
+                    statementFlowMap.put(block, specialFlow);
+                    break;
+
+                case EXCEPTION_BLOCK:
+                    ExceptionBlock exceptionBlock = (ExceptionBlock) block;
+                    final BlockFlow exceptionFlow = new BlockFlow("n" + exceptionBlock.getNode().getUid());
+                    exceptionFlow.setOutNode("n" + exceptionBlock.getNode().getUid());
+                    statementFlowMap.put(exceptionBlock, exceptionFlow);
+                    break;
+
+                case CONDITIONAL_BLOCK:
+                    final BlockFlow conditionalFlow = new BlockFlow("n" + block.getLastNode());
+                    statementFlowMap.put(block, conditionalFlow);
+                    break;
+            }
+        }
+
+        // Walk inter-block edge map
+        StringBuilder sbDotInterEdges = new StringBuilder();
+        for (Block block : blocks) {
+            String from = statementFlowMap.get(block).outNode;
+            switch (block.getType()) {
+                case REGULAR_BLOCK:
+                    RegularBlock regularBlock = ((RegularBlock) block);
+
+                    if (regularBlock.getRegularSuccessor() instanceof ConditionalBlock) {
+                        ConditionalBlock conditionalSuccessor = (ConditionalBlock) regularBlock.getRegularSuccessor();
+
+                        sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, EdgeType.CONTROL));
+                        sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, EdgeType.CONTROL));
+                    } else {
+                        String to = statementFlowMap.get(regularBlock.getRegularSuccessor()).inNode;
+                        sbDotInterEdges.append(formatPdgEdge(from, to, EdgeType.CONTROL));
+                    }
+                    break;
+                case CONDITIONAL_BLOCK:
+                    break;
+                case SPECIAL_BLOCK:
+                    SpecialBlock specialBlock = ((SpecialBlock) block);
+
+                    for (Block successor : specialBlock.getSuccessors()) {
+                        sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(successor).inNode, EdgeType.CONTROL));
+                    }
+                    break;
+                case EXCEPTION_BLOCK:
+                    ExceptionBlock exceptionBlock = ((ExceptionBlock) block);
+
+                    // Add control edge to normal execution successor
+                    sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(exceptionBlock.getSuccessor()).inNode, EdgeType.CONTROL));
+
+                    // Add control edges to exceptional execution successors
+                    for (Map.Entry<TypeMirror, Set<Block>> entry : exceptionBlock.getExceptionalSuccessors().entrySet()) {
+                        for (Block exception : entry.getValue()) {
+                            // FIX: May create duplicates when there are multiple entries for EXCEPTIONAL_EXIT.
+                            sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(exception).inNode, EdgeType.CONTROL));
+                        }
+                    }
+                    break;
+            }
+
+            assertNoConditionalSuccessor(block);
+
+        }
+        return sbDotInterEdges;
+    }
+
+    /**
+     * Logs an error if a non RegularBlock has a ConditionalBlock as successor.
+     */
+    private void assertNoConditionalSuccessor(Block block) {
+        if (block.getType() == Block.BlockType.CONDITIONAL_BLOCK
+                || block.getType() == Block.BlockType.EXCEPTION_BLOCK
+                || block.getType() == Block.BlockType.SPECIAL_BLOCK){
+            for (Block successor : block.getSuccessors()) {
+                if (successor instanceof ConditionalBlock) {
+                    logger.error("Wrong assumption: Block {} of type {} has a successor that is conditional ({})", block, block.getType(), block.getSuccessors());
+                }
+            }
+        }
+    }
+
+    private String makeStatementNodes(Set<Block> blocks, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+        StringBuilder sbDotNodes = new StringBuilder();
+
+        // Definition of all nodes including their labels.
+        for (Block v : blocks) {
+            String strBlock = visualizeBlock(v, analysis);
+            sbDotNodes.append(strBlock);
+        }
+        sbDotNodes.append(lineSeparator);
+        return sbDotNodes.toString();
+    }
+
+    private String formatPdgEdge(@NonNull final String from, @NonNull final String to, @NonNull final EdgeType type) {
+        return formatPdgEdge(from, to, type, null);
+    }
+
+    private String formatPdgEdge(@NonNull final String from, @NonNull final String to, @NonNull final EdgeType type, @Nullable final String label) {
         final StringBuilder sb = new StringBuilder(from + " -> " + to + " ");
 
         sb.append("[");
         sb.append("key=").append(type.key);
         sb.append(", style=").append(type.style);
 
-        if(label != null) {
+        if (label != null) {
             sb.append(", label=\"").append(label).append("\"");
         }
 
-        if(type.color != "black") {
+        if (type.color != "black") {
             sb.append(", color=").append(type.color);
         }
         sb.append("];");
+        sb.append(lineSeparator);
         return sb.toString();
     }
 
     @Override
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
-        Tree tree = t.getTree();
-
-        if (tree == null) {
+        if (t.getTree() == null) {
+            logger.warn("No tree for Node {}", t);
             return "";
         }
 
-        Element e = TreeUtils.elementFromTree(tree);
         JCTree jct = ((JCTree) t.getTree());
-
-        // No if or while constructs bubble here.
-
         long lineStart = lineMap.getLineNumber(jct.getStartPosition());
         long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
 
-        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + " (" + t.getClass() + ") (" + jct.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
-
-        // If there is no Block in the map, add it starting at this node.
-        statementFlowMap.putIfAbsent(t.getBlock(), new BlockFlow("n" + t.getUid()));
-
-        // Every node is potentially the last "real" node.
-        BlockFlow blockFlow = statementFlowMap.get(t.getBlock());
-        blockFlow.setOutNode("n" + t.getUid());
-
-//        System.out.println("Keep");
-
-        addStatementEdge("n" + t.getUid());
-
-        return lineSeparator + formatNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
+//        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + "!" + t.getUid() + "!" + " (" + t.getClass() + ") (" + jct.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
+        return formatStatementNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
     }
 
-    private String formatNode(String uid, String label, long lineStart, long lineEnd) {
-        return "n" + uid + " [cluster=\"" + cluster + "\", label=\"" + label + "\", span=\"" + lineStart + "-" + lineEnd + "\"];";
+    private String formatStatementNode(String uid, String label, long lineStart, long lineEnd) {
+        return formatNode("n", uid, label, lineStart, lineEnd);
+    }
+
+
+    private String formatBlockNode(String uid, String label, long lineStart, long lineEnd) {
+        return formatNode("b", uid, label, lineStart, lineEnd);
+    }
+
+    private String formatNode(String suffix, String uid, String label, long lineStart, long lineEnd) {
+        return suffix + uid + " [cluster=\"" + cluster + "\", label=\"" + label + "\", span=\"" + lineStart + "-" + lineEnd + "\"];" + lineSeparator;
     }
 
     private void addStatementEdge(String to) {
-        if(lastStatementInBlock != null) {
-            cfgEdges.add(new Edge(lastStatementInBlock, to));
+        if (lastStatementInBlock != null) {
+            Edge e = new Edge(lastStatementInBlock, to);
+            logger.info("Adding new edge {}", e);
+            cfgEdges.add(e);
         }
         lastStatementInBlock = to;
     }
@@ -336,7 +400,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
     @Override
     public String visualizeSpecialBlock(SpecialBlock sbb) {
-        return formatNode(String.valueOf(sbb.getUid()), sbb.getSpecialType().name(), 0,0);
+        return formatBlockNode(String.valueOf(sbb.getUid()), sbb.getSpecialType().name(), 0, 0);
     }
 
     @Override
@@ -346,6 +410,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
     @Override
     protected String visualizeEdge(Object sId, Object eId, String flowRule) {
+        // No need to visualize the edges between blocks.
         return "";
     }
 
