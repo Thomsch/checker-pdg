@@ -142,6 +142,16 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         StringBuilder sbDotSpecialEdges = makeExitEntryDotEdge(cfg);
 
         // Dataflow edges
+        StringBuilder sbDotDataflowEdges = null;
+        if (analysis == null) {
+            logger.error("Analysis is null");
+        } else {
+            sbDotDataflowEdges = makeDataflowDotEdges(cfg, analysis);
+        }
+        return dotNodes + lineSeparator + sbDotIntraEdges + sbDotInterEdges + sbDotSpecialEdges + sbDotDataflowEdges;
+    }
+
+    private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         FlexemeDataflowStore dataflowStore = analysis.getResult().getStoreAfter(cfg.getRegularExitBlock());
         Set<org.checkerframework.checker.codechanges.Edge> edges = dataflowStore.getEdges();
         StringBuilder sbDotDataflowEdges = new StringBuilder();
@@ -150,37 +160,32 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
             Node from = edge.getFrom().reference;
 
             String fromUuid;
-            if (from.getBlock() == null) {
-                fromUuid = "b" + cfg.getEntryBlock().getUid();
-            } else {
-                fromUuid = "n" + edge.getFrom().reference.getUid();
-            }
-
             String label = "undefined";
 
-            if (from instanceof LocalVariableNode) {
-                LocalVariableNode lvnFrom = ((LocalVariableNode) from);
-                TypeMirror type = lvnFrom.getType();
-
+            if (from.getBlock() == null) { // Parameters
+                fromUuid = "b" + cfg.getEntryBlock().getUid();
+                TypeMirror type = from.getType();
                 label = TypesUtils.getTypeElement(type).getQualifiedName().toString();
-                // The type parameters do not seem accessible at this point even though, I can see them in 'sym' field of the MethodCFG in the debugger.
+            } else { // Local Variables
+                fromUuid = "n" + edge.getFrom().reference.getUid();
 
-            } else if (from instanceof FieldAccessNode) {
-                FieldAccessNode fanFrom = ((FieldAccessNode) from);
-                label = fanFrom.getFieldName();
-            } else if (from instanceof VariableDeclarationNode) {
-                VariableDeclarationNode vdnFrom = ((VariableDeclarationNode) from);
-                label = vdnFrom.getName();
-            } else {
-                logger.error("Unsupported 'from' dataflow edge: {}", from);
+                if (from instanceof LocalVariableNode) {
+                    LocalVariableNode lvnFrom = ((LocalVariableNode) from);
+                    label = lvnFrom.getName();
+                } else if (from instanceof FieldAccessNode) {
+                    FieldAccessNode fanFrom = ((FieldAccessNode) from);
+                    label = fanFrom.getFieldName();
+                } else if (from instanceof VariableDeclarationNode) {
+                    VariableDeclarationNode vdnFrom = ((VariableDeclarationNode) from);
+                    label = vdnFrom.getName();
+                } else {
+                    logger.error("Unsupported 'from' dataflow edge: {}", from);
+                }
             }
-
-            logger.info("{}: {}", edge, label);
 
             sbDotDataflowEdges.append(formatPdgEdge(fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA, label));
         }
-
-        return dotNodes + lineSeparator + sbDotIntraEdges + sbDotInterEdges + sbDotSpecialEdges + sbDotDataflowEdges;
+        return sbDotDataflowEdges;
     }
 
     private StringBuilder makeIntraBlockDotEdges(Set<Block> blocks) {
