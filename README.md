@@ -1,7 +1,10 @@
 # Flexeme Dataflow Extraction
 
-`FlexemeDataflowPlayground` runs the analysis and extracts a Flexeme-compatible PDG graph.
+`FlexemePdgGenerator` runs the analysis and extracts a Flexeme-compatible PDG graph.
 
+Run with `java -cp codechanges-checker-all.jar org.checkerframework.checker.codechanges.FlexemePdgGenerator <filepath>`
+
+Requires Java 11. Otherwise you'll get an Illegal Access Error with Java 17.
 
 ## More information
 
