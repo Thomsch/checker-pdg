@@ -62,8 +62,8 @@ public class FlexemePdgGenerator {
         logger.info("Generating PDG for " + javaFile);
 
         String outputDir = "."; // output directory
-        String method = "test"; // name of the method to analyze
-        String clazz = "Test"; // name of the class to consider
+        String clazz = "BasicTests"; // name of the class to consider
+        String method = "sample"; // name of the method to analyze
 
         FlexemePdgGenerator playground = new FlexemePdgGenerator(javaFile, outputDir, method, clazz);
         playground.run();
