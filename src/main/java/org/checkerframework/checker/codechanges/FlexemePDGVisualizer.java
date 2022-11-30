@@ -7,6 +7,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
+import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.block.*;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
@@ -40,6 +41,11 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         this.cfgEdges = new ArrayList<>();
         this.lastStatementInBlock = null;
         this.statementFlowMap = new HashMap<>();
+    }
+
+    @Override
+    protected String dotOutputFileName(UnderlyingAST ast) {
+        return "pdg.dot";
     }
 
     enum EdgeType {

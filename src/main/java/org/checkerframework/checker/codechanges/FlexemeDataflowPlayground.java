@@ -19,6 +19,8 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizeLauncher;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -35,6 +37,7 @@ public class FlexemeDataflowPlayground {
     private final String outputDir;
     private final String method;
     private final String clazz;
+    private static final Logger logger = LoggerFactory.getLogger(FlexemeDataflowPlayground.class);
 
     public FlexemeDataflowPlayground(String inputFile, String outputDir, String method, String clazz) {
         this.inputFile = inputFile;
@@ -44,13 +47,20 @@ public class FlexemeDataflowPlayground {
     }
 
     public static void main(String[] args) {
-        /* Configuration: change as appropriate */
-        String inputFile = "tests/codechanges/Test.java"; // input file name and path
-        String outputDir = "build/tmp"; // output directory
+
+        if (args.length != 1) {
+            System.err.println("Usage: java -jar codechanges-checker.jar <filepath>");
+            System.exit(-1);
+        }
+        String javaFile = args[0];
+
+        logger.info("Generating PDG for " + javaFile);
+
+        String outputDir = "."; // output directory
         String method = "test"; // name of the method to analyze
         String clazz = "Test"; // name of the class to consider
 
-        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(javaFile, outputDir, method, clazz);
         playground.run();
     }
 
@@ -93,7 +103,6 @@ public class FlexemeDataflowPlayground {
         args.put("verbose", verbose);
 
         CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new FlexemePDGVisualizer(cluster, this.lineMap, this.compilationUnitTree);
-//        CFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> viz = new DOTCFGVisualizer<>();
         viz.init(args);
         Map<String, Object> res = viz.visualize(cfg, cfg.getEntryBlock(), analysis);
         viz.shutdown();

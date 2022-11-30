@@ -1,7 +1,19 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        gradlePluginPortal()
+    }
+    dependencies {
+        classpath "gradle.plugin.com.github.johnrengelman:shadow:7.1.2"
+    }
+}
+
 plugins {
     id 'java'
     id 'maven-publish'
 }
+
+apply plugin: 'com.github.johnrengelman.shadow'
 
 repositories {
     // Use Maven Central for resolving your dependencies.
@@ -35,7 +47,7 @@ dependencies {
 
     // Logging
     implementation 'org.slf4j:slf4j-api:2.0.3'
-    testImplementation 'org.slf4j:slf4j-simple:2.0.3'
+    implementation 'org.slf4j:slf4j-simple:2.0.3'
 
 
     compileOnly "com.google.errorprone:javac:9+181-r4173-1"
