@@ -1,6 +1,6 @@
 package tests;
 
-import org.checkerframework.checker.codechanges.FlexemeDataflowPlayground;
+import org.checkerframework.checker.codechanges.FlexemePdgGenerator;
 import org.junit.Test;
 
 public class DataFlowGenerationTest {
@@ -11,7 +11,7 @@ public class DataFlowGenerationTest {
         String method = "sample";
         String clazz = "BasicTests";
 
-        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
         playground.run();
     }
 
@@ -22,7 +22,7 @@ public class DataFlowGenerationTest {
         String method = "exceptionTest";
         String clazz = "BasicTests";
 
-        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
         playground.run();
     }
 
@@ -33,7 +33,7 @@ public class DataFlowGenerationTest {
         String method = "anonymous";
         String clazz = "BasicTests";
 
-        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(inputFile, outputDir, method, clazz);
+        FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
         playground.run();
     }
 }

@@ -31,19 +31,24 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringJoiner;
 
-public class FlexemeDataflowPlayground {
+/**
+ * PDG generator for Flexeme's pipeline.
+ */
+public class FlexemePdgGenerator {
 
     private final String inputFile;
     private final String outputDir;
     private final String method;
     private final String clazz;
-    private static final Logger logger = LoggerFactory.getLogger(FlexemeDataflowPlayground.class);
+    private static final Logger logger = LoggerFactory.getLogger(FlexemePdgGenerator.class);
+    private boolean generatePDF;
 
-    public FlexemeDataflowPlayground(String inputFile, String outputDir, String method, String clazz) {
+    public FlexemePdgGenerator(String inputFile, String outputDir, String method, String clazz) {
         this.inputFile = inputFile;
         this.outputDir = outputDir;
         this.method = method;
         this.clazz = clazz;
+        this.generatePDF = false;
     }
 
     public static void main(String[] args) {
@@ -60,7 +65,7 @@ public class FlexemeDataflowPlayground {
         String method = "test"; // name of the method to analyze
         String clazz = "Test"; // name of the class to consider
 
-        FlexemeDataflowPlayground playground = new FlexemeDataflowPlayground(javaFile, outputDir, method, clazz);
+        FlexemePdgGenerator playground = new FlexemePdgGenerator(javaFile, outputDir, method, clazz);
         playground.run();
     }
 
@@ -72,7 +77,8 @@ public class FlexemeDataflowPlayground {
         FlexemeDataflowTransfer transfer = new FlexemeDataflowTransfer();
         ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> forwardAnalysis = new ForwardAnalysisImpl<>(transfer);
 
-        visualize(inputFile, outputDir, method, clazz, true, false, forwardAnalysis);
+
+        visualize(inputFile, outputDir, method, clazz, generatePDF, false, forwardAnalysis);
     }
 
 
