@@ -1,6 +1,6 @@
 package org.checkerframework.checker.codechanges;
 
-import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
+import java.util.Objects;
 
 public class Edge {
     private final FlexemeDataflowValue from;
@@ -17,6 +17,19 @@ public class Edge {
 
     public FlexemeDataflowValue getTo() {
         return to;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Edge edge = (Edge) o;
+        return Objects.equals(from, edge.from) && Objects.equals(to, edge.to);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(from, to);
     }
 
     @Override
