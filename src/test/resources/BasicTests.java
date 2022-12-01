@@ -9,6 +9,13 @@ class BasicTests {
         int omega = w + z;
     }
 
+    void loopy(int x) {
+        int a = 0;
+        for (int i = 0; i < x; x++) {
+            a += x;
+        }
+    }
+
     int sample(int x, int y, List<String> o) {
         int a = x;
         int b = y;
