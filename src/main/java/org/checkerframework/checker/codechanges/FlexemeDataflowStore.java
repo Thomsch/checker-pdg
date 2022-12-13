@@ -11,17 +11,15 @@ import org.checkerframework.javacutil.BugInCF;
 import java.util.*;
 import java.util.function.BiFunction;
 
+/**
+ * A store that keeps track of
+ * 1) when was a variable last used (i.e., declared or referred);
+ * 2) the use edges between variable references.
+ */
 public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     private final Map<String, Set<FlexemeDataflowValue>> lastUse;
     private final Set<Edge> edges;
-    private final List<LocalVariableNode> parameters;
-
-    public FlexemeDataflowStore(List<LocalVariableNode> parameters) {
-        lastUse = new HashMap<>();
-        edges = new LinkedHashSet<>();
-        this.parameters = parameters;
-        parameters.forEach(this::addParameter);
-    }
+    private final List<LocalVariableNode> parameters; // Initial variable declaration for method parameters.
 
     /**
      * Create a new FlexemeDataflowStore.
@@ -32,15 +30,14 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
         this.parameters = parameters;
     }
 
-    public void addParameter(LocalVariableNode node) {
-        if (lastUse.containsKey(node.getName())) {
-            return;
-        }
-
-        lastUse.put(node.getName(), Sets.newHashSet(new FlexemeDataflowValue(node)));
+    public FlexemeDataflowStore(List<LocalVariableNode> parameters) {
+        lastUse = new HashMap<>();
+        edges = new LinkedHashSet<>();
+        this.parameters = parameters;
+        parameters.forEach(this::addParameter);
     }
 
-    public void addLocalVariableDeclaration(VariableDeclarationNode node) {
+    private void addParameter(LocalVariableNode node) {
         if (lastUse.containsKey(node.getName())) {
             return;
         }
@@ -48,15 +45,30 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     }
 
     /**
+     * Add a variable declaration to the store to keep track of.
+     * @param node The variable declaration.
+     */
+    public void addLocalVariableDeclaration(VariableDeclarationNode node) {
+        if (lastUse.containsKey(node.getName())) {
+            // Nothing to do, we already know of this variable.
+            return;
+        }
+        // We mark that we encountered this variable for the first time.
+        lastUse.put(node.getName(), Sets.newHashSet(new FlexemeDataflowValue(node)));
+    }
+
+    /**
      * Add a new dataflow edge between the last and current n.
-     * @param n
+     * @param n The variable reference
      */
     public void addDataflowEdge(LocalVariableNode n) {
         FlexemeDataflowValue value = new FlexemeDataflowValue(n);
+
+        // Add a new edge between the last time this variable is used to this current reference.
         for (FlexemeDataflowValue last : this.lastUse.get(n.getName())) {
             edges.add(new Edge(last, value));
         }
-
+        // The last use is this reference now.
         this.lastUse.put(n.getName(), Sets.newHashSet(value));
     }
 
