@@ -38,7 +38,7 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
             return false;
         }
         FlexemeDataflowValue other = (FlexemeDataflowValue) obj;
-        return this.reference.equals(other.reference);
+        return this.reference.equals(other.reference) && this.reference.getUid() == other.reference.getUid();
     }
 
     @Override
@@ -51,7 +51,10 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
             s.append(",");
             s.append(this.reference.getTree().getKind());
         }
-        s.append("]");
+        s.append("] ");
+        s.append("(uuid=");
+        s.append(this.reference.getUid());
+        s.append(")");
         return s.toString();
     }
 }

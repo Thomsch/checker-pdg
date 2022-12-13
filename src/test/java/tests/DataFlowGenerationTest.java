@@ -47,4 +47,15 @@ public class DataFlowGenerationTest {
         FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
         playground.run();
     }
+
+    @Test
+    public void join() {
+        String inputFile = "src/test/resources/DataFlowTests.java";
+        String outputDir = "build/tmp";
+        String method = "join";
+        String clazz = "DataFlowTests";
+
+        FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
+        playground.run();
+    }
 }
