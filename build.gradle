@@ -33,6 +33,7 @@ ext.versions = [
 
 sourceCompatibility = 1.8
 def checkerframework_local = false  // Set this variable to [true] while using local version of checker framework.
+project.setVersion("0.1")
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -70,7 +71,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'org.checkerframework'
             artifactId = 'codechanges-checker'
-            version = '0.1-SNAPSHOT'
+            version = project.getVersion()
 
             from components.java
         }
@@ -130,4 +131,8 @@ sourceSets {
             srcDirs += ['src/main/java']
         }
     }
+}
+
+shadowJar {
+    archiveVersion.set(project.getVersion())
 }
