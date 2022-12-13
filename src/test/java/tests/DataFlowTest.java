@@ -3,7 +3,10 @@ package tests;
 import org.checkerframework.checker.codechanges.FlexemePdgGenerator;
 import org.junit.Test;
 
-public class DataFlowGenerationTest {
+/**
+ * Test that the dataflow analysis is working properly.
+ */
+public class DataFlowTest {
     @Test
     public void sample() {
         String inputFile = "src/test/resources/BasicTests.java";
@@ -53,6 +56,20 @@ public class DataFlowGenerationTest {
         String inputFile = "src/test/resources/DataFlowTests.java";
         String outputDir = "build/tmp";
         String method = "join";
+        String clazz = "DataFlowTests";
+
+        FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
+        playground.run();
+    }
+
+    /**
+     * The C# PDG generation ignore class fields so should our implementation.
+     */
+    @Test
+    public void nameConflict() {
+        String inputFile = "src/test/resources/DataFlowTests.java";
+        String outputDir = "build/tmp";
+        String method = "nameConflict";
         String clazz = "DataFlowTests";
 
         FlexemePdgGenerator playground = new FlexemePdgGenerator(inputFile, outputDir, method, clazz);
