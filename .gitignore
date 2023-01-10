@@ -13,3 +13,6 @@ build
 codechanges-checker-qual/src
 /tests/codechanges/**/*.class
 /src/test/**/*.class
+
+# Project
+pdg.dot
