@@ -65,8 +65,8 @@ public class FlexemePdgGenerator {
         String clazz = "BasicTests"; // name of the class to consider
         String method = "sample"; // name of the method to analyze
 
-        FlexemePdgGenerator playground = new FlexemePdgGenerator(javaFile, outputDir, method, clazz);
-        playground.run();
+        FlexemePdgGenerator pdgGenerator = new FlexemePdgGenerator(javaFile, outputDir, method, clazz);
+        pdgGenerator.run();
     }
 
     private LineMap lineMap;
@@ -76,7 +76,6 @@ public class FlexemePdgGenerator {
         // Run the analysis and create a PDF file
         FlexemeDataflowTransfer transfer = new FlexemeDataflowTransfer();
         ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> forwardAnalysis = new ForwardAnalysisImpl<>(transfer);
-
 
         visualize(inputFile, outputDir, method, clazz, generatePDF, false, forwardAnalysis);
     }
