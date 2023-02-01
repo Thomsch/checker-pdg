@@ -5,8 +5,13 @@ class BasicTests {
 
     float f = 3;
 
-    void bar(int w, int z) {
+    void foo() {
+        int a = bar(1,2);
+    }
+
+    int bar(int w, int z) {
         int omega = w + z;
+        return omega;
     }
 
     void loopy(int x) {

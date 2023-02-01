@@ -7,7 +7,6 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.block.*;
 import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
@@ -32,6 +31,11 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     Logger logger = LoggerFactory.getLogger(FlexemePDGVisualizer.class);
 
     private Map<Block, BlockFlow> statementFlowMap;
+    private String graph;
+
+    public String getGraph() {
+        return graph;
+    }
 
     public FlexemePDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree) {
         super();
@@ -43,9 +47,21 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         this.statementFlowMap = new HashMap<>();
     }
 
+
     @Override
-    protected String dotOutputFileName(UnderlyingAST ast) {
-        return "pdg.dot";
+    protected String visualizeGraph(ControlFlowGraph cfg, Block entry, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+        graph = super.visualizeGraph(cfg, entry, analysis);
+        return graph;
+    }
+
+    @Override
+    protected String visualizeGraphHeader() {
+        return "";
+    }
+
+    @Override
+    protected String visualizeGraphFooter() {
+        return "";
     }
 
     enum EdgeType {
