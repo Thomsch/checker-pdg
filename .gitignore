@@ -16,3 +16,5 @@ codechanges-checker-qual/src
 
 # Project
 pdg.dot
+out/**
+jfreechart/**
