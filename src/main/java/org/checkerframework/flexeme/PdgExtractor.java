@@ -42,13 +42,22 @@ public class PdgExtractor {
             String graph = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
             graphs.append(graph);
         });
+
+        FlexemePDGVisualizer.invocations.forEach((nodeId, methodName) -> {
+            String blockId = FlexemePDGVisualizer.methods.get(methodName);
+            if (blockId != null) {
+                System.out.println("Adding call for " + methodName + ": " + nodeId + " -> " + blockId);
+                graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]");
+            }
+        });
+
         graphs.append("}");
 
 //        3. Stitch results together.
 // In the visualizer
 
 //        4. Print dot file.
-        try (BufferedWriter out = new BufferedWriter(new FileWriter("all.dot"))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter("pdg.dot"))) {
             out.write(graphs.toString());
         } catch (IOException e) {
             throw new UserError("Error creating dot file (is the path valid?): all.dot", e);

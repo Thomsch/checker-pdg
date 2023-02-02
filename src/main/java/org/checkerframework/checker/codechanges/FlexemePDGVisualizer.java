@@ -7,11 +7,9 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
+import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.block.*;
-import org.checkerframework.dataflow.cfg.node.FieldAccessNode;
-import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
-import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
+import org.checkerframework.dataflow.cfg.node.*;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
 import org.checkerframework.javacutil.TypesUtils;
 import org.slf4j.Logger;
@@ -33,6 +31,10 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     private Map<Block, BlockFlow> statementFlowMap;
     private String graph;
 
+    public static Map<String, String> invocations = new HashMap<>();
+
+    public static Map<String, String> methods = new HashMap<>(); // maps from method name to entry block number.
+
     public String getGraph() {
         return graph;
     }
@@ -47,6 +49,15 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         this.statementFlowMap = new HashMap<>();
     }
 
+    @Override
+    public @Nullable Map<String, Object> visualize(ControlFlowGraph cfg, Block entry, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+        UnderlyingAST.CFGMethod cfgMethod = (UnderlyingAST.CFGMethod) cfg.underlyingAST;
+        methods.put(cfgMethod.getMethodName(), "b" + entry.getUid());
+
+//        TreeUtils.getMethod() Try this for multiple methods
+//        cfgMethod.getSimpleClassName()
+        return super.visualize(cfg, entry, analysis);
+    }
 
     @Override
     protected String visualizeGraph(ControlFlowGraph cfg, Block entry, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
@@ -385,17 +396,21 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
 
     @Override
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
-        if (t.getTree() == null) {
-            logger.warn("No tree for Node {}", t);
-            return "";
+        if (t instanceof MethodAccessNode) {
+            MethodAccessNode methodAccessNode = (MethodAccessNode) t;
+            System.out.println("Call to " + methodAccessNode.getMethod());
+            invocations.put("n"+ t.getUid(), methodAccessNode.getMethod().getSimpleName().toString());
         }
 
-        JCTree jct = ((JCTree) t.getTree());
-        long lineStart = lineMap.getLineNumber(jct.getStartPosition());
-        long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
+        if (t.getTree() == null) {
+            return formatStatementNode(String.valueOf(t.getUid()), t.toString(), 0, 0);
+        } else {
+            JCTree jct = ((JCTree) t.getTree());
+            long lineStart = lineMap.getLineNumber(jct.getStartPosition());
+            long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
 
-//        System.out.println(t.getTree().toString() + " -> " + t.getTree().getKind() + "!" + t.getUid() + "!" + " (" + t.getClass() + ") (" + jct.getClass() + ") " + t.getInSource() + " [" + lineStart + "-" + lineEnd + "]");
-        return formatStatementNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
+            return formatStatementNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
+        }
     }
 
     private String formatStatementNode(String uid, String label, long lineStart, long lineEnd) {
