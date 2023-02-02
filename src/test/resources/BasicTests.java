@@ -7,11 +7,16 @@ class BasicTests {
 
     void foo() {
         int a = bar(1,2);
+        int b = bar(3);
     }
 
     int bar(int w, int z) {
         int omega = w + z;
         return omega;
+    }
+
+    int bar(int y) {
+        return y + 1;
     }
 
     void loopy(int x) {

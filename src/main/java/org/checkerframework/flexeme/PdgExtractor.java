@@ -37,7 +37,7 @@ public class PdgExtractor {
 //        2. Run analysis for each method. in: cfg, out: analysis done
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            System.out.println("Processing " + methodTree.getName().toString());
+//            System.out.println("Processing " + methodTree.getName().toString());
             ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis = runAnalysis(controlFlowGraph);
             String graph = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
             graphs.append(graph);

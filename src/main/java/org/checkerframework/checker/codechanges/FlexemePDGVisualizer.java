@@ -15,8 +15,10 @@ import org.checkerframework.javacutil.TypesUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.lang.model.element.Name;
 import javax.lang.model.type.TypeMirror;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
     private final String cluster;
@@ -52,10 +54,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     @Override
     public @Nullable Map<String, Object> visualize(ControlFlowGraph cfg, Block entry, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         UnderlyingAST.CFGMethod cfgMethod = (UnderlyingAST.CFGMethod) cfg.underlyingAST;
-        methods.put(cfgMethod.getMethodName(), "b" + entry.getUid());
-
-//        TreeUtils.getMethod() Try this for multiple methods
-//        cfgMethod.getSimpleClassName()
+        methods.put(methodSignature(cfgMethod), "b" + entry.getUid());
         return super.visualize(cfg, entry, analysis);
     }
 
@@ -398,8 +397,8 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         if (t instanceof MethodAccessNode) {
             MethodAccessNode methodAccessNode = (MethodAccessNode) t;
-            System.out.println("Call to " + methodAccessNode.getMethod());
-            invocations.put("n"+ t.getUid(), methodAccessNode.getMethod().getSimpleName().toString());
+            String signature = methodSignature(methodAccessNode);
+            invocations.put("n"+ t.getUid(), signature);
         }
 
         if (t.getTree() == null) {
@@ -464,5 +463,29 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     @Override
     public String visualizeBlockTransferInputAfter(Block bb, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
         return "";
+    }
+
+
+    private String methodSignature(UnderlyingAST.CFGMethod cfgMethod) {
+        List<String> types = cfgMethod.getMethod().getParameters().stream()
+                .map(variableTree -> variableTree.getType().toString())
+                .collect(Collectors.toList());
+        String returnType = cfgMethod.getMethod().getReturnType() == null ?
+                null : cfgMethod.getMethod().getReturnType().toString();
+        return methodSignature(cfgMethod.getMethod().getName(), types, returnType);
+    }
+
+    private String methodSignature(MethodAccessNode methodAccessNode) {
+        List<String> types = methodAccessNode.getMethod().getParameters().stream()
+                .map(parameter -> parameter.asType().toString())
+                .collect(Collectors.toList());
+        return methodSignature(
+                methodAccessNode.getMethod().getSimpleName(),
+                types,
+                methodAccessNode.getMethod().getReturnType().toString());
+    }
+
+    private String methodSignature(Name name, List<String> types, String returnType) {
+        return String.format("%s %s -> %s", name, String.join(",", types), returnType == null ? "null": returnType);
     }
 }
