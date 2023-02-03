@@ -27,12 +27,15 @@ import java.util.*;
 public class PdgExtractor {
     public static void main(String[] args) throws Throwable {
 //        0. Setting environment / parsing arguments
-        String file = "src/test/resources/BasicTests.java";
+        String file = args[0];
+        String sourcePath = args[1];
+        String classPath = args[2];
+
         String compile_out = "out/";
-        String path_out = "pdg.dot"; // Where to write the results
+        String path_out = "pdg.dot"; // Where to write the results TODO
 
 //        1. Compile file. in: file path. out: cfgs
-        FileProcessor processor = compileFile(file, compile_out, false); // Returns the spent processor with the compilation results.
+        FileProcessor processor = compileFile(file, compile_out, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
 //        2. Run analysis for each method. in: cfg, out: analysis done
         StringBuilder graphs = new StringBuilder("digraph {");
@@ -46,7 +49,6 @@ public class PdgExtractor {
         FlexemePDGVisualizer.invocations.forEach((nodeId, methodName) -> {
             String blockId = FlexemePDGVisualizer.methods.get(methodName);
             if (blockId != null) {
-                System.out.println("Adding call for " + methodName + ": " + nodeId + " -> " + blockId);
                 graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]");
             }
         });
@@ -98,7 +100,7 @@ public class PdgExtractor {
         return analysis;
     }
 
-    private static FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose) {
+    public static FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose, String sourcePath, String classPath) {
         java.util.List<String> arguments = new ArrayList<>();
         arguments.add("-d");
         arguments.add(compile_out);
@@ -108,7 +110,10 @@ public class PdgExtractor {
         }
 
         arguments.add("-sourcepath");
-        arguments.add("hello");
+        arguments.add(sourcePath);
+
+        arguments.add("-classpath");
+        arguments.add(classPath);
 
         Context context = new Context();
         JavacFileManager.preRegister(context); // Necessary to have fileManager before javac.
