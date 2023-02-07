@@ -325,7 +325,12 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                     ExceptionBlock exceptionBlock = ((ExceptionBlock) block);
 
                     // Add control edge to normal execution successor
-                    sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(exceptionBlock.getSuccessor()).inNode, EdgeType.CONTROL));
+
+                    // When the exception block doesn't have a successor, it means it's throwing an exception and there is
+                    // no successor
+                    if (exceptionBlock.getSuccessor() != null) {
+                        sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(exceptionBlock.getSuccessor()).inNode, EdgeType.CONTROL));
+                    }
 
                     // Add control edges to exceptional execution successors
                     for (Map.Entry<TypeMirror, Set<Block>> entry : exceptionBlock.getExceptionalSuccessors().entrySet()) {
