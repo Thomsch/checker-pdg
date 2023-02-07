@@ -427,7 +427,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     }
 
     private String formatNode(String suffix, String uid, String label, long lineStart, long lineEnd) {
-        return suffix + uid + " [cluster=\"" + cluster + "\", label=\"" + label + "\", span=\"" + lineStart + "-" + lineEnd + "\"];" + lineSeparator;
+        return suffix + uid + " [cluster=\"" + cluster + "\", label=\"" + label.replace("\"", "") + "\", span=\"" + lineStart + "-" + lineEnd + "\"];" + lineSeparator;
     }
 
     private void addStatementEdge(String to) {
