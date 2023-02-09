@@ -136,6 +136,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         private String outNode;
 
         private BlockFlow(String inNode) {
+            Objects.requireNonNull(inNode);
             this.inNode = inNode;
         }
 
@@ -288,6 +289,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                     break;
 
                 case CONDITIONAL_BLOCK:
+                    // TODO: Assest that `block.getLastNode()` isn't null.
                     final BlockFlow conditionalFlow = new BlockFlow("n" + block.getLastNode());
                     statementFlowMap.put(block, conditionalFlow);
                     break;
