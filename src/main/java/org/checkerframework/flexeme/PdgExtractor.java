@@ -22,6 +22,7 @@ import javax.tools.ToolProvider;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 public class PdgExtractor {
@@ -115,16 +116,39 @@ public class PdgExtractor {
         arguments.add("-classpath");
         arguments.add(classPath);
 
+        arguments.add("-Xlint:none"); // Ignore warnings
+
         Context context = new Context();
         JavacFileManager.preRegister(context); // Necessary to have fileManager before javac.
         JavacFileManager fileManager = (JavacFileManager) context.get(JavaFileManager.class);
         Iterable<? extends JavaFileObject> jFile = fileManager.getJavaFileObjectsFromStrings(List.of(filepath));
 
         JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
-        JavaCompiler.CompilationTask task = javac.getTask(null, null, null, arguments, null, jFile);
+
+        NullOutputStream out = new NullOutputStream();
+
+        JavaCompiler.CompilationTask task = javac.getTask(out, null, null, arguments, null, jFile);
         FileProcessor o = new FileProcessor();
         task.setProcessors(Collections.singleton(o));
         task.call();
         return o;
+    }
+
+    public static class NullOutputStream extends Writer {
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+
+        }
+
+        @Override
+        public void flush() throws IOException {
+
+        }
+
+        @Override
+        public void close() throws IOException {
+
+        }
     }
 }
