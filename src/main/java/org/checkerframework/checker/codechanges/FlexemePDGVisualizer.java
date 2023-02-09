@@ -329,7 +329,16 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                     // When the exception block doesn't have a successor, it means it's throwing an exception and there is
                     // no successor
                     if (exceptionBlock.getSuccessor() != null) {
-                        sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(exceptionBlock.getSuccessor()).inNode, EdgeType.CONTROL));
+
+                        if (exceptionBlock.getSuccessor() instanceof ConditionalBlock) {
+                            ConditionalBlock conditionalSuccessor = (ConditionalBlock) exceptionBlock.getSuccessor();
+
+                            sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, EdgeType.CONTROL));
+                            sbDotInterEdges.append(formatPdgEdge(from, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, EdgeType.CONTROL));
+                        } else {
+                            String to = statementFlowMap.get(exceptionBlock.getSuccessor()).inNode;
+                            sbDotInterEdges.append(formatPdgEdge(from, to, EdgeType.CONTROL));
+                        }
                     }
 
                     // Add control edges to exceptional execution successors
@@ -353,7 +362,6 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
      */
     private void assertNoConditionalSuccessor(Block block) {
         if (block.getType() == Block.BlockType.CONDITIONAL_BLOCK
-                || block.getType() == Block.BlockType.EXCEPTION_BLOCK
                 || block.getType() == Block.BlockType.SPECIAL_BLOCK){
             for (Block successor : block.getSuccessors()) {
                 if (successor instanceof ConditionalBlock) {
