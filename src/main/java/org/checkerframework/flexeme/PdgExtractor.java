@@ -28,7 +28,7 @@ import java.util.*;
 public class PdgExtractor {
     public static void main(String[] args) throws Throwable {
 //        0. Setting environment / parsing arguments
-        String file = args[0];
+        String file = args[0]; // Relative to the repository e.g., src/java/App.java
         String sourcePath = args[1];
         String classPath = args[2];
 
