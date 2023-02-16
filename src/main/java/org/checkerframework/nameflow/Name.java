@@ -3,10 +3,10 @@ package org.checkerframework.nameflow;
 import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.javacutil.BugInCF;
 
+import java.util.Objects;
+
 /**
  * Represents a tuple of name and type from the set returned by the Ξ function in "RefiNym: Using Names to Refine Types".
- * TODO: Store name
- * TODO: Store type.
  */
 public class Name implements AbstractValue<Name> {
     private final String name;
@@ -27,5 +27,18 @@ public class Name implements AbstractValue<Name> {
         return "(" + name + "," + kind + ")";
     }
 
-    public enum Kind {AssignL}
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Name that = (Name) o;
+        return name.equals(that.name) && kind == that.kind;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, kind);
+    }
+
+    public enum Kind {AssignV, AssignM, AssignL}
 }
