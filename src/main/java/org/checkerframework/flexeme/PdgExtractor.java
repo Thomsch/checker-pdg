@@ -27,7 +27,7 @@ import java.util.*;
 
 public class PdgExtractor {
     public static void main(String[] args) throws Throwable {
-//        0. Setting environment / parsing arguments
+        // 0. Setting environment / parsing arguments
         String file = args[0]; // Relative to the repository e.g., src/java/App.java
         String sourcePath = args[1];
         String classPath = args[2];
@@ -35,13 +35,12 @@ public class PdgExtractor {
         String compile_out = "out/";
         String path_out = "pdg.dot"; // Where to write the results TODO
 
-//        1. Compile file. in: file path. out: cfgs
+        // 1. Compile file. in: file path. out: cfgs
         FileProcessor processor = compileFile(file, compile_out, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
-//        2. Run analysis for each method. in: cfg, out: analysis done
+       // 2. Run analysis for each method. in: cfg, out: graph
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-//            System.out.println("Processing " + methodTree.getName().toString());
             ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis = runAnalysis(controlFlowGraph);
             String graph = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
             graphs.append(graph);
@@ -56,10 +55,9 @@ public class PdgExtractor {
 
         graphs.append("}");
 
-//        3. Stitch results together.
-// In the visualizer
+        // 3. Stitch results together. In the visualizer
 
-//        4. Print dot file.
+        // 4. Print dot file.
         try (BufferedWriter out = new BufferedWriter(new FileWriter("pdg.dot"))) {
             out.write(graphs.toString());
         } catch (IOException e) {
@@ -97,7 +95,6 @@ public class PdgExtractor {
     private static ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
         ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis = new ForwardAnalysisImpl<>(new FlexemeDataflowTransfer());
         analysis.performAnalysis(methodControlFlowGraph);
-
         return analysis;
     }
 
@@ -106,7 +103,7 @@ public class PdgExtractor {
         arguments.add("-d");
         arguments.add(compile_out);
 
-        if (compile_verbose){
+        if (compile_verbose) {
             arguments.add("-verbose");
         }
 
