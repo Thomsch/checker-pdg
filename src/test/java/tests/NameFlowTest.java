@@ -7,7 +7,12 @@ public class NameFlowTest {
     @Test
     public void testToyExample() {
         String inputFile = "src/test/resources/Calc.java";
+        PdgExtractor.nameFlow(inputFile, "build/");
+    }
 
+    @Test
+    public void testBasicTests() {
+        String inputFile = "src/test/resources/BasicTests.java";
         PdgExtractor.nameFlow(inputFile, "build/");
     }
 }

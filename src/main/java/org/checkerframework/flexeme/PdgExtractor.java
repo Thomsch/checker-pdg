@@ -14,6 +14,9 @@ import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.javacutil.UserError;
+import org.checkerframework.nameflow.Name;
+import org.checkerframework.nameflow.NameFlowStore;
+import org.checkerframework.nameflow.NameFlowTransfer;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
@@ -129,6 +132,21 @@ public class PdgExtractor {
         task.setProcessors(Collections.singleton(o));
         task.call();
         return o;
+    }
+
+    public static void nameFlow(final String inputFile, final String compile_out) {
+
+    //    Run compilation on file with the analysis.
+        FileProcessor processor = compileFile(inputFile, compile_out, false, "", "");
+
+        // Run analysis for each method.
+        // TODO: Ask Mike or Suzanne if there is a better way to do the analysis for a file.
+        processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
+            System.out.println("Method: " + methodTree.getName());
+            ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
+            analysis.performAnalysis(controlFlowGraph);
+            System.out.println(analysis.getRegularExitStore());
+        });
     }
 
     public static class NullOutputStream extends Writer {

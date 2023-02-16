@@ -9,7 +9,8 @@ import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.javacutil.BugInCF;
 
 import java.util.*;
-import java.util.function.BiFunction;
+
+import static org.checkerframework.checker.codechanges.Util.mergeHashMaps;
 
 /**
  * A store that keeps track of
@@ -87,34 +88,6 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
         return new FlexemeDataflowStore(lastUseLub, edgesLub, parameters);
     }
 
-    /**
-     * Merge two Maps.
-     * @param a The first Map
-     * @param b The second Map
-     * @param mergeValues Function that defines how to merge two of the values together.
-     * @return A new Map instance containing the keys and values of a and b maps.
-     * @param <K> Generic type for map keys
-     * @param <V> Generic type for map values
-     */
-    private <K, V> Map<K, V> mergeHashMaps(Map<K, V> a, Map<K, V> b, BiFunction<V, V, V> mergeValues) {
-        Map<K, V> result = new HashMap<>(a.size() + b.size());
-
-        // Optimize merge performance loss in big hashmaps (e.g., after a long branch).
-        Map<K, V> big;
-        Map<K, V> small;
-        if (a.size() > b.size()) {
-            big = a;
-            small = b;
-        } else {
-            big = b;
-            small = a;
-        }
-
-        result.putAll(big);
-        small.forEach((key, value) -> result.merge(key, value, mergeValues));
-        return result;
-    }
-
     private String visualizeLastUseStore(CFGVisualizer<?, FlexemeDataflowStore, ?> viz) {
         String key = "variables";
         if (lastUse.isEmpty()) {
@@ -148,7 +121,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     /** It should not be called since it is not used by the backward analysis. */
     @Override
     public FlexemeDataflowStore widenedUpperBound(FlexemeDataflowStore previous) {
-        throw new BugInCF("wub of LiveVarStore get called!");
+        throw new BugInCF("wub of FlexemeDataflowStore get called!");
     }
 
     @Override
