@@ -33,6 +33,10 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
 
     @Override
     public TransferResult<Name, NameFlowStore> visitAssignment(final AssignmentNode n, final TransferInput<Name, NameFlowStore> transferInput) {
+        // For each operand in the expression, add the name to the store
+
+        // operand can be anything from a literal to a method call.
+
         RegularTransferResult<Name, NameFlowStore> transferResult = (RegularTransferResult<Name, NameFlowStore>) super.visitAssignment(n, transferInput);
         if (isScalar(n.getExpression().getType().getKind())) {
             // System.out.println("visitAssignment: " + n);
@@ -54,6 +58,10 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
             }
 
             for (final Node operand : n.getOperands()) {
+                if (operand.equals(n.getTarget())) {
+                    continue;
+                }
+
                 if (operand instanceof ValueLiteralNode) { //    AssignL
                     assignL(element, (ValueLiteralNode) operand, transferResult.getRegularStore());
                 } else if (operand instanceof LocalVariableNode && !operand.equals(n.getTarget())) { //    AssignV
@@ -61,14 +69,40 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
                 } else if (operand instanceof MethodInvocationNode) {  //    AssignM
                     assignM(element, (MethodInvocationNode) operand, transferResult.getRegularStore());
                 } else {
-                    logger.warn("Unhandled operand: " + operand.getClass());
+                    assignE(element, operand, transferResult.getRegularStore());
                 }
             }
-
         }
         return transferResult;
     }
 
+    private void assignE(final Element element, final Node expression, final NameFlowStore store) {
+        if (expression instanceof ValueLiteralNode) { //    AssignL
+            assignL(element, (ValueLiteralNode) expression, store);
+        } else if (expression instanceof LocalVariableNode){
+            assignV(element, (LocalVariableNode) expression, store);
+        } else if (expression instanceof MethodInvocationNode) {  //    AssignM
+            assignM(element, (MethodInvocationNode) expression, store);
+        } else if (expression instanceof UnaryOperationNode) {
+            UnaryOperationNode unaryNode = (UnaryOperationNode) expression;
+            assignE(element, unaryNode.getOperand(), store);
+        } else if (expression instanceof TernaryExpressionNode) {
+            TernaryExpressionNode ternaryNode = (TernaryExpressionNode) expression;
+            assignE(element, ternaryNode.getConditionOperand(), store);
+            assignE(element, ternaryNode.getThenOperand(), store);
+            assignE(element, ternaryNode.getElseOperand(), store);
+        } else if (expression instanceof TypeCastNode) {
+            TypeCastNode typeCastNode = (TypeCastNode) expression;
+            assignE(element, typeCastNode.getOperand(), store);
+        } else if (expression instanceof InstanceOfNode) {
+            InstanceOfNode instanceOfNode = (InstanceOfNode) expression;
+            assignE(element, instanceOfNode.getOperand(), store);
+        } else if (expression instanceof BinaryOperationNode) {
+            BinaryOperationNode binaryNode = (BinaryOperationNode) expression;
+            assignE(element, binaryNode.getLeftOperand(), store);
+            assignE(element, binaryNode.getRightOperand(), store);
+        }
+    }
 
     private void assignM(final Element element, final MethodInvocationNode operand, final NameFlowStore store) {
         Name name = new Name(operand.getTarget().toString(), Name.Kind.AssignM);

@@ -14,6 +14,7 @@ class Calc {
 
         sum = c.add(fst, snd);
         sum = c.add(sum, 40);
+        int sum2 = sum + fst + 10 + snd + c.add(3,4);
     }
 
     public int add(int x, int y) {
