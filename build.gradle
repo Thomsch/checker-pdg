@@ -2,6 +2,7 @@ plugins {
     id 'java'
     id 'maven-publish'
     id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id 'idea'
 }
 
 repositories {
@@ -13,6 +14,13 @@ repositories {
 configurations {
     // for putting Error Prone javac in bootclasspath for running tests
     errorproneJavac
+}
+
+idea {
+    module {
+        downloadJavadoc = true
+        downloadSources = true
+    }
 }
 
 ext.versions = [
