@@ -76,7 +76,6 @@ publishing {
 }
 
 test {
-    inputs.files("tests/codechanges")
     if (!JavaVersion.current().java9Compatible) {
         jvmArgs "-Xbootclasspath/p:${configurations.errorproneJavac.asPath}"
     } else {
