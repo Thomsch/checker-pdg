@@ -101,17 +101,17 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     }
 
     private void assignM(final Element element, final MethodInvocationNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getTarget().toString(), Name.Kind.AssignM);
+        Name name = new Name(operand.getTarget().toString(), Name.Kind.Method);
         store.add(element.getSimpleName().toString(), name);
     }
 
     private void assignV(final Element element, final LocalVariableNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getName(), Name.Kind.AssignV);
+        Name name = new Name(operand.getName(), Name.Kind.Variable);
         store.add(element.getSimpleName().toString(), name);
     }
 
     private void assignL(final Element element, final ValueLiteralNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getValue().toString(), Name.Kind.AssignL);
+        Name name = new Name(operand.getValue().toString(), Name.Kind.Literal);
         store.add(element.getSimpleName().toString(), name);
     }
 }

@@ -40,5 +40,5 @@ public class Name implements AbstractValue<Name> {
         return Objects.hash(name, kind);
     }
 
-    public enum Kind {AssignV, AssignM, AssignL}
+    public enum Kind {Variable, Method, Literal}
 }
