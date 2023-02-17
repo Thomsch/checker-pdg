@@ -5,18 +5,17 @@ import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
-import org.checkerframework.checker.codechanges.FlexemeDataflowStore;
-import org.checkerframework.checker.codechanges.FlexemeDataflowTransfer;
-import org.checkerframework.checker.codechanges.FlexemeDataflowValue;
-import org.checkerframework.checker.codechanges.FlexemePDGVisualizer;
 import org.checkerframework.dataflow.analysis.ForwardAnalysis;
 import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST;
+import org.checkerframework.flexeme.dataflow.DataflowStore;
+import org.checkerframework.flexeme.dataflow.DataflowTransfer;
+import org.checkerframework.flexeme.dataflow.DataflowValue;
+import org.checkerframework.flexeme.nameflow.Name;
+import org.checkerframework.flexeme.nameflow.NameFlowStore;
+import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
 import org.checkerframework.javacutil.UserError;
-import org.checkerframework.nameflow.Name;
-import org.checkerframework.nameflow.NameFlowStore;
-import org.checkerframework.nameflow.NameFlowTransfer;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
@@ -44,13 +43,13 @@ public class PdgExtractor {
        // 2. Run analysis for each method. in: cfg, out: graph
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis = runAnalysis(controlFlowGraph);
+            ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
             String graph = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
             graphs.append(graph);
         });
 
-        FlexemePDGVisualizer.invocations.forEach((nodeId, methodName) -> {
-            String blockId = FlexemePDGVisualizer.methods.get(methodName);
+        PDGVisualizer.invocations.forEach((nodeId, methodName) -> {
+            String blockId = PDGVisualizer.methods.get(methodName);
             if (blockId != null) {
                 graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]");
             }
@@ -69,7 +68,7 @@ public class PdgExtractor {
 
     }
 
-    private static String runVisualization(ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
+    private static String runVisualization(ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", "out");
         args.put("verbose", true);
@@ -78,7 +77,7 @@ public class PdgExtractor {
         UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
 
         String cluster = makeClusterLabel(null, method1.getSimpleClassName(), method1.getMethodName(), method1.getMethod().getParameters());
-        FlexemePDGVisualizer viz = new FlexemePDGVisualizer(cluster, lineMap, null);
+        PDGVisualizer viz = new PDGVisualizer(cluster, lineMap, null);
         viz.init(args);
         Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
         viz.shutdown();
@@ -95,8 +94,8 @@ public class PdgExtractor {
         return packageName + "." + className + "." + methodName + "(" + sjParameters + ")";
     }
 
-    private static ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
-        ForwardAnalysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis = new ForwardAnalysisImpl<>(new FlexemeDataflowTransfer());
+    private static ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
+        ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = new ForwardAnalysisImpl<>(new DataflowTransfer());
         analysis.performAnalysis(methodControlFlowGraph);
         return analysis;
     }

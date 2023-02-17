@@ -1,4 +1,4 @@
-package org.checkerframework.checker.codechanges;
+package org.checkerframework.flexeme.dataflow;
 
 import org.checkerframework.com.google.common.collect.Sets;
 import org.checkerframework.dataflow.analysis.Store;
@@ -10,28 +10,28 @@ import org.checkerframework.javacutil.BugInCF;
 
 import java.util.*;
 
-import static org.checkerframework.checker.codechanges.Util.mergeHashMaps;
+import static org.checkerframework.flexeme.Util.mergeHashMaps;
 
 /**
  * A store that keeps track of
  * 1) when was a variable last used (i.e., declared or referred);
  * 2) the use edges between variable references.
  */
-public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
-    private final Map<String, Set<FlexemeDataflowValue>> lastUse;
+public class DataflowStore implements Store<DataflowStore> {
+    private final Map<String, Set<DataflowValue>> lastUse;
     private final Set<Edge> edges;
     private final List<LocalVariableNode> parameters; // Initial variable declaration for method parameters.
 
     /**
      * Create a new FlexemeDataflowStore.
      */
-    public FlexemeDataflowStore(Map<String, Set<FlexemeDataflowValue>> lastUse, Set<Edge> edges, List<LocalVariableNode> parameters) {
+    public DataflowStore(Map<String, Set<DataflowValue>> lastUse, Set<Edge> edges, List<LocalVariableNode> parameters) {
         this.lastUse = lastUse;
         this.edges = edges;
         this.parameters = parameters;
     }
 
-    public FlexemeDataflowStore(List<LocalVariableNode> parameters) {
+    public DataflowStore(List<LocalVariableNode> parameters) {
         lastUse = new HashMap<>();
         edges = new LinkedHashSet<>();
         this.parameters = parameters;
@@ -42,7 +42,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
         if (lastUse.containsKey(node.getName())) {
             return;
         }
-        lastUse.put(node.getName(), Sets.newHashSet(new FlexemeDataflowValue(node)));
+        lastUse.put(node.getName(), Sets.newHashSet(new DataflowValue(node)));
     }
 
     /**
@@ -55,7 +55,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
             return;
         }
         // We mark that we encountered this variable for the first time.
-        lastUse.put(node.getName(), Sets.newHashSet(new FlexemeDataflowValue(node)));
+        lastUse.put(node.getName(), Sets.newHashSet(new DataflowValue(node)));
     }
 
     /**
@@ -63,10 +63,10 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
      * @param n The variable reference
      */
     public void addDataflowEdge(LocalVariableNode n) {
-        FlexemeDataflowValue value = new FlexemeDataflowValue(n);
+        DataflowValue value = new DataflowValue(n);
 
         // Add a new edge between the last time this variable is used to this current reference.
-        for (FlexemeDataflowValue last : this.lastUse.get(n.getName())) {
+        for (DataflowValue last : this.lastUse.get(n.getName())) {
             edges.add(new Edge(last, value));
         }
         // The last use is this reference now.
@@ -74,34 +74,34 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     }
 
     @Override
-    public FlexemeDataflowStore copy() {
-        return new FlexemeDataflowStore(new HashMap<>(lastUse), new HashSet<>(edges), parameters);
+    public DataflowStore copy() {
+        return new DataflowStore(new HashMap<>(lastUse), new HashSet<>(edges), parameters);
     }
 
     @Override
-    public FlexemeDataflowStore leastUpperBound(FlexemeDataflowStore other) {
-        final Map<String, Set<FlexemeDataflowValue>> lastUseLub = mergeHashMaps(this.lastUse, other.lastUse, Sets::union);
+    public DataflowStore leastUpperBound(DataflowStore other) {
+        final Map<String, Set<DataflowValue>> lastUseLub = mergeHashMaps(this.lastUse, other.lastUse, Sets::union);
         final Set<Edge> edgesLub =
                 new HashSet<>(this.edges.size() + other.edges.size());
         edgesLub.addAll(this.edges);
         edgesLub.addAll(other.edges);
-        return new FlexemeDataflowStore(lastUseLub, edgesLub, parameters);
+        return new DataflowStore(lastUseLub, edgesLub, parameters);
     }
 
-    private String visualizeLastUseStore(CFGVisualizer<?, FlexemeDataflowStore, ?> viz) {
+    private String visualizeLastUseStore(CFGVisualizer<?, DataflowStore, ?> viz) {
         String key = "variables";
         if (lastUse.isEmpty()) {
             return viz.visualizeStoreKeyVal(key, "none");
         }
         StringJoiner sjStoreVal = new StringJoiner(", ");
-        for (Map.Entry<String, Set<FlexemeDataflowValue>> entry : lastUse.entrySet()) {
+        for (Map.Entry<String, Set<DataflowValue>> entry : lastUse.entrySet()) {
             sjStoreVal.add(entry.getKey());
         }
 
         return viz.visualizeStoreKeyVal(key, sjStoreVal.toString());
     }
 
-    private CharSequence visualizeEdges(CFGVisualizer<?, FlexemeDataflowStore, ?> viz) {
+    private CharSequence visualizeEdges(CFGVisualizer<?, DataflowStore, ?> viz) {
         StringJoiner sjStoreVal = new StringJoiner("\n");
         for (Edge edge : edges) {
             sjStoreVal.add(edge.toString());
@@ -120,7 +120,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
 
     /** It should not be called since it is not used by the backward analysis. */
     @Override
-    public FlexemeDataflowStore widenedUpperBound(FlexemeDataflowStore previous) {
+    public DataflowStore widenedUpperBound(DataflowStore previous) {
         throw new BugInCF("wub of FlexemeDataflowStore get called!");
     }
 
@@ -130,7 +130,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     }
 
     @Override
-    public String visualize(CFGVisualizer<?, FlexemeDataflowStore, ?> viz) {
+    public String visualize(CFGVisualizer<?, DataflowStore, ?> viz) {
         StringJoiner stores = new StringJoiner("\n");
         stores.add(visualizeLastUseStore(viz));
         stores.add(visualizeEdges(viz));
@@ -154,7 +154,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        FlexemeDataflowStore that = (FlexemeDataflowStore) o;
+        DataflowStore that = (DataflowStore) o;
         return lastUse.equals(that.lastUse) && edges.equals(that.edges) && parameters.equals(that.parameters);
     }
 
@@ -171,7 +171,7 @@ public class FlexemeDataflowStore implements Store<FlexemeDataflowStore> {
     //    public void addUseInExpression(Node expression) {
     //        // TODO Do we need a AbstractNodeScanner to do the following job?
     //        if (expression instanceof LocalVariableNode || expression instanceof FieldAccessNode) {
-    //            FlexemeDataflowValue liveVarValue = new FlexemeDataflowValue(expression);
+    //            DataflowValue liveVarValue = new DataflowValue(expression);
     //            putLiveVar(liveVarValue);
     //        } else if (expression instanceof UnaryOperationNode) {
     //            UnaryOperationNode unaryNode = (UnaryOperationNode) expression;

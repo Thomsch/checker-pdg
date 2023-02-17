@@ -1,11 +1,11 @@
-package org.checkerframework.checker.codechanges;
+package org.checkerframework.flexeme.dataflow;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BugInCF;
 
-public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue> {
+public class DataflowValue implements AbstractValue<DataflowValue> {
     /**
      * A live variable is represented by a node, which can be a {@link
      * org.checkerframework.dataflow.cfg.node.LocalVariableNode} or {@link
@@ -14,7 +14,7 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
     protected final Node reference;
 
     @Override
-    public FlexemeDataflowValue leastUpperBound(FlexemeDataflowValue other) {
+    public DataflowValue leastUpperBound(DataflowValue other) {
         throw new BugInCF("lub of LiveVar get called!");
     }
 
@@ -23,8 +23,12 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
      *
      * @param n a node
      */
-    public FlexemeDataflowValue(Node n) {
+    public DataflowValue(Node n) {
         this.reference = n;
+    }
+
+    public Node getReference() {
+        return reference;
     }
 
     @Override
@@ -34,10 +38,10 @@ public class FlexemeDataflowValue implements AbstractValue<FlexemeDataflowValue>
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if (!(obj instanceof FlexemeDataflowValue)) {
+        if (!(obj instanceof DataflowValue)) {
             return false;
         }
-        FlexemeDataflowValue other = (FlexemeDataflowValue) obj;
+        DataflowValue other = (DataflowValue) obj;
         return this.reference.equals(other.reference) && this.reference.getUid() == other.reference.getUid();
     }
 

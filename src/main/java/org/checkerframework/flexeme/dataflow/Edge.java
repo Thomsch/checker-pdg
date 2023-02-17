@@ -1,21 +1,21 @@
-package org.checkerframework.checker.codechanges;
+package org.checkerframework.flexeme.dataflow;
 
 import java.util.Objects;
 
 public class Edge {
-    private final FlexemeDataflowValue from;
-    private final FlexemeDataflowValue to;
+    private final DataflowValue from;
+    private final DataflowValue to;
 
-    public Edge(FlexemeDataflowValue from, FlexemeDataflowValue to) {
+    public Edge(DataflowValue from, DataflowValue to) {
         this.from = from;
         this.to = to;
     }
 
-    public FlexemeDataflowValue getFrom() {
+    public DataflowValue getFrom() {
         return from;
     }
 
-    public FlexemeDataflowValue getTo() {
+    public DataflowValue getTo() {
         return to;
     }
 

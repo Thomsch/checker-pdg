@@ -1,4 +1,4 @@
-package org.checkerframework.nameflow;
+package org.checkerframework.flexeme.nameflow;
 
 import com.sun.source.tree.Tree;
 import org.checkerframework.dataflow.analysis.ForwardTransferFunction;

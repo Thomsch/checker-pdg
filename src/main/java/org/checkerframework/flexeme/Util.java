@@ -1,4 +1,4 @@
-package org.checkerframework.checker.codechanges;
+package org.checkerframework.flexeme;
 
 import java.util.HashMap;
 import java.util.Map;

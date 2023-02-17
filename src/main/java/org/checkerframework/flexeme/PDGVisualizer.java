@@ -1,4 +1,4 @@
-package org.checkerframework.checker.codechanges;
+package org.checkerframework.flexeme;
 
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
@@ -11,6 +11,9 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.block.*;
 import org.checkerframework.dataflow.cfg.node.*;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
+import org.checkerframework.flexeme.dataflow.DataflowStore;
+import org.checkerframework.flexeme.dataflow.DataflowTransfer;
+import org.checkerframework.flexeme.dataflow.DataflowValue;
 import org.checkerframework.javacutil.TypesUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +23,10 @@ import javax.lang.model.type.TypeMirror;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> {
+/**
+ * Visualizes the control flow graph and dataflow of a method.
+ */
+public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore, DataflowTransfer> {
     private final String cluster;
     private final LineMap lineMap;
     private final CompilationUnitTree compilationUnitTree;
@@ -28,7 +34,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     private String lastStatementInBlock;
     private List<Edge> cfgEdges;
 
-    Logger logger = LoggerFactory.getLogger(FlexemePDGVisualizer.class);
+    Logger logger = LoggerFactory.getLogger(PDGVisualizer.class);
 
     private Map<Block, BlockFlow> statementFlowMap;
     private String graph;
@@ -41,7 +47,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         return graph;
     }
 
-    public FlexemePDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree) {
+    public PDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree) {
         super();
         this.cluster = cluster;
         this.lineMap = lineMap;
@@ -52,14 +58,14 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     }
 
     @Override
-    public @Nullable Map<String, Object> visualize(ControlFlowGraph cfg, Block entry, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    public @Nullable Map<String, Object> visualize(ControlFlowGraph cfg, Block entry, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         UnderlyingAST.CFGMethod cfgMethod = (UnderlyingAST.CFGMethod) cfg.underlyingAST;
         methods.put(methodSignature(cfgMethod), "b" + entry.getUid());
         return super.visualize(cfg, entry, analysis);
     }
 
     @Override
-    protected String visualizeGraph(ControlFlowGraph cfg, Block entry, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    protected String visualizeGraph(ControlFlowGraph cfg, Block entry, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         graph = super.visualizeGraph(cfg, entry, analysis);
         return graph;
     }
@@ -162,7 +168,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
      * @return
      */
     @Override
-    public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         String dotNodes = makeStatementNodes(blocks, analysis);
 
         // Intra-block edges
@@ -184,13 +190,13 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         return dotNodes + lineSeparator + sbDotIntraEdges + sbDotInterEdges + sbDotSpecialEdges + sbDotDataflowEdges;
     }
 
-    private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
-        FlexemeDataflowStore dataflowStore = analysis.getResult().getStoreAfter(cfg.getRegularExitBlock());
-        Set<org.checkerframework.checker.codechanges.Edge> edges = dataflowStore.getEdges();
+    private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+        DataflowStore dataflowStore = analysis.getResult().getStoreAfter(cfg.getRegularExitBlock());
+        Set<org.checkerframework.flexeme.dataflow.Edge> edges = dataflowStore.getEdges();
         StringBuilder sbDotDataflowEdges = new StringBuilder();
 
-        for (org.checkerframework.checker.codechanges.Edge edge : edges) {
-            Node from = edge.getFrom().reference;
+        for (org.checkerframework.flexeme.dataflow.Edge edge : edges) {
+            Node from = edge.getFrom().getReference();
 
             String fromUuid;
             String label = "undefined";
@@ -200,7 +206,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                 TypeMirror type = from.getType();
                 label = TypesUtils.getTypeElement(type).getQualifiedName().toString();
             } else { // Local Variables
-                fromUuid = "n" + edge.getFrom().reference.getUid();
+                fromUuid = "n" + edge.getFrom().getReference().getUid();
 
                 if (from instanceof LocalVariableNode) {
                     LocalVariableNode lvnFrom = ((LocalVariableNode) from);
@@ -216,7 +222,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
                 }
             }
 
-            sbDotDataflowEdges.append(formatPdgEdge(fromUuid, "n" + edge.getTo().reference.getUid(), EdgeType.DATA, label));
+            sbDotDataflowEdges.append(formatPdgEdge(fromUuid, "n" + edge.getTo().getReference().getUid(), EdgeType.DATA, label));
         }
         return sbDotDataflowEdges;
     }
@@ -373,7 +379,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
         }
     }
 
-    private String makeStatementNodes(Set<Block> blocks, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    private String makeStatementNodes(Set<Block> blocks, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         StringBuilder sbDotNodes = new StringBuilder();
 
         // Definition of all nodes including their labels.
@@ -409,7 +415,7 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     }
 
     @Override
-    public String visualizeBlockNode(Node t, @Nullable Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    public String visualizeBlockNode(Node t, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         if (t instanceof MethodAccessNode) {
             MethodAccessNode methodAccessNode = (MethodAccessNode) t;
             String signature = methodSignature(methodAccessNode);
@@ -471,12 +477,12 @@ public class FlexemePDGVisualizer extends DOTCFGVisualizer<FlexemeDataflowValue,
     }
 
     @Override
-    public String visualizeBlockTransferInputBefore(Block bb, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    public String visualizeBlockTransferInputBefore(Block bb, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         return "";
     }
 
     @Override
-    public String visualizeBlockTransferInputAfter(Block bb, Analysis<FlexemeDataflowValue, FlexemeDataflowStore, FlexemeDataflowTransfer> analysis) {
+    public String visualizeBlockTransferInputAfter(Block bb, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
         return "";
     }
 

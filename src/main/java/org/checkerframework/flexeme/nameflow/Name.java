@@ -1,4 +1,4 @@
-package org.checkerframework.nameflow;
+package org.checkerframework.flexeme.nameflow;
 
 import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.javacutil.BugInCF;

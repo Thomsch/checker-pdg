@@ -1,4 +1,4 @@
-package org.checkerframework.nameflow;
+package org.checkerframework.flexeme.nameflow;
 
 import org.checkerframework.com.google.common.collect.Sets;
 import org.checkerframework.dataflow.analysis.Store;
@@ -8,7 +8,7 @@ import org.checkerframework.javacutil.BugInCF;
 
 import java.util.*;
 
-import static org.checkerframework.checker.codechanges.Util.mergeHashMaps;
+import static org.checkerframework.flexeme.Util.mergeHashMaps;
 
 /**
  * A store that keeps track of
