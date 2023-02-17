@@ -12,9 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.type.TypeKind;
+import javax.lang.model.element.VariableElement;
 import java.util.List;
 
+/**
+ * Implementation of the assignment rules from "RefiNym: Using Names to Refine Types".
+ * Compared to the paper, the name flow rules encompasses any type, not just scalars.
+ */
 public class NameFlowTransfer extends AbstractNodeVisitor<
         TransferResult<Name, NameFlowStore>, TransferInput<Name, NameFlowStore>>
         implements ForwardTransferFunction<Name, NameFlowStore> {
@@ -33,45 +37,37 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
 
     @Override
     public TransferResult<Name, NameFlowStore> visitAssignment(final AssignmentNode n, final TransferInput<Name, NameFlowStore> transferInput) {
-        // For each operand in the expression, add the name to the store
-
-        // operand can be anything from a literal to a method call.
-
         RegularTransferResult<Name, NameFlowStore> transferResult = (RegularTransferResult<Name, NameFlowStore>) super.visitAssignment(n, transferInput);
-        if (isScalar(n.getExpression().getType().getKind())) {
-            // System.out.println("visitAssignment: " + n);
-            // System.out.println("operands: " + n.getOperands());
-            // System.out.println("target: " + n.getTarget());
-            // System.out.println("expression: " + n.getExpression());
-            // System.out.println(n.getExpression().getOperands());
-            // System.out.println(n.getExpression().getTransitiveOperands());
+        final Tree variableTree = n.getTarget().getTree();
+        if (variableTree == null) {
+            logger.warn("No tree for assigned variable: " + n);
+            return transferResult;
+        }
+        final Element element = TreeUtils.elementFromTree(variableTree);
+        if (element == null) {
+            logger.warn("No element for assigned variable: " + n);
+            return transferResult;
+        }
 
-            final Tree variableTree = n.getTarget().getTree();
-            if (variableTree == null) {
-                logger.warn("No tree for assigned variable: " + n);
-                return transferResult;
-            }
-            final Element element = TreeUtils.elementFromTree(variableTree);
-            if (element == null) {
-                logger.warn("No element for assigned variable: " + n);
-                return transferResult;
+        for (final Node operand : n.getOperands()) {
+            if (operand.equals(n.getTarget())) {
+                continue;
             }
 
-            for (final Node operand : n.getOperands()) {
-                if (operand.equals(n.getTarget())) {
-                    continue;
-                }
+            assignE(element, operand, transferResult.getRegularStore());
+        }
+        return transferResult;
+    }
 
-                if (operand instanceof ValueLiteralNode) { //    AssignL
-                    assignL(element, (ValueLiteralNode) operand, transferResult.getRegularStore());
-                } else if (operand instanceof LocalVariableNode && !operand.equals(n.getTarget())) { //    AssignV
-                    assignV(element, (LocalVariableNode) operand, transferResult.getRegularStore());
-                } else if (operand instanceof MethodInvocationNode) {  //    AssignM
-                    assignM(element, (MethodInvocationNode) operand, transferResult.getRegularStore());
-                } else {
-                    assignE(element, operand, transferResult.getRegularStore());
-                }
-            }
+    @Override
+    public TransferResult<Name, NameFlowStore> visitMethodInvocation(final MethodInvocationNode n, final TransferInput<Name, NameFlowStore> transferInput) {
+        RegularTransferResult<Name, NameFlowStore> transferResult = (RegularTransferResult<Name, NameFlowStore>) super.visitMethodInvocation(n, transferInput);
+        // Bind parameters to arguments
+        for (int i = 0; i < n.getArguments().size(); i++) {
+            final Node argument = n.getArguments().get(i); // actual
+            final VariableElement parameter = n.getTarget().getMethod().getParameters().get(i); // declared
+
+            assignE(parameter, argument, transferResult.getRegularStore());
         }
         return transferResult;
     }
@@ -118,21 +114,4 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         Name name = new Name(operand.getValue().toString(), Name.Kind.AssignL);
         store.add(element.getSimpleName().toString(), name);
     }
-
-    private static boolean isScalar(final TypeKind type) {
-        return type == TypeKind.INT
-                || type == TypeKind.LONG
-                || type == TypeKind.SHORT
-                || type == TypeKind.FLOAT
-                || type == TypeKind.DOUBLE;
-    }
-
-    @Override
-    public TransferResult<Name, NameFlowStore> visitMethodInvocation(final MethodInvocationNode n, final TransferInput<Name, NameFlowStore> transferInput) {
-        System.out.println("visitMethodInvocation:" + n.getTarget() + " = " + n.getArguments());
-        System.out.println(n.getTree());
-        // Invoke
-        return super.visitMethodInvocation(n, transferInput);
-    }
-
 }
