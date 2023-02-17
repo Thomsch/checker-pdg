@@ -40,7 +40,8 @@ public class PdgExtractor {
         // 1. Compile file. in: file path. out: cfgs
         FileProcessor processor = compileFile(file, compile_out, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
-       // 2. Run analysis for each method. in: cfg, out: graph
+        // 2. Run analysis for each method and build the graph. in: cfg, out: graph
+        // TODO: This is extremely tangled. The construction of the PDG and it's visualization are tangled. We should refactor this.
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
             ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
@@ -57,9 +58,7 @@ public class PdgExtractor {
 
         graphs.append("}");
 
-        // 3. Stitch results together. In the visualizer
-
-        // 4. Print dot file.
+        // 3. Print dot file.
         try (BufferedWriter out = new BufferedWriter(new FileWriter("pdg.dot"))) {
             out.write(graphs.toString());
         } catch (IOException e) {
@@ -100,6 +99,15 @@ public class PdgExtractor {
         return analysis;
     }
 
+    /**
+     * Compiles a file and returns the processor with the compilation results.
+     * @param filepath Path to the file to compile
+     * @param compile_out Where to put the compiled files
+     * @param compile_verbose Whether to print the compilation output
+     * @param sourcePath Source path for the compilation
+     * @param classPath Class path for the compilation
+     * @return The processor with the compilation results
+     */
     public static FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose, String sourcePath, String classPath) {
         java.util.List<String> arguments = new ArrayList<>();
         arguments.add("-d");
@@ -127,15 +135,20 @@ public class PdgExtractor {
         NullOutputStream out = new NullOutputStream();
 
         JavaCompiler.CompilationTask task = javac.getTask(out, null, null, arguments, null, jFile);
-        FileProcessor o = new FileProcessor();
-        task.setProcessors(Collections.singleton(o));
+        FileProcessor processor = new FileProcessor();
+        task.setProcessors(Collections.singleton(processor));
         task.call();
-        return o;
+        return processor;
     }
 
+    /**
+     * Prints the name flow analysis for a file.
+     * @param inputFile The file to analyze.
+     * @param compile_out The directory to compile the file to.
+     */
     public static void nameFlow(final String inputFile, final String compile_out) {
 
-    //    Run compilation on file with the analysis.
+        // Run compilation on file with the analysis.
         FileProcessor processor = compileFile(inputFile, compile_out, false, "", "");
 
         // Run analysis for each method.

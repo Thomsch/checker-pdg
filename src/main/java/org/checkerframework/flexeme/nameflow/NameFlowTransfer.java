@@ -54,6 +54,7 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
                 continue;
             }
 
+            // TODO: Convert to visiting the operand through {@link AbstractNodeVisitor}
             assignE(element, operand, transferResult.getRegularStore());
         }
         return transferResult;
@@ -67,11 +68,19 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
             final Node argument = n.getArguments().get(i); // actual
             final VariableElement parameter = n.getTarget().getMethod().getParameters().get(i); // declared
 
+            // TODO: Convert to visiting the operand through {@link AbstractNodeVisitor}
             assignE(parameter, argument, transferResult.getRegularStore());
         }
         return transferResult;
     }
 
+    /**
+     * Implementation of the assignE rule from "RefiNym: Using Names to Refine Types".
+     * It recursively visits the expression and assigns the names to the element.
+     * @param element The left side of the assignment
+     * @param expression The right side of the assignment
+     * @param store The store to update
+     */
     private void assignE(final Element element, final Node expression, final NameFlowStore store) {
         if (expression instanceof ValueLiteralNode) { //    AssignL
             assignL(element, (ValueLiteralNode) expression, store);

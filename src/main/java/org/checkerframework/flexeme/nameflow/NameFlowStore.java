@@ -11,9 +11,7 @@ import java.util.*;
 import static org.checkerframework.flexeme.Util.mergeHashMaps;
 
 /**
- * A store that keeps track of
- * 1) when was a variable last used (i.e., declared or referred);
- * 2) the use edges between variable references.
+ * Represents the store of the NameFlow analysis.
  */
 public class NameFlowStore implements Store<NameFlowStore> {
 
