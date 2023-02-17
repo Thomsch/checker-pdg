@@ -7,6 +7,7 @@ import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.javacutil.BugInCF;
 
 import java.util.*;
+import java.util.function.BiFunction;
 
 import static org.checkerframework.flexeme.Util.mergeHashMaps;
 
@@ -38,7 +39,12 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
-        final Map<String, Set<Name>> xiLub = mergeHashMaps(this.xi, other.xi, Sets::union);
+        final Map<String, Set<Name>> xiLub = mergeHashMaps(this.xi, other.xi, new BiFunction<Set<Name>, Set<Name>, Set<Name>>() {
+            @Override
+            public Set<Name> apply(final Set<Name> left, final Set<Name> right) {
+                return new HashSet<>(Sets.union(left, right)); // Need to return a mutable set.
+            }
+        });
         return new NameFlowStore(xiLub);
     }
 
