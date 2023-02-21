@@ -17,7 +17,7 @@ import static org.checkerframework.flexeme.Util.mergeHashMaps;
 public class NameFlowStore implements Store<NameFlowStore> {
 
     // Map Xi of <variable node, set of names: {(snd,v),(40,l)}
-    private final Map<String, Set<Name>> xi ;
+    private final Map<String, Set<Name>> xi;
 
     public NameFlowStore() {
         this.xi = new HashMap<>();
@@ -30,6 +30,10 @@ public class NameFlowStore implements Store<NameFlowStore> {
     public void add(final String variable, final Name name) {
         xi.computeIfAbsent(variable, k -> new HashSet<>());
         xi.get(variable).add(name);
+    }
+
+    public Map<String, Set<Name>> getXi() {
+        return xi;
     }
 
     @Override

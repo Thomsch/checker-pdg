@@ -1,5 +1,7 @@
 package org.checkerframework.flexeme;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
@@ -12,6 +14,7 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.DataflowValue;
+import org.checkerframework.flexeme.nameflow.JsonResult;
 import org.checkerframework.flexeme.nameflow.Name;
 import org.checkerframework.flexeme.nameflow.NameFlowStore;
 import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
@@ -152,13 +155,26 @@ public class PdgExtractor {
         FileProcessor processor = compileFile(inputFile, compile_out, false, "", "");
 
         // Run analysis for each method.
-        // TODO: Ask Mike or Suzanne if there is a better way to do the analysis for a file.
+        JsonResult result = new JsonResult();
+
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            System.out.println("Method: " + methodTree.getName());
             ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
             analysis.performAnalysis(controlFlowGraph);
-            System.out.println(analysis.getRegularExitStore());
+
+            analysis.getRegularExitStore().getXi().forEach((variable, names) -> {
+                result.addNode(variable);
+                names.forEach(name -> {
+                    result.addEdge(variable, name);
+                });
+            });
+            // System.out.println(analysis.getRegularExitStore());
         });
+
+        // Write method name to json file.
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        // Save the results to a json file.
+        gson.toJson(result, System.out);
     }
 
     public static class NullOutputStream extends Writer {
