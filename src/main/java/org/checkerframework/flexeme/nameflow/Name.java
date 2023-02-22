@@ -12,9 +12,12 @@ public class Name implements AbstractValue<Name> {
     private final String name;
     private final Kind kind;
 
-    public Name(final String name, final Kind kind) {
+    private final String uid;
+
+    public Name(final String name, final Kind kind, final String uid) {
         this.name = name;
         this.kind = kind;
+        this.uid = uid;
     }
 
     @Override
@@ -32,12 +35,16 @@ public class Name implements AbstractValue<Name> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Name that = (Name) o;
-        return name.equals(that.name) && kind == that.kind;
+        return name.equals(that.name) && kind == that.kind && uid.equals(that.uid);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, kind);
+        return Objects.hash(name, kind, uid);
+    }
+
+    public String getUid() {
+        return uid;
     }
 
     public enum Kind {Variable, Method, Literal}

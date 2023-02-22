@@ -15,4 +15,12 @@ public class NameFlowTest {
         String inputFile = "src/test/resources/BasicTests.java";
         PdgExtractor.nameFlow(inputFile, "build/");
     }
+
+    @Test
+    public void testTogetherTest() {
+        String inputFile = "src/test/resources/Calc.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile, "", "", "build/testTogetherTest.dot");
+    }
 }

@@ -72,8 +72,6 @@ public class FileProcessor extends BasicTypeProcessor {
 
     @Override
     public void typeProcessingOver() {
-        System.out.println("Found " + methodTrees.size() + " methods.");
-
         // perform analysis for each method.
         for (MethodTree method : methodTrees) {
             ControlFlowGraph cfg = CFGBuilder.build(rootTree, method, classTree, processingEnv);

@@ -19,6 +19,8 @@ import org.checkerframework.flexeme.nameflow.Name;
 import org.checkerframework.flexeme.nameflow.NameFlowStore;
 import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
 import org.checkerframework.javacutil.UserError;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
@@ -31,46 +33,92 @@ import java.io.Writer;
 import java.util.*;
 
 public class PdgExtractor {
+
+    private static final Logger logger = LoggerFactory.getLogger(PdgExtractor.class);
+    private final String compileOut;
+
     public static void main(String[] args) throws Throwable {
-        // 0. Setting environment / parsing arguments
         String file = args[0]; // Relative to the repository e.g., src/java/App.java
         String sourcePath = args[1];
         String classPath = args[2];
-
-        String compile_out = "out/";
         String path_out = "pdg.dot"; // Where to write the results TODO
 
+        PdgExtractor extractor = new PdgExtractor();
+        try {
+            extractor.run(file, sourcePath, classPath, path_out);
+        } catch (Throwable e) {
+            logger.error("Error while running the PDG extractor: " + e.getMessage(), e);
+            System.exit(1);
+        }
+    }
+
+    public PdgExtractor() {
+        compileOut = "out/";
+    }
+
+    public void run(String file, String sourcePath, String classPath, String path_out) {
         // 1. Compile file. in: file path. out: cfgs
-        FileProcessor processor = compileFile(file, compile_out, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
+        FileProcessor processor = compileFile(file, compileOut, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
         // 2. Run analysis for each method and build the graph. in: cfg, out: graph
         // TODO: This is extremely tangled. The construction of the PDG and it's visualization are tangled. We should refactor this.
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
             ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
-            String graph = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
+            PDGVisualizer visualizer = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
+            String graph = visualizer.getGraph();
             graphs.append(graph);
         });
 
         PDGVisualizer.invocations.forEach((nodeId, methodName) -> {
             String blockId = PDGVisualizer.methods.get(methodName);
             if (blockId != null) {
-                graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]");
+                graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]").append(System.lineSeparator());
             }
         });
+
+        // TODO: The creation of the graph should be decoupled from printing the results
+        // 1. Create graph in memory in a data structure.
+        // 2. Print graph
+
+        JsonResult result = new JsonResult();
+        processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
+            ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
+            analysis.performAnalysis(controlFlowGraph);
+
+            analysis.getRegularExitStore().getXi().forEach((variable, names) -> {
+                result.addNode(variable);
+                names.forEach(name -> {
+                    result.addEdge(analysis.getRegularExitStore().names.get(variable) + "(" + variable + ")", name);
+
+                    // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
+                    if (PDGVisualizer.getNodes().contains(name.getUid()) && PDGVisualizer.getNodes().contains(variable)) {
+                        graphs.append(name.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
+                    }
+                });
+            });
+            // System.out.println(analysis.getRegularExitStore());
+        });
+
+        // Write method name to json file.
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+        // Save the results to a json file.
+        gson.toJson(result, System.out);
 
         graphs.append("}");
 
         // 3. Print dot file.
-        try (BufferedWriter out = new BufferedWriter(new FileWriter("pdg.dot"))) {
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(path_out))) {
             out.write(graphs.toString());
         } catch (IOException e) {
             throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
         }
 
+
     }
 
-    private static String runVisualization(ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
+    private static PDGVisualizer runVisualization(ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", "out");
         args.put("verbose", true);
@@ -83,7 +131,7 @@ public class PdgExtractor {
         viz.init(args);
         Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
         viz.shutdown();
-        return viz.getGraph();
+        return viz;
     }
 
     private static String makeClusterLabel(String packageName, String className, String methodName, java.util.List<? extends VariableTree> parameters) {

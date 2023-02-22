@@ -42,9 +42,14 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     public static Map<String, String> invocations = new HashMap<>();
 
     public static Map<String, String> methods = new HashMap<>(); // maps from method name to entry block number.
+    private static Set<String> nodes = new HashSet<>();
 
     public String getGraph() {
         return graph;
+    }
+
+    public static Set<String> getNodes() {
+        return nodes;
     }
 
     public PDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree) {
@@ -443,7 +448,12 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     }
 
     private String formatNode(String suffix, String uid, String label, long lineStart, long lineEnd) {
-        return suffix + uid + " [cluster=\"" + cluster + "\", label=\"" + label.replace("\"", "") + "\", span=\"" + lineStart + "-" + lineEnd + "\"];" + lineSeparator;
+        final String nodeId = suffix + uid;
+        if (nodes.contains(nodeId)) {
+            logger.warn("Node {} already exists", nodeId);
+        }
+        nodes.add(nodeId);
+        return nodeId + " [cluster=\"" + cluster + "\", label=\"" + label.replace("\"", "") + "\", span=\"" + lineStart + "-" + lineEnd + "\"];" + lineSeparator;
     }
 
     private void addStatementEdge(String to) {

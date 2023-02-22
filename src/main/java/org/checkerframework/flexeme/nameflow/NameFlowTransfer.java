@@ -55,7 +55,7 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
             }
 
             // TODO: Convert to visiting the operand through {@link AbstractNodeVisitor}
-            assignE(element, operand, transferResult.getRegularStore());
+            assignE(n.getTarget(), operand, transferResult.getRegularStore());
         }
         return transferResult;
     }
@@ -69,7 +69,7 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
             final VariableElement parameter = n.getTarget().getMethod().getParameters().get(i); // declared
 
             // TODO: Convert to visiting the operand through {@link AbstractNodeVisitor}
-            assignE(parameter, argument, transferResult.getRegularStore());
+            assignE(n.getTarget(), argument, transferResult.getRegularStore());
         }
         return transferResult;
     }
@@ -77,50 +77,54 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     /**
      * Implementation of the assignE rule from "RefiNym: Using Names to Refine Types".
      * It recursively visits the expression and assigns the names to the element.
-     * @param element The left side of the assignment
+     *
+     * @param target     The left side of the assignment
      * @param expression The right side of the assignment
-     * @param store The store to update
+     * @param store      The store to update
      */
-    private void assignE(final Element element, final Node expression, final NameFlowStore store) {
+    private void assignE(final Node target, final Node expression, final NameFlowStore store) {
         if (expression instanceof ValueLiteralNode) { //    AssignL
-            assignL(element, (ValueLiteralNode) expression, store);
+            assignL(target, (ValueLiteralNode) expression, store);
         } else if (expression instanceof LocalVariableNode){
-            assignV(element, (LocalVariableNode) expression, store);
+            assignV(target, (LocalVariableNode) expression, store);
         } else if (expression instanceof MethodInvocationNode) {  //    AssignM
-            assignM(element, (MethodInvocationNode) expression, store);
+            assignM(target, (MethodInvocationNode) expression, store);
         } else if (expression instanceof UnaryOperationNode) {
             UnaryOperationNode unaryNode = (UnaryOperationNode) expression;
-            assignE(element, unaryNode.getOperand(), store);
+            assignE(target, unaryNode.getOperand(), store);
         } else if (expression instanceof TernaryExpressionNode) {
             TernaryExpressionNode ternaryNode = (TernaryExpressionNode) expression;
-            assignE(element, ternaryNode.getConditionOperand(), store);
-            assignE(element, ternaryNode.getThenOperand(), store);
-            assignE(element, ternaryNode.getElseOperand(), store);
+            assignE(target, ternaryNode.getConditionOperand(), store);
+            assignE(target, ternaryNode.getThenOperand(), store);
+            assignE(target, ternaryNode.getElseOperand(), store);
         } else if (expression instanceof TypeCastNode) {
             TypeCastNode typeCastNode = (TypeCastNode) expression;
-            assignE(element, typeCastNode.getOperand(), store);
+            assignE(target, typeCastNode.getOperand(), store);
         } else if (expression instanceof InstanceOfNode) {
             InstanceOfNode instanceOfNode = (InstanceOfNode) expression;
-            assignE(element, instanceOfNode.getOperand(), store);
+            assignE(target, instanceOfNode.getOperand(), store);
         } else if (expression instanceof BinaryOperationNode) {
             BinaryOperationNode binaryNode = (BinaryOperationNode) expression;
-            assignE(element, binaryNode.getLeftOperand(), store);
-            assignE(element, binaryNode.getRightOperand(), store);
+            assignE(target, binaryNode.getLeftOperand(), store);
+            assignE(target, binaryNode.getRightOperand(), store);
         }
     }
 
-    private void assignM(final Element element, final MethodInvocationNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getTarget().toString(), Name.Kind.Method);
-        store.add(element.getSimpleName().toString(), name);
+    private void assignM(final Node target, final MethodInvocationNode operand, final NameFlowStore store) {
+        Name name = new Name(operand.getTarget().toString(), Name.Kind.Method, "n" + operand.getUid());
+        Element el = TreeUtils.elementFromTree(target.getTree());
+        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), name);
     }
 
-    private void assignV(final Element element, final LocalVariableNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getName(), Name.Kind.Variable);
-        store.add(element.getSimpleName().toString(), name);
+    private void assignV(final Node target, final LocalVariableNode operand, final NameFlowStore store) {
+        Element el = TreeUtils.elementFromTree(target.getTree());
+        Name name = new Name(operand.getName(), Name.Kind.Variable, "n" + operand.getUid());
+        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), name);
     }
 
-    private void assignL(final Element element, final ValueLiteralNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getValue().toString(), Name.Kind.Literal);
-        store.add(element.getSimpleName().toString(), name);
+    private void assignL(final Node target, final ValueLiteralNode operand, final NameFlowStore store) {
+        Name name = new Name(operand.getValue().toString(), Name.Kind.Literal, "n" + operand.getUid());
+        Element el = TreeUtils.elementFromTree(target.getTree());
+        store.add("n" + target.getUid(),String.valueOf(el.getSimpleName()), name);
     }
 }
