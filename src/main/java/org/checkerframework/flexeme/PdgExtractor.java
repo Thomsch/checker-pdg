@@ -81,15 +81,15 @@ public class PdgExtractor {
         // 1. Create graph in memory in a data structure.
         // 2. Print graph
 
-        JsonResult result = new JsonResult();
+        // JsonResult result = new JsonResult();
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
             ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
             analysis.performAnalysis(controlFlowGraph);
 
             analysis.getRegularExitStore().getXi().forEach((variable, names) -> {
-                result.addNode(variable);
+                // result.addNode(variable);
                 names.forEach(name -> {
-                    result.addEdge(analysis.getRegularExitStore().names.get(variable) + "(" + variable + ")", name);
+                    // result.addEdge(analysis.getRegularExitStore().names.get(variable) + "(" + variable + ")", name);
 
                     // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
                     if (PDGVisualizer.getNodes().contains(name.getUid()) && PDGVisualizer.getNodes().contains(variable)) {
@@ -101,10 +101,10 @@ public class PdgExtractor {
         });
 
         // Write method name to json file.
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        // Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
         // Save the results to a json file.
-        gson.toJson(result, System.out);
+        // gson.toJson(result, System.out);
 
         graphs.append("}");
 
