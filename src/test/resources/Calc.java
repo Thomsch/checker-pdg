@@ -27,5 +27,6 @@ class Calc {
         String foo2 = foo;
         Thread t1 = new Thread();
         Thread t2 = t1;
+        Object o = null;
     }
 }

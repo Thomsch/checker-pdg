@@ -123,7 +123,11 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     }
 
     private void assignL(final Node target, final ValueLiteralNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getValue().toString(), Name.Kind.Literal, "n" + operand.getUid());
+        Object value = operand.getValue();
+        if (value == null) { // If the value of the literal is null, then we use the string "null".
+            value = "null";
+        }
+        Name name = new Name(value.toString(), Name.Kind.Literal, "n" + operand.getUid());
         Element el = TreeUtils.elementFromTree(target.getTree());
         store.add("n" + target.getUid(),String.valueOf(el.getSimpleName()), name);
     }
