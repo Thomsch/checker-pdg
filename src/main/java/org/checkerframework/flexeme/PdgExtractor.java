@@ -174,6 +174,11 @@ public class PdgExtractor {
         arguments.add("-classpath");
         arguments.add(classPath);
 
+        arguments.add("-source");
+        arguments.add("1.8");
+        arguments.add("-target");
+        arguments.add("1.8");
+
         arguments.add("-Xlint:none"); // Ignore warnings
 
         Context context = new Context();
