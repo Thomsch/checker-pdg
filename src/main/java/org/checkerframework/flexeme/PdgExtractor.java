@@ -29,7 +29,7 @@ import javax.tools.ToolProvider;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.Writer;
+import java.io.StringWriter;
 import java.util.*;
 
 public class PdgExtractor {
@@ -188,12 +188,17 @@ public class PdgExtractor {
 
         JavaCompiler javac = ToolProvider.getSystemJavaCompiler();
 
-        NullOutputStream out = new NullOutputStream();
+        StringWriter out = new StringWriter();
 
         JavaCompiler.CompilationTask task = javac.getTask(out, null, null, arguments, null, jFile);
         FileProcessor processor = new FileProcessor();
         task.setProcessors(Collections.singleton(processor));
-        task.call();
+        boolean result = task.call();
+
+        if (!result) {
+            throw new RuntimeException("Compilation failed for file: " + filepath, new Throwable(out.toString()));
+        }
+
         return processor;
     }
 
@@ -228,23 +233,5 @@ public class PdgExtractor {
 
         // Save the results to a json file.
         gson.toJson(result, System.out);
-    }
-
-    public static class NullOutputStream extends Writer {
-
-        @Override
-        public void write(char[] cbuf, int off, int len) throws IOException {
-
-        }
-
-        @Override
-        public void flush() throws IOException {
-
-        }
-
-        @Override
-        public void close() throws IOException {
-
-        }
     }
 }
