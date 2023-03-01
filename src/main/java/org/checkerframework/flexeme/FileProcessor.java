@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -51,7 +52,10 @@ public class FileProcessor extends BasicTypeProcessor {
             @Override
             public Void visitMethod(MethodTree node, Void p) {
                 ExecutableElement el = TreeUtils.elementFromDeclaration(node);
-                if (el != null) {
+
+                // Abstract methods declared in ENUMs should not be added.
+                // However, normal abstract methods are not visited here.
+                if (el != null && !node.getModifiers().getFlags().contains(Modifier.ABSTRACT)) {
                     methodTrees.add(node);
                     classMap.put(node, classTree);
                 }

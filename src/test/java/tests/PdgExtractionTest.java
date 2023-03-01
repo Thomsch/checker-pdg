@@ -31,4 +31,20 @@ public class PdgExtractionTest {
         String inputFile2 = "src/test/resources/DataFlowTests.java";
         PdgExtractor.compileFile(inputFile2, "build/", false, "", "");
     }
+
+    @Test
+    public void testEnum() {
+        String inputFile1 = "src/test/resources/MyEnum.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile1, "", "", "build/Enum.dot");
+    }
+
+    @Test
+    public void testAbstract() {
+        String inputFile1 = "src/test/resources/MyAbstract.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile1, "", "", "build/Abstract.dot");
+    }
 }
