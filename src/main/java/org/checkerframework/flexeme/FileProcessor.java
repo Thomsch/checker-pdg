@@ -34,9 +34,12 @@ public class FileProcessor extends BasicTypeProcessor {
 
     final private Map<MethodTree, ControlFlowGraph> cfgResults;
 
+    final private Map<MethodTree, ClassTree> classMap;
+
     public FileProcessor() {
         methodTrees = new ArrayList<>();
         cfgResults = new HashMap<>();
+        classMap = new HashMap<>();
     }
 
     @Override
@@ -50,6 +53,7 @@ public class FileProcessor extends BasicTypeProcessor {
                 ExecutableElement el = TreeUtils.elementFromDeclaration(node);
                 if (el != null) {
                     methodTrees.add(node);
+                    classMap.put(node, classTree);
                 }
                 return null;
             }
@@ -57,9 +61,8 @@ public class FileProcessor extends BasicTypeProcessor {
             @Override
             public Void visitClass(ClassTree node, Void unused) {
                 if (classTree != null) {
-                    logger.error("Overriding class tree {} for {}", classTree, node);
+                    logger.error("Class tree is null");
                 }
-
                 classTree = node;
                 return super.visitClass(node, unused);
             }
@@ -74,6 +77,7 @@ public class FileProcessor extends BasicTypeProcessor {
     public void typeProcessingOver() {
         // perform analysis for each method.
         for (MethodTree method : methodTrees) {
+            final ClassTree classTree = classMap.get(method);
             ControlFlowGraph cfg = CFGBuilder.build(rootTree, method, classTree, processingEnv);
             cfgResults.put(method, cfg);
         }

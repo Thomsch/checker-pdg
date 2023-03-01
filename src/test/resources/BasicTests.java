@@ -6,7 +6,7 @@ class BasicTests {
     float f = 3;
 
     void foo() {
-        int a = bar(1,2);
+        int a = bar(1, 2);
         int b = bar(3);
     }
 
@@ -34,7 +34,7 @@ class BasicTests {
         //bar(a, b); // Unsupported.
         // This is a comment
         if (a == 3 || a == 2) {
-            if(b < 0) {
+            if (b < 0) {
                 boolean c = true && false;
             }
 
