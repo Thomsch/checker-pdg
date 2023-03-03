@@ -47,4 +47,12 @@ public class PdgExtractionTest {
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile1, "", "", "build/Abstract.dot");
     }
+
+    @Test
+    public void testAlwaysThrows() {
+        String inputFile1 = "src/test/resources/AlwaysThrows.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile1, "", "", "build/AlwaysThrows.dot");
+    }
 }

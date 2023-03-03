@@ -88,7 +88,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     enum EdgeType {
         CONTROL(0, "black", "solid"), DATA(1, "darkseagreen4", "dashed"), CALL(2, "black", "dotted"), NAME(3, "darkorchid", "bold"), EXIT(0, "blue", "bold");
 
-        private int key;
+        private final int key;
         private final String color;
         private final String style;
 
@@ -196,7 +196,11 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     }
 
     private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
-        DataflowStore dataflowStore = analysis.getResult().getStoreAfter(cfg.getRegularExitBlock());
+        DataflowStore dataflowStore = analysis.getRegularExitStore();
+        if (dataflowStore == null) {
+            dataflowStore = analysis.getResult().getStoreAfter(cfg.getExceptionalExitBlock());
+        }
+
         Set<org.checkerframework.flexeme.dataflow.Edge> edges = dataflowStore.getEdges();
         StringBuilder sbDotDataflowEdges = new StringBuilder();
 
@@ -254,7 +258,16 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     private StringBuilder makeExitEntryDotEdge(ControlFlowGraph cfg) {
         StringBuilder sb = new StringBuilder();
 
-        String from = statementFlowMap.get(cfg.getRegularExitBlock()).outNode;
+        // TODO verify that Flexeme's extractor also doesn't add an exit edge if the method always throws an exception.
+        final SpecialBlock regularExitBlock = cfg.getRegularExitBlock();
+        final BlockFlow exitBlockFlow = statementFlowMap.get(regularExitBlock);
+
+        // If a method throws an exception instead of returning, then the regular exit block is null.
+        if (exitBlockFlow == null) {
+            return sb;
+        }
+
+        String from = exitBlockFlow.outNode;
         String to = statementFlowMap.get(cfg.getEntryBlock()).inNode;
 
         sb.append(formatPdgEdge(from, to, EdgeType.EXIT));

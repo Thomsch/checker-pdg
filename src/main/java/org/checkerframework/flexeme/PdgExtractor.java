@@ -86,7 +86,8 @@ public class PdgExtractor {
             ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
             analysis.performAnalysis(controlFlowGraph);
 
-            analysis.getRegularExitStore().getXi().forEach((variable, names) -> {
+            final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
+            exitStore.getXi().forEach((variable, names) -> {
                 // result.addNode(variable);
                 names.forEach(name -> {
                     // result.addEdge(analysis.getRegularExitStore().names.get(variable) + "(" + variable + ")", name);
