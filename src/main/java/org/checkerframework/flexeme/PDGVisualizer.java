@@ -462,9 +462,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
 
     private String formatNode(String suffix, String uid, String label, long lineStart, long lineEnd) {
         final String nodeId = suffix + uid;
-        if (nodes.contains(nodeId)) {
-            logger.warn("Node {} already exists", nodeId);
-        }
+        // Sometimes nodes are sent to the method multiple times. Since `nodes` is a set, this is not a problem.
         nodes.add(nodeId);
         return nodeId + " [cluster=\"" + cluster + "\", label=\"" + label.replace("\"", "") + "\", span=\"" + lineStart + "-" + lineEnd + "\"];" + lineSeparator;
     }
