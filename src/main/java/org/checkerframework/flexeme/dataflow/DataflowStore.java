@@ -66,6 +66,11 @@ public class DataflowStore implements Store<DataflowStore> {
         DataflowValue value = new DataflowValue(n);
 
         // Add a new edge between the last time this variable is used to this current reference.
+        final Set<DataflowValue> lastUses = this.lastUse.get(n.getName());
+        if (lastUses == null) {
+            return;
+        }
+
         for (DataflowValue last : this.lastUse.get(n.getName())) {
             edges.add(new Edge(last, value));
         }

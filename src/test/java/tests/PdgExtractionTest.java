@@ -87,4 +87,12 @@ public class PdgExtractionTest {
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Interface.dot");
     }
+
+    @Test
+    public void testAssert() {
+        String inputFile = "src/test/resources/Assert.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Assert.dot");
+    }
 }
