@@ -28,7 +28,7 @@ ext.versions = [
 ]
 
 
-sourceCompatibility = 1.8
+sourceCompatibility = 1.11
 def checkerframework_local = false  // Set this variable to [true] while using local version of checker framework.
 project.setVersion("0.1")
 
