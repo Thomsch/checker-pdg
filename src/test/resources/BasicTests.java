@@ -57,11 +57,21 @@ class BasicTests {
         }
     }
 
-    void anonymous(Integer x) {
+    void anonymousMethod(Integer x) {
         Integer a = x;
         Optional<Integer> optX = Optional.of(x);
         optX.ifPresent(n -> System.out.println(n));
 
         Integer b = optX.get();
+    }
+
+    void anonymousClass() {
+        int a = 0;
+        Runnable r = new Runnable() {
+            public void run() {
+                int b = a;
+            }
+        };
+        r.run();
     }
 }
