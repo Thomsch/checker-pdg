@@ -55,4 +55,12 @@ public class PdgExtractionTest {
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile1, "", "", "build/AlwaysThrows.dot");
     }
+
+    @Test
+    public void testInfiniteLoop() {
+        String inputFile1 = "src/test/resources/Infinite.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile1, "src/test/resources", "src/test/resources", "build/Infinite.dot");
+    }
 }

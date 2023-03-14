@@ -1,15 +1,12 @@
 package org.checkerframework.flexeme.nameflow;
 
-import org.checkerframework.com.google.common.collect.Sets;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
+import org.checkerframework.flexeme.Util;
 import org.checkerframework.javacutil.BugInCF;
 
 import java.util.*;
-import java.util.function.BiFunction;
-
-import static org.checkerframework.flexeme.Util.mergeHashMaps;
 
 /**
  * Represents the store of the NameFlow analysis.
@@ -48,12 +45,7 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
-        final Map<String, Set<Name>> xiLub = mergeHashMaps(this.xi, other.xi, new BiFunction<Set<Name>, Set<Name>, Set<Name>>() {
-            @Override
-            public Set<Name> apply(final Set<Name> left, final Set<Name> right) {
-                return new HashSet<>(Sets.union(left, right)); // Need to return a mutable set.
-            }
-        });
+        final Map<String, Set<Name>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
         return new NameFlowStore(xiLub, this.names);
     }
 
