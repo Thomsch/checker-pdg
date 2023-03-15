@@ -3,6 +3,9 @@ package tests;
 import org.checkerframework.flexeme.PdgExtractor;
 import org.junit.Test;
 
+/**
+ * General tests for the PDG extraction.
+ */
 public class PdgExtractionTest {
 
     @Test

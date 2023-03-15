@@ -14,9 +14,8 @@ import java.util.*;
 public class NameFlowStore implements Store<NameFlowStore> {
 
     // Map Xi of <variable node, set of names: {(snd,v),(40,l)}
-    private final Map<String, Set<Name>> xi;
-
     public final Map<String, String> names;
+    private final Map<String, Set<Name>> xi;
 
     public NameFlowStore() {
         this.xi = new HashMap<>();
@@ -28,6 +27,12 @@ public class NameFlowStore implements Store<NameFlowStore> {
         this.names = names;
     }
 
+    /**
+     * Associate a potentially new name to a variable.
+     * @param uid The node id
+     * @param targetName The target id
+     * @param name The new name to associate
+     */
     public void add(final String uid, final String targetName, final Name name) {
         xi.computeIfAbsent(uid, k -> new HashSet<>());
         xi.get(uid).add(name);

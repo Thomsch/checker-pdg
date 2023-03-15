@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * A processor that stores the control flow graph for each method in the file.
+ */
 @SupportedAnnotationTypes("*")
 public class FileProcessor extends BasicTypeProcessor {
 
@@ -90,7 +93,6 @@ public class FileProcessor extends BasicTypeProcessor {
             ControlFlowGraph cfg = CFGBuilder.build(rootTree, method, classTree, processingEnv);
             cfgResults.put(method, cfg);
         }
-
         super.typeProcessingOver();
     }
 

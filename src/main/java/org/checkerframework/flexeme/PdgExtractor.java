@@ -32,16 +32,24 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
+/**
+ * This class is responsible for extracting the PDG from a Java file.
+ * It is a wrapper around the Checker Framework's dataflow analysis.
+ */
 public class PdgExtractor {
 
     private static final Logger logger = LoggerFactory.getLogger(PdgExtractor.class);
     private final String compileOut;
 
+    public PdgExtractor() {
+        compileOut = "out/";
+    }
+
     public static void main(String[] args) throws Throwable {
         String file = args[0]; // Relative to the repository e.g., src/java/App.java
         String sourcePath = args[1];
         String classPath = args[2];
-        String path_out = "pdg.dot"; // Where to write the results TODO
+        String path_out = "pdg.dot"; // Where to write the PDG.
 
         PdgExtractor extractor = new PdgExtractor();
         try {
@@ -52,15 +60,11 @@ public class PdgExtractor {
         }
     }
 
-    public PdgExtractor() {
-        compileOut = "out/";
-    }
-
     public void run(String file, String sourcePath, String classPath, String path_out) {
-        // 1. Compile file. in: file path. out: cfgs
+        // 1. Compile file and dependencies.
         FileProcessor processor = compileFile(file, compileOut, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
-        // 2. Run analysis for each method and build the graph. in: cfg, out: graph
+        // 2. Run analysis for each method and build the dataflow graph.
         // TODO: This is extremely tangled. The construction of the PDG and it's visualization are tangled. We should refactor this.
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
@@ -78,34 +82,21 @@ public class PdgExtractor {
         });
 
         // TODO: The creation of the graph should be decoupled from printing the results
-        // 1. Create graph in memory in a data structure.
-        // 2. Print graph
-
-        // JsonResult result = new JsonResult();
+        // 3. Run nameflow analysis and add it to the graph.
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
             ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
             analysis.performAnalysis(controlFlowGraph);
 
             final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
             exitStore.getXi().forEach((variable, names) -> {
-                // result.addNode(variable);
                 names.forEach(name -> {
-                    // result.addEdge(analysis.getRegularExitStore().names.get(variable) + "(" + variable + ")", name);
-
                     // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
                     if (PDGVisualizer.getNodes().contains(name.getUid()) && PDGVisualizer.getNodes().contains(variable)) {
                         graphs.append(name.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
                     }
                 });
             });
-            // System.out.println(analysis.getRegularExitStore());
         });
-
-        // Write method name to json file.
-        // Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-        // Save the results to a json file.
-        // gson.toJson(result, System.out);
 
         graphs.append("}");
 
@@ -115,10 +106,15 @@ public class PdgExtractor {
         } catch (IOException e) {
             throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
         }
-
-
     }
 
+    /**
+     * Create the CFG with dataflow edges for a given method.
+     * @param analysis The results of the dataflow analysis
+     * @param methodControlFlowGraph The CFG of the method to visualize
+     * @param lineMap The line map of the file to recover the line numbers
+     * @return The visualizer object containing the PDG for the method.
+     */
     private static PDGVisualizer runVisualization(ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", "out");
@@ -135,6 +131,9 @@ public class PdgExtractor {
         return viz;
     }
 
+    /**
+     * Creates the label for the cluster attribute in the dot file.
+     */
     private static String makeClusterLabel(String packageName, String className, String methodName, java.util.List<? extends VariableTree> parameters) {
         StringJoiner sjParameters = new StringJoiner(",");
 
@@ -145,6 +144,11 @@ public class PdgExtractor {
         return packageName + "." + className + "." + methodName + "(" + sjParameters + ")";
     }
 
+    /**
+     * Runs the dataflow analysis for a given method.
+     * @param methodControlFlowGraph The CFG of the method to analyze
+     * @return The spent dataflow analysis.
+     */
     private static ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
         ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = new ForwardAnalysisImpl<>(new DataflowTransfer());
         analysis.performAnalysis(methodControlFlowGraph);

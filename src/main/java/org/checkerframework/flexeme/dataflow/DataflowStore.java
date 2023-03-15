@@ -31,6 +31,10 @@ public class DataflowStore implements Store<DataflowStore> {
         this.parameters = parameters;
     }
 
+    /**
+     * Create a new FlexemeDataflowStore.
+     * @param parameters The parameters of the method, added at the start since they are not declared while visiting the body of the method.
+     */
     public DataflowStore(List<LocalVariableNode> parameters) {
         lastUse = new HashMap<>();
         edges = new LinkedHashSet<>();
@@ -38,6 +42,10 @@ public class DataflowStore implements Store<DataflowStore> {
         parameters.forEach(this::addParameter);
     }
 
+    /**
+     * Add a parameter to the store to keep track of.
+     * @param node The parameter.
+     */
     private void addParameter(LocalVariableNode node) {
         if (lastUse.containsKey(node.getName())) {
             return;

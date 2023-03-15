@@ -2,6 +2,9 @@ package org.checkerframework.flexeme.dataflow;
 
 import java.util.Objects;
 
+/**
+ * Represents a dataflow edge in the dataflow graph.
+ */
 public class Edge {
     private final DataflowValue from;
     private final DataflowValue to;

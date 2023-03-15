@@ -3,6 +3,9 @@ package tests;
 import org.checkerframework.flexeme.PdgExtractor;
 import org.junit.Test;
 
+/**
+ * Tests for name flow analysis.
+ */
 public class NameFlowTest {
     @Test
     public void testToyExample() {

@@ -25,6 +25,11 @@ import java.util.stream.Collectors;
 
 /**
  * Visualizes the control flow graph and dataflow of a method.
+ *
+ * TODO: {@link DOTCFGVisualizer} is not really designed to visualize at the statement level, so the implementation below is a bit hacky.
+ * This should be refactored to work in two steps:
+ *  1) Extract nodes and edges from the dataflow analysis and CFG at the statement level from the block traversal below (or from one of the CheckerFramework classes)
+ *  2) Run through the graph and visualize it, not using the DOTCFGVisualizer.
  */
 public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore, DataflowTransfer> {
     private final String cluster;

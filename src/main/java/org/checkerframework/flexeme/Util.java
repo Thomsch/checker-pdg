@@ -5,6 +5,9 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Collection of utility methods for the dataflow analyses.
+ */
 public class Util {
     /**
      * Merge two maps where the values are {@link Set}.

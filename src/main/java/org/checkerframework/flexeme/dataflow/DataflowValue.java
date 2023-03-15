@@ -5,18 +5,16 @@ import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BugInCF;
 
+/**
+ * Represents a dataflow value.
+ */
 public class DataflowValue implements AbstractValue<DataflowValue> {
     /**
-     * A live variable is represented by a node, which can be a {@link
+     * A value is represented by a node, which can be a {@link
      * org.checkerframework.dataflow.cfg.node.LocalVariableNode} or {@link
      * org.checkerframework.dataflow.cfg.node.FieldAccessNode}.
      */
     protected final Node reference;
-
-    @Override
-    public DataflowValue leastUpperBound(DataflowValue other) {
-        throw new BugInCF("lub of LiveVar get called!");
-    }
 
     /**
      * Create a new live variable.
@@ -25,6 +23,11 @@ public class DataflowValue implements AbstractValue<DataflowValue> {
      */
     public DataflowValue(Node n) {
         this.reference = n;
+    }
+
+    @Override
+    public DataflowValue leastUpperBound(DataflowValue other) {
+        throw new BugInCF("lub of LiveVar get called!");
     }
 
     public Node getReference() {

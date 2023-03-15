@@ -85,7 +85,7 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     private void assignE(final Node target, final Node expression, final NameFlowStore store) {
         if (expression instanceof ValueLiteralNode) { //    AssignL
             assignL(target, (ValueLiteralNode) expression, store);
-        } else if (expression instanceof LocalVariableNode){
+        } else if (expression instanceof LocalVariableNode) {
             assignV(target, (LocalVariableNode) expression, store);
         } else if (expression instanceof MethodInvocationNode) {  //    AssignM
             assignM(target, (MethodInvocationNode) expression, store);
@@ -129,6 +129,6 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         }
         Name name = new Name(value.toString(), Name.Kind.Literal, "n" + operand.getUid());
         Element el = TreeUtils.elementFromTree(target.getTree());
-        store.add("n" + target.getUid(),String.valueOf(el.getSimpleName()), name);
+        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), name);
     }
 }

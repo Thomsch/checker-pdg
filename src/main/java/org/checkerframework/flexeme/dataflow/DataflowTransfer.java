@@ -12,6 +12,9 @@ import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 
 import java.util.List;
 
+/**
+ * Transfer rules for the dataflow analysis.
+ */
 public class DataflowTransfer extends AbstractNodeVisitor<
         TransferResult<DataflowValue, DataflowStore>, TransferInput<DataflowValue, DataflowStore>>
         implements ForwardTransferFunction<DataflowValue, DataflowStore> {
