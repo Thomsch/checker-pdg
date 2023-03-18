@@ -55,7 +55,7 @@ public class NameFlowStore implements Store<NameFlowStore> {
     }
 
     @Override
-    public boolean canAlias(final JavaExpression javaExpression, final JavaExpression javaExpression1) {
+    public boolean canAlias(final JavaExpression javaExpression1, final JavaExpression javaExpression2) {
         return true;
     }
 
