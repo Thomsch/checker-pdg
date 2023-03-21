@@ -47,7 +47,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Add a variable declaration to the store to keep track of.
-     * @param node The variable declaration.
+     * @param node the variable declaration
      */
     public void addLocalVariableDeclaration(VariableDeclarationNode node) {
         if (lastUse.containsKey(node.getName())) {
@@ -60,7 +60,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Add a new dataflow edge between the last and current n.
-     * @param n The variable reference
+     * @param n the variable reference
      */
     public void addDataflowEdge(LocalVariableNode n) {
         DataflowValue value = new DataflowValue(n);

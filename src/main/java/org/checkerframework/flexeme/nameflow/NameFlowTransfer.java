@@ -78,9 +78,9 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
      * Implementation of the assignE rule from "RefiNym: Using Names to Refine Types".
      * It recursively visits the expression and assigns the names to the element.
      *
-     * @param target     The left side of the assignment
-     * @param expression The right side of the assignment
-     * @param store      The store to update
+     * @param target     the left side of the assignment
+     * @param expression the right side of the assignment
+     * @param store      the store to update
      */
     private void assignE(final Node target, final Node expression, final NameFlowStore store) {
         if (expression instanceof ValueLiteralNode) { //    AssignL

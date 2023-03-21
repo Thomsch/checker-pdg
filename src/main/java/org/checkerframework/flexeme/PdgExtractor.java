@@ -153,12 +153,12 @@ public class PdgExtractor {
 
     /**
      * Compiles a file and returns the processor with the compilation results.
-     * @param filepath Path to the file to compile
-     * @param compile_out Where to put the compiled files
-     * @param compile_verbose Whether to print the compilation output
-     * @param sourcePath Source path for the compilation
-     * @param classPath Class path for the compilation
-     * @return The processor with the compilation results
+     * @param filepath path to the file to compile
+     * @param compile_out where to put the compiled files
+     * @param compile_verbose whether to print the compilation output
+     * @param sourcePath source path for the compilation
+     * @param classPath class path for the compilation
+     * @return the processor with the compilation results
      */
     public static FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose, String sourcePath, String classPath) {
         java.util.List<String> arguments = new ArrayList<>();
@@ -205,8 +205,8 @@ public class PdgExtractor {
 
     /**
      * Prints the name flow analysis for a file.
-     * @param inputFile The file to analyze.
-     * @param compile_out The directory to compile the file to.
+     * @param inputFile the file to analyze
+     * @param compile_out the directory to compile the file to
      */
     public static void nameFlow(final String inputFile, final String compile_out) {
 

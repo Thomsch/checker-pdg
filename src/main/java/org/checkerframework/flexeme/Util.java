@@ -8,11 +8,11 @@ import java.util.Set;
 public class Util {
     /**
      * Merge two maps where the values are {@link Set}.
-     * @param left The first Map
-     * @param right The second Map
-     * @return A new Map instance containing the keys and values of left and right maps.
-     * @param <K> Generic type for map keys
-     * @param <V> Generic type for set values
+     * @param left the first Map
+     * @param right the second Map
+     * @return a new Map instance containing the keys and values of left and right maps
+     * @param <K> type for map keys
+     * @param <V> type for set values
      */
     public static <K, V> Map<K, Set<V>> mergeSetMaps(Map<K, Set<V>> left, Map<K, Set<V>> right) {
         Map<K, Set<V>> result = new HashMap<>(left.size() + right.size());
@@ -35,10 +35,10 @@ public class Util {
 
     /**
      * Merge two sets.
-     * @param left The first set.
-     * @param right The second set.
-     * @return A new set containing the elements of both sets.
-     * @param <V> The type of the set.
+     * @param left the first set
+     * @param right the second set
+     * @return a new set containing the elements of both sets
+     * @param <V> the type of the set elements
      */
     private static <V> Set<V> mergeSets(final Set<V> left, final Set<V> right) {
         HashSet<V> result = new HashSet<>(left.size() + right.size());
@@ -48,11 +48,11 @@ public class Util {
     }
 
     /**
-     * Create a new mutable set. This is a helper method to avoid having to write
-     * {@code new HashSet<>()} everywhere.
-     * @param value The value to put in the set.
-     * @return A new mutable set.
-     * @param <V> The type of the set.
+     * Create a new mutable set containing one element. This is a helper method to avoid having to write
+     * {@code new HashSet<>(Collections.singleton(value))} everywhere.
+     * @param value the value to put in the set
+     * @return a new mutable set containing one element
+     * @param <V> the type of the set elements
      */
     public static <V> Set<V> newSet(V value) {
         Set<V> set = new HashSet<>();
