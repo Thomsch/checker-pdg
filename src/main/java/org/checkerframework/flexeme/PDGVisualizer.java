@@ -44,9 +44,11 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
     private Map<Block, BlockFlow> statementFlowMap;
     private String graph;
 
+    // Stores the invocations of methods. The key is the node calling the method. The value is the accessed method signature.
     public static Map<String, String> invocations = new HashMap<>();
 
-    public static Map<String, String> methods = new HashMap<>(); // maps from method name to entry block number.
+    // Stores the methods signature and their location in the DOT graph. The key is the method's signature. The value is the node id of the START node for the method.
+    public static Map<String, String> methods = new HashMap<>();
     private static Set<String> nodes = new HashSet<>();
 
     public String getGraph() {

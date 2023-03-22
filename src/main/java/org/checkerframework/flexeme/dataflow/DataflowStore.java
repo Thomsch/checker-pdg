@@ -18,12 +18,15 @@ import java.util.stream.Collectors;
  */
 public class DataflowStore implements Store<DataflowStore> {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DataflowStore.class);
+
+    // Map from variable name to the last time it was used.
+    // The keys are the variable name e.g., 'foo' and the values are pointing to the last instance of that variable in the CFG.
     private final Map<String, Set<VariableReference>> lastUse;
     private final Set<Edge> edges;
     private final List<LocalVariableNode> parameters; // Initial variable declaration for method parameters.
 
     /**
-     * Create a new FlexemeDataflowStore.
+     * Create a new DataflowStore.
      */
     public DataflowStore(Map<String, Set<VariableReference>> lastUse, Set<Edge> edges, List<LocalVariableNode> parameters) {
         this.lastUse = lastUse;
@@ -32,7 +35,7 @@ public class DataflowStore implements Store<DataflowStore> {
     }
 
     /**
-     * Create a new FlexemeDataflowStore.
+     * Create a new DataflowStore.
      * @param parameters The parameters of the method, added at the start since they are not declared while visiting the body of the method.
      */
     public DataflowStore(List<LocalVariableNode> parameters) {

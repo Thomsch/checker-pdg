@@ -13,8 +13,10 @@ import java.util.*;
  */
 public class NameFlowStore implements Store<NameFlowStore> {
 
-    // Map Xi of <variable node, set of names: {(snd,v),(40,l)}
+    // Store the edges between nodes representing the nameflow
     public final Map<String, String> names;
+
+    // Map Xi of <variable node, set of names: {(snd,v),(40,l)}
     private final Map<String, Set<NameRecord>> xi;
 
     public NameFlowStore() {
