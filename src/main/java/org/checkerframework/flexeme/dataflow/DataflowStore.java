@@ -116,7 +116,7 @@ public class DataflowStore implements Store<DataflowStore> {
     }
 
     private CharSequence visualizeEdges(CFGVisualizer<?, DataflowStore, ?> viz) {
-        StringJoiner sjStoreVal = new StringJoiner("\n");
+        StringJoiner sjStoreVal = new StringJoiner(System.lineSeparator());
         for (Edge edge : edges) {
             sjStoreVal.add(edge.toString());
         }
@@ -156,7 +156,7 @@ public class DataflowStore implements Store<DataflowStore> {
         final StringBuilder sb = new StringBuilder();
         sb.append("Variables: ");
         sb.append(lastUse.keySet());
-        sb.append("\n");
+        sb.append(System.lineSeparator());
 
         sb.append("Edges: ");
         sb.append(edges.stream().map(edge -> edge.getFrom().getReference().getUid() + " -> " + edge.getTo().getReference().getUid()).collect(Collectors.joining(",")));
