@@ -1,7 +1,5 @@
 package org.checkerframework.flexeme;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
@@ -14,7 +12,6 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
-import org.checkerframework.flexeme.nameflow.JsonResult;
 import org.checkerframework.flexeme.nameflow.Name;
 import org.checkerframework.flexeme.nameflow.NameFlowStore;
 import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
@@ -205,38 +202,5 @@ public class PdgExtractor {
         }
 
         return processor;
-    }
-
-    /**
-     * Prints the name flow analysis for a file.
-     * @param inputFile the file to analyze
-     * @param compile_out the directory to compile the file to
-     */
-    public static void nameFlow(final String inputFile, final String compile_out) {
-
-        // Run compilation on file with the analysis.
-        FileProcessor processor = compileFile(inputFile, compile_out, false, "", "");
-
-        // Run analysis for each method.
-        JsonResult result = new JsonResult();
-
-        processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
-            analysis.performAnalysis(controlFlowGraph);
-
-            analysis.getRegularExitStore().getXi().forEach((variable, names) -> {
-                result.addNode(variable);
-                names.forEach(name -> {
-                    result.addEdge(variable, name);
-                });
-            });
-            // System.out.println(analysis.getRegularExitStore());
-        });
-
-        // Write method name to json file.
-        Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-        // Save the results to a json file.
-        gson.toJson(result, System.out);
     }
 }

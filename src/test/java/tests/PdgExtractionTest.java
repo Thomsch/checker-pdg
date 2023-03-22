@@ -98,4 +98,12 @@ public class PdgExtractionTest {
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Assert.dot");
     }
+
+    @Test
+    public void testNameflow() {
+        String inputFile = "src/test/resources/Calc.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile, "", "", "build/testTogetherTest.dot");
+    }
 }
