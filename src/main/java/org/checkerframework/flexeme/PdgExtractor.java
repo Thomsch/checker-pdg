@@ -12,9 +12,9 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
-import org.checkerframework.flexeme.nameflow.Name;
 import org.checkerframework.flexeme.nameflow.NameFlowStore;
 import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
+import org.checkerframework.flexeme.nameflow.NameRecord;
 import org.checkerframework.javacutil.UserError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,15 +81,15 @@ public class PdgExtractor {
         // TODO: The creation of the graph should be decoupled from printing the results
         // 3. Run nameflow analysis and add it to the graph.
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            ForwardAnalysis<Name, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
+            ForwardAnalysis<NameRecord, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
             analysis.performAnalysis(controlFlowGraph);
 
             final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
             exitStore.getXi().forEach((variable, names) -> {
-                names.forEach(name -> {
+                names.forEach(nameRecord -> {
                     // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
-                    if (PDGVisualizer.getNodes().contains(name.getUid()) && PDGVisualizer.getNodes().contains(variable)) {
-                        graphs.append(name.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
+                    if (PDGVisualizer.getNodes().contains(nameRecord.getUid()) && PDGVisualizer.getNodes().contains(variable)) {
+                        graphs.append(nameRecord.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
                     }
                 });
             });

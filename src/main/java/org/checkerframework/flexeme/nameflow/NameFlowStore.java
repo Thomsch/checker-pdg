@@ -15,31 +15,31 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     // Map Xi of <variable node, set of names: {(snd,v),(40,l)}
     public final Map<String, String> names;
-    private final Map<String, Set<Name>> xi;
+    private final Map<String, Set<NameRecord>> xi;
 
     public NameFlowStore() {
         this.xi = new HashMap<>();
         this.names = new HashMap<>();
     }
 
-    public NameFlowStore(final Map<String, Set<Name>> xi, final Map<String, String> names) {
+    public NameFlowStore(final Map<String, Set<NameRecord>> xi, final Map<String, String> names) {
         this.xi = xi;
         this.names = names;
     }
 
     /**
-     * Associate a potentially new name to a variable.
+     * Associate a potentially new nameRecord to a variable.
      * @param uid The node id
      * @param targetName The target id
-     * @param name The new name to associate
+     * @param nameRecord The new nameRecord to associate
      */
-    public void add(final String uid, final String targetName, final Name name) {
+    public void add(final String uid, final String targetName, final NameRecord nameRecord) {
         xi.computeIfAbsent(uid, k -> new HashSet<>());
-        xi.get(uid).add(name);
+        xi.get(uid).add(nameRecord);
         names.put(uid, targetName);
     }
 
-    public Map<String, Set<Name>> getXi() {
+    public Map<String, Set<NameRecord>> getXi() {
         return xi;
     }
 
@@ -50,7 +50,7 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
-        final Map<String, Set<Name>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
+        final Map<String, Set<NameRecord>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
         return new NameFlowStore(xiLub, this.names);
     }
 

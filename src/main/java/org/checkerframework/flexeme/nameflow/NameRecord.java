@@ -7,22 +7,23 @@ import java.util.Objects;
 
 /**
  * Represents a tuple of name and type from the set returned by the Ξ function in "RefiNym: Using Names to Refine Types".
+ * Also contains a unique identifier representing the node in the CFG.
  */
-public class Name implements AbstractValue<Name> {
+public class NameRecord implements AbstractValue<NameRecord> {
     private final String name;
     private final Kind kind;
 
     private final String uid;
 
-    public Name(final String name, final Kind kind, final String uid) {
+    public NameRecord(final String name, final Kind kind, final String uid) {
         this.name = name;
         this.kind = kind;
         this.uid = uid;
     }
 
     @Override
-    public Name leastUpperBound(final Name name) {
-        throw new BugInCF("lub of Name get called!");
+    public NameRecord leastUpperBound(final NameRecord nameRecord) {
+        throw new BugInCF("lub of NameRecord get called!");
     }
 
     @Override
@@ -34,7 +35,7 @@ public class Name implements AbstractValue<Name> {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Name that = (Name) o;
+        NameRecord that = (NameRecord) o;
         return name.equals(that.name) && kind == that.kind && uid.equals(that.uid);
     }
 

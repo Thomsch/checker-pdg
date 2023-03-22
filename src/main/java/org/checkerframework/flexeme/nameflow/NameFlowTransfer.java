@@ -20,13 +20,13 @@ import java.util.List;
  * Compared to the paper, the name flow rules encompasses any type, not just scalars.
  */
 public class NameFlowTransfer extends AbstractNodeVisitor<
-        TransferResult<Name, NameFlowStore>, TransferInput<Name, NameFlowStore>>
-        implements ForwardTransferFunction<Name, NameFlowStore> {
+        TransferResult<NameRecord, NameFlowStore>, TransferInput<NameRecord, NameFlowStore>>
+        implements ForwardTransferFunction<NameRecord, NameFlowStore> {
 
     private static final Logger logger = LoggerFactory.getLogger(NameFlowTransfer.class);
 
     @Override
-    public TransferResult<Name, NameFlowStore> visitNode(final Node node, final TransferInput<Name, NameFlowStore> transferInput) {
+    public TransferResult<NameRecord, NameFlowStore> visitNode(final Node node, final TransferInput<NameRecord, NameFlowStore> transferInput) {
         return new RegularTransferResult<>(null, transferInput.getRegularStore());
     }
 
@@ -36,8 +36,8 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     }
 
     @Override
-    public TransferResult<Name, NameFlowStore> visitAssignment(final AssignmentNode n, final TransferInput<Name, NameFlowStore> transferInput) {
-        RegularTransferResult<Name, NameFlowStore> transferResult = (RegularTransferResult<Name, NameFlowStore>) super.visitAssignment(n, transferInput);
+    public TransferResult<NameRecord, NameFlowStore> visitAssignment(final AssignmentNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {
+        RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitAssignment(n, transferInput);
         final Tree variableTree = n.getTarget().getTree();
         if (variableTree == null) {
             logger.warn("No tree for assigned variable: " + n);
@@ -61,8 +61,8 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     }
 
     @Override
-    public TransferResult<Name, NameFlowStore> visitMethodInvocation(final MethodInvocationNode n, final TransferInput<Name, NameFlowStore> transferInput) {
-        RegularTransferResult<Name, NameFlowStore> transferResult = (RegularTransferResult<Name, NameFlowStore>) super.visitMethodInvocation(n, transferInput);
+    public TransferResult<NameRecord, NameFlowStore> visitMethodInvocation(final MethodInvocationNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {
+        RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitMethodInvocation(n, transferInput);
         // Bind parameters to arguments
         for (int i = 0; i < n.getArguments().size(); i++) {
             final Node argument = n.getArguments().get(i); // actual
@@ -111,15 +111,15 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     }
 
     private void assignM(final Node target, final MethodInvocationNode operand, final NameFlowStore store) {
-        Name name = new Name(operand.getTarget().toString(), Name.Kind.Method, "n" + operand.getUid());
+        NameRecord nameRecord = new NameRecord(operand.getTarget().toString(), NameRecord.Kind.Method, "n" + operand.getUid());
         Element el = TreeUtils.elementFromTree(target.getTree());
-        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), name);
+        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), nameRecord);
     }
 
     private void assignV(final Node target, final LocalVariableNode operand, final NameFlowStore store) {
         Element el = TreeUtils.elementFromTree(target.getTree());
-        Name name = new Name(operand.getName(), Name.Kind.Variable, "n" + operand.getUid());
-        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), name);
+        NameRecord nameRecord = new NameRecord(operand.getName(), NameRecord.Kind.Variable, "n" + operand.getUid());
+        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), nameRecord);
     }
 
     private void assignL(final Node target, final ValueLiteralNode operand, final NameFlowStore store) {
@@ -127,8 +127,8 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         if (value == null) { // If the value of the literal is null, then we use the string "null".
             value = "null";
         }
-        Name name = new Name(value.toString(), Name.Kind.Literal, "n" + operand.getUid());
+        NameRecord nameRecord = new NameRecord(value.toString(), NameRecord.Kind.Literal, "n" + operand.getUid());
         Element el = TreeUtils.elementFromTree(target.getTree());
-        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), name);
+        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), nameRecord);
     }
 }
