@@ -13,7 +13,7 @@ import org.checkerframework.dataflow.cfg.node.*;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
-import org.checkerframework.flexeme.dataflow.DataflowValue;
+import org.checkerframework.flexeme.dataflow.VariableReference;
 import org.checkerframework.javacutil.TypesUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  *  1) Extract nodes and edges from the dataflow analysis and CFG at the statement level from the block traversal below (or from one of the CheckerFramework classes)
  *  2) Run through the graph and visualize it, not using the DOTCFGVisualizer.
  */
-public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore, DataflowTransfer> {
+public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowStore, DataflowTransfer> {
     private final String cluster;
     private final LineMap lineMap;
     private final CompilationUnitTree compilationUnitTree;
@@ -68,14 +68,14 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     }
 
     @Override
-    public @Nullable Map<String, Object> visualize(ControlFlowGraph cfg, Block entry, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    public @Nullable Map<String, Object> visualize(ControlFlowGraph cfg, Block entry, @Nullable Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         UnderlyingAST.CFGMethod cfgMethod = (UnderlyingAST.CFGMethod) cfg.underlyingAST;
         methods.put(methodSignature(cfgMethod), "b" + entry.getUid());
         return super.visualize(cfg, entry, analysis);
     }
 
     @Override
-    protected String visualizeGraph(ControlFlowGraph cfg, Block entry, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    protected String visualizeGraph(ControlFlowGraph cfg, Block entry, @Nullable Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         graph = super.visualizeGraph(cfg, entry, analysis);
         return graph;
     }
@@ -178,7 +178,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
      * @return
      */
     @Override
-    public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         String dotNodes = makeStatementNodes(blocks, analysis);
 
         // Intra-block edges
@@ -200,7 +200,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
         return dotNodes + lineSeparator + sbDotIntraEdges + sbDotInterEdges + sbDotSpecialEdges + sbDotDataflowEdges;
     }
 
-    private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         DataflowStore dataflowStore = analysis.getRegularExitStore();
         if (dataflowStore == null) {
             dataflowStore = analysis.getResult().getStoreAfter(cfg.getExceptionalExitBlock());
@@ -402,7 +402,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
         }
     }
 
-    private String makeStatementNodes(Set<Block> blocks, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    private String makeStatementNodes(Set<Block> blocks, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         StringBuilder sbDotNodes = new StringBuilder();
 
         // Definition of all nodes including their labels.
@@ -438,7 +438,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     }
 
     @Override
-    public String visualizeBlockNode(Node t, @Nullable Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    public String visualizeBlockNode(Node t, @Nullable Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         if (t instanceof MethodAccessNode) {
             MethodAccessNode methodAccessNode = (MethodAccessNode) t;
             String signature = methodSignature(methodAccessNode);
@@ -503,12 +503,12 @@ public class PDGVisualizer extends DOTCFGVisualizer<DataflowValue, DataflowStore
     }
 
     @Override
-    public String visualizeBlockTransferInputBefore(Block bb, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    public String visualizeBlockTransferInputBefore(Block bb, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         return "";
     }
 
     @Override
-    public String visualizeBlockTransferInputAfter(Block bb, Analysis<DataflowValue, DataflowStore, DataflowTransfer> analysis) {
+    public String visualizeBlockTransferInputAfter(Block bb, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         return "";
     }
 

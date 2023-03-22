@@ -18,14 +18,14 @@ import java.util.stream.Collectors;
  */
 public class DataflowStore implements Store<DataflowStore> {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DataflowStore.class);
-    private final Map<String, Set<DataflowValue>> lastUse;
+    private final Map<String, Set<VariableReference>> lastUse;
     private final Set<Edge> edges;
     private final List<LocalVariableNode> parameters; // Initial variable declaration for method parameters.
 
     /**
      * Create a new FlexemeDataflowStore.
      */
-    public DataflowStore(Map<String, Set<DataflowValue>> lastUse, Set<Edge> edges, List<LocalVariableNode> parameters) {
+    public DataflowStore(Map<String, Set<VariableReference>> lastUse, Set<Edge> edges, List<LocalVariableNode> parameters) {
         this.lastUse = lastUse;
         this.edges = edges;
         this.parameters = parameters;
@@ -50,7 +50,7 @@ public class DataflowStore implements Store<DataflowStore> {
         if (lastUse.containsKey(node.getName())) {
             return;
         }
-        lastUse.put(node.getName(), Util.newSet(new DataflowValue(node)));
+        lastUse.put(node.getName(), Util.newSet(new VariableReference(node)));
     }
 
     /**
@@ -63,7 +63,7 @@ public class DataflowStore implements Store<DataflowStore> {
             return;
         }
         // We mark that we encountered this variable for the first time.
-        lastUse.put(node.getName(), Util.newSet(new DataflowValue(node)));
+        lastUse.put(node.getName(), Util.newSet(new VariableReference(node)));
     }
 
     /**
@@ -71,15 +71,15 @@ public class DataflowStore implements Store<DataflowStore> {
      * @param n the variable reference
      */
     public void addDataflowEdge(LocalVariableNode n) {
-        DataflowValue value = new DataflowValue(n);
+        VariableReference value = new VariableReference(n);
 
         // Add a new edge between the last time this variable is used to this current reference.
-        final Set<DataflowValue> lastUses = this.lastUse.get(n.getName());
+        final Set<VariableReference> lastUses = this.lastUse.get(n.getName());
         if (lastUses == null) {
             return;
         }
 
-        for (DataflowValue last : this.lastUse.get(n.getName())) {
+        for (VariableReference last : this.lastUse.get(n.getName())) {
             edges.add(new Edge(last, value));
         }
         // The last use is this reference now.
@@ -93,7 +93,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     @Override
     public DataflowStore leastUpperBound(DataflowStore other) {
-        final Map<String, Set<DataflowValue>> lastUseLub = Util.mergeSetMaps(this.lastUse, other.lastUse);
+        final Map<String, Set<VariableReference>> lastUseLub = Util.mergeSetMaps(this.lastUse, other.lastUse);
 
         final Set<Edge> edgesLub =
                 new HashSet<>(this.edges.size() + other.edges.size());
@@ -108,7 +108,7 @@ public class DataflowStore implements Store<DataflowStore> {
             return viz.visualizeStoreKeyVal(key, "none");
         }
         StringJoiner sjStoreVal = new StringJoiner(", ");
-        for (Map.Entry<String, Set<DataflowValue>> entry : lastUse.entrySet()) {
+        for (Map.Entry<String, Set<VariableReference>> entry : lastUse.entrySet()) {
             sjStoreVal.add(entry.getKey());
         }
 

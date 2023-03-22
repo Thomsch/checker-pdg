@@ -6,9 +6,9 @@ import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BugInCF;
 
 /**
- * Represents a dataflow value.
+ * Represents a variable reference.
  */
-public class DataflowValue implements AbstractValue<DataflowValue> {
+public class VariableReference implements AbstractValue<VariableReference> {
     /**
      * A value is represented by a node, which can be a {@link
      * org.checkerframework.dataflow.cfg.node.LocalVariableNode} or {@link
@@ -21,12 +21,12 @@ public class DataflowValue implements AbstractValue<DataflowValue> {
      *
      * @param n a node
      */
-    public DataflowValue(Node n) {
+    public VariableReference(Node n) {
         this.reference = n;
     }
 
     @Override
-    public DataflowValue leastUpperBound(DataflowValue other) {
+    public VariableReference leastUpperBound(VariableReference other) {
         throw new BugInCF("lub of LiveVar get called!");
     }
 
@@ -41,10 +41,10 @@ public class DataflowValue implements AbstractValue<DataflowValue> {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-        if (!(obj instanceof DataflowValue)) {
+        if (!(obj instanceof VariableReference)) {
             return false;
         }
-        DataflowValue other = (DataflowValue) obj;
+        VariableReference other = (VariableReference) obj;
         return this.reference.equals(other.reference) && this.reference.getUid() == other.reference.getUid();
     }
 

@@ -13,7 +13,7 @@ import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
-import org.checkerframework.flexeme.dataflow.DataflowValue;
+import org.checkerframework.flexeme.dataflow.VariableReference;
 import org.checkerframework.flexeme.nameflow.JsonResult;
 import org.checkerframework.flexeme.nameflow.Name;
 import org.checkerframework.flexeme.nameflow.NameFlowStore;
@@ -68,7 +68,7 @@ public class PdgExtractor {
         // TODO: This is extremely tangled. The construction of the PDG and it's visualization are tangled. We should refactor this.
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
+            ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
             PDGVisualizer visualizer = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
             String graph = visualizer.getGraph();
             graphs.append(graph);
@@ -115,7 +115,7 @@ public class PdgExtractor {
      * @param lineMap The line map of the file to recover the line numbers
      * @return The visualizer object containing the PDG for the method.
      */
-    private static PDGVisualizer runVisualization(ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
+    private static PDGVisualizer runVisualization(ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", "out");
         args.put("verbose", true);
@@ -149,8 +149,8 @@ public class PdgExtractor {
      * @param methodControlFlowGraph The CFG of the method to analyze
      * @return The spent dataflow analysis.
      */
-    private static ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
-        ForwardAnalysis<DataflowValue, DataflowStore, DataflowTransfer> analysis = new ForwardAnalysisImpl<>(new DataflowTransfer());
+    private static ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
+        ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = new ForwardAnalysisImpl<>(new DataflowTransfer());
         analysis.performAnalysis(methodControlFlowGraph);
         return analysis;
     }

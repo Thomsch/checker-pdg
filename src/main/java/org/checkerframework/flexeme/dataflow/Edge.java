@@ -6,19 +6,19 @@ import java.util.Objects;
  * Represents a dataflow edge in the dataflow graph.
  */
 public class Edge {
-    private final DataflowValue from;
-    private final DataflowValue to;
+    private final VariableReference from;
+    private final VariableReference to;
 
-    public Edge(DataflowValue from, DataflowValue to) {
+    public Edge(VariableReference from, VariableReference to) {
         this.from = from;
         this.to = to;
     }
 
-    public DataflowValue getFrom() {
+    public VariableReference getFrom() {
         return from;
     }
 
-    public DataflowValue getTo() {
+    public VariableReference getTo() {
         return to;
     }
 
