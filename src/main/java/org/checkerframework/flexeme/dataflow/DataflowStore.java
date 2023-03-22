@@ -45,13 +45,19 @@ public class DataflowStore implements Store<DataflowStore> {
         parameters.forEach(this::addParameter);
     }
 
+    @Override
+    public DataflowStore copy() {
+        return new DataflowStore(new HashMap<>(lastUse), new HashSet<>(edges), parameters);
+    }
+
     /**
      * Add a parameter to the store to keep track of.
      * @param node The parameter.
      */
     private void addParameter(LocalVariableNode node) {
         if (lastUse.containsKey(node.getName())) {
-            return;
+            // We can't have two parameters with the same name.
+            throw new RuntimeException("Parameter " + node.getName() + " is declared more than once.");
         }
         lastUse.put(node.getName(), Util.newSet(new VariableReference(node)));
     }
@@ -90,11 +96,6 @@ public class DataflowStore implements Store<DataflowStore> {
     }
 
     @Override
-    public DataflowStore copy() {
-        return new DataflowStore(new HashMap<>(lastUse), new HashSet<>(edges), parameters);
-    }
-
-    @Override
     public DataflowStore leastUpperBound(DataflowStore other) {
         final Map<String, Set<VariableReference>> lastUseLub = Util.mergeSetMaps(this.lastUse, other.lastUse);
 
@@ -111,10 +112,10 @@ public class DataflowStore implements Store<DataflowStore> {
             return viz.visualizeStoreKeyVal(key, "none");
         }
         StringJoiner sjStoreVal = new StringJoiner(", ");
-        for (Map.Entry<String, Set<VariableReference>> entry : lastUse.entrySet()) {
-            sjStoreVal.add(entry.getKey());
-        }
 
+        for (final String k : lastUse.keySet()) {
+            sjStoreVal.add(k);
+        }
         return viz.visualizeStoreKeyVal(key, sjStoreVal.toString());
     }
 
