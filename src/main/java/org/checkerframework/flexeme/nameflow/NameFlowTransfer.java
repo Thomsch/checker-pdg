@@ -40,11 +40,13 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitAssignment(n, transferInput);
         final Tree variableTree = n.getTarget().getTree();
         if (variableTree == null) {
+            // Logging for debugging purposes in case we encounter such a case to determine whether it's an error or not.
             logger.warn("No tree for assigned variable: " + n);
             return transferResult;
         }
         final Element element = TreeUtils.elementFromTree(variableTree);
         if (element == null) {
+            // Logging for debugging purposes in case we encounter such a case to determine whether it's an error or not.
             logger.warn("No element for assigned variable: " + n);
             return transferResult;
         }
@@ -69,6 +71,7 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
             final VariableElement parameter = n.getTarget().getMethod().getParameters().get(i); // declared
 
             // TODO: Convert to visiting the operand through {@link AbstractNodeVisitor}
+            // Visitor collects the names, then iterate over the list of names calling `assignM()`, `assignV()`, and `assignL()`.
             assignE(n.getTarget(), argument, transferResult.getRegularStore());
         }
         return transferResult;
@@ -76,7 +79,7 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
 
     /**
      * Implementation of the assignE rule from "RefiNym: Using Names to Refine Types".
-     * It recursively visits the expression and assigns the names to the element.
+     * It recursively visits the expression and stores the variable names encountered.
      *
      * @param target     the left side of the assignment
      * @param expression the right side of the assignment

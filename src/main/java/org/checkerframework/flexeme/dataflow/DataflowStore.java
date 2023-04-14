@@ -149,7 +149,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     @Override
     public String visualize(CFGVisualizer<?, DataflowStore, ?> viz) {
-        StringJoiner stores = new StringJoiner("\n");
+        StringJoiner stores = new StringJoiner(System.lineSeparator());
         stores.add(visualizeLastUseStore(viz));
         stores.add(visualizeEdges(viz));
         return stores.toString();

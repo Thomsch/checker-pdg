@@ -13,10 +13,12 @@ import java.util.*;
  */
 public class NameFlowStore implements Store<NameFlowStore> {
 
-    // Store the edges between nodes representing the nameflow
+    // Store the edges between nodes representing the nameflow.
+    //
     public final Map<String, String> names;
 
-    // Map Xi of <variable node, set of names: {(snd,v),(40,l)}
+    // Store the return value of the Ξ function in "RefiNym: Using Names to Refine Types".
+    // The key is a variable node, the values is set of names: {(snd,v),(40,l)}
     private final Map<String, Set<NameRecord>> xi;
 
     public NameFlowStore() {
@@ -52,6 +54,7 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
+        // The names of each store are saved. If the names are the same, the corresponding sets are merged.
         final Map<String, Set<NameRecord>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
         return new NameFlowStore(xiLub, this.names);
     }
@@ -90,11 +93,11 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
         sb.append("Ξ = {");
         sb.append(System.lineSeparator());
-        xi.forEach((variable, names) -> {
+        xi.forEach((variable, nameSet) -> {
             sb.append("  ");
             sb.append(variable);
             sb.append(": ");
-            sb.append(names);
+            sb.append(nameSet);
             sb.append(System.lineSeparator());
         });
         sb.append("}");

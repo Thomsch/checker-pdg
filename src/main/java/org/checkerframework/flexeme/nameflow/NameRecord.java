@@ -6,10 +6,11 @@ import org.checkerframework.javacutil.BugInCF;
 import java.util.Objects;
 
 /**
- * Represents a tuple of name and type from the set returned by the Ξ function in "RefiNym: Using Names to Refine Types".
+ * Represents a tuple of name and type of name from the set returned by the Ξ function in "RefiNym: Using Names to Refine Types".
  * Also contains a unique identifier representing the node in the CFG.
  */
 public class NameRecord implements AbstractValue<NameRecord> {
+    public enum Kind {Variable, Method, Literal}
     private final String name;
     private final Kind kind;
 
@@ -47,6 +48,4 @@ public class NameRecord implements AbstractValue<NameRecord> {
     public String getUid() {
         return uid;
     }
-
-    public enum Kind {Variable, Method, Literal}
 }
