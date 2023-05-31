@@ -45,7 +45,7 @@ public class VariableReference implements AbstractValue<VariableReference> {
             return false;
         }
         VariableReference other = (VariableReference) obj;
-        return this.reference.equals(other.reference) && this.reference.getUid() == other.reference.getUid();
+        return this.reference == other.reference && this.reference.getUid() == other.reference.getUid();
     }
 
     @Override
