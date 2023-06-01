@@ -1,6 +1,6 @@
 package org.checkerframework.flexeme;
 
-import com.sun.source.tree.LineMap;
+import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.VariableTree;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
@@ -66,7 +66,7 @@ public class PdgExtractor {
         StringBuilder graphs = new StringBuilder("digraph {");
         processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
             ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
-            PDGVisualizer visualizer = runVisualization(analysis, controlFlowGraph, processor.getLineMap());
+            PDGVisualizer visualizer = runVisualization(analysis, controlFlowGraph, processor, methodTree);
             String graph = visualizer.getGraph();
             graphs.append(graph);
         });
@@ -107,12 +107,13 @@ public class PdgExtractor {
 
     /**
      * Create the CFG with dataflow edges for a given method.
-     * @param analysis The results of the dataflow analysis
+     *
+     * @param analysis               The results of the dataflow analysis
      * @param methodControlFlowGraph The CFG of the method to visualize
-     * @param lineMap The line map of the file to recover the line numbers
+     * @param methodTree
      * @return The visualizer object containing the PDG for the method.
      */
-    private static PDGVisualizer runVisualization(ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, LineMap lineMap) {
+    private static PDGVisualizer runVisualization(ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, FileProcessor processor, final MethodTree methodTree) {
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", "out");
         args.put("verbose", true);
@@ -121,7 +122,7 @@ public class PdgExtractor {
         UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
 
         String cluster = makeClusterLabel(null, method1.getSimpleClassName(), method1.getMethodName(), method1.getMethod().getParameters());
-        PDGVisualizer viz = new PDGVisualizer(cluster, lineMap, null);
+        PDGVisualizer viz = new PDGVisualizer(cluster, processor.getLineMap(), null, processor.getCfgNodes().get(methodTree));
         viz.init(args);
         Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
         viz.shutdown();

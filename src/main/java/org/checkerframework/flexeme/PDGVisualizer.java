@@ -2,6 +2,7 @@ package org.checkerframework.flexeme;
 
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
+import com.sun.source.tree.MethodTree;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -35,6 +36,7 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
     private final String cluster;
     private final LineMap lineMap;
     private final CompilationUnitTree compilationUnitTree;
+    private final Set<Node> extractedNodes;
 
     private String lastStatementInBlock;
     private List<Edge> cfgEdges;
@@ -59,11 +61,12 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
         return nodes;
     }
 
-    public PDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree) {
+    public PDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Set<Node> extractedNodes) {
         super();
         this.cluster = cluster;
         this.lineMap = lineMap;
         this.compilationUnitTree = compilationUnitTree;
+        this.extractedNodes = extractedNodes;
         this.cfgEdges = new ArrayList<>();
         this.lastStatementInBlock = null;
         this.statementFlowMap = new HashMap<>();
@@ -451,10 +454,18 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
             return formatStatementNode(String.valueOf(t.getUid()), t.toString(), 0, 0);
         } else {
             JCTree jct = ((JCTree) t.getTree());
+
+            System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ")");
+            if (!extractedNodes.contains(t)) {
+                // TODO Look how the artificial nodes are stored in the look up, to know which Tree was associated with it.
+                logger.error("Node '" + t + "'is has no linked node in the PDG.");
+            }
+
             long lineStart = lineMap.getLineNumber(jct.getStartPosition());
             long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
 
-            return formatStatementNode(String.valueOf(t.getUid()), t.getTree().toString(), lineStart, lineEnd);
+            String label = t.getTree().toString() + " ("+ jct.getTag() + ") " + (extractedNodes.contains(t) ? "MATCHED" : "NOT MATCHED");
+            return formatStatementNode(String.valueOf(t.getUid()), label, lineStart, lineEnd);
         }
     }
 
