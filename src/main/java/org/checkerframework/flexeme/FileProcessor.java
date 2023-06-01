@@ -8,12 +8,14 @@ import org.checkerframework.dataflow.cfg.builder.CFGBuilder;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BasicTypeProcessor;
 import org.checkerframework.org.plumelib.util.IdentityArraySet;
+import org.checkerframework.org.plumelib.util.UnmodifiableIdentityHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A processor that stores the control flow graph for each method in the file.
@@ -29,13 +31,13 @@ public class FileProcessor extends BasicTypeProcessor {
 
     final private Map<MethodTree, ControlFlowGraph> cfgResults;
 
-    private final Map<MethodTree, Set<Node>> cfgNodes;
+    private final Map<MethodTree, Map<Node, Tree>> nodeMap;
 
     private final MethodScanner methodScanner;
 
     public FileProcessor() {
         cfgResults = new HashMap<>();
-        cfgNodes = new HashMap<>();
+        nodeMap = new HashMap<>();
         methodScanner = new MethodScanner();
     }
 
@@ -58,69 +60,46 @@ public class FileProcessor extends BasicTypeProcessor {
             if (classTree == null) {
                 logger.error("Class tree is null");
             }
+
+            // TODO: Move everything below out of this method.
             ControlFlowGraph cfg = CFGBuilder.build(compilationUnitTree, method, classTree, processingEnv);
 
+            // TODO: Refactor to return the set of statements by overriding `reduce`.
             TreeScanner<Void, Set<Tree>> statementScanner = new StatementScanner(method);
             Set<Tree> statements = new IdentityArraySet<>();
             statementScanner.scan(method, statements);
 
             System.out.println(cfg.toStringDebug());
-
+            System.out.println(cfg);
+            System.out.println(method);
             System.out.println("Statements: " + statements.size());
-            for (final Tree tree : statements) {
-                System.out.println(tree);
+
+            final UnmodifiableIdentityHashMap<UnaryTree, BinaryTree> postfixNodeLookup = cfg.getPostfixNodeLookup();
+
+            // Using an equality hashmap instead of identity hashmap because we want that different cfg nodes represent the same node
+            HashMap<Node, Tree> cfgNodesToPdgNodes = new HashMap<>();
+            for (final Tree statement : statements) {
+                Set<Node> found = new IdentityArraySet<>();
+                TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(cfg);
+                scanner.scan(statement, found);
+
+                final BinaryTree binaryTree = postfixNodeLookup.get(statement);
+                if (binaryTree != null) {
+                    scanner.scan(binaryTree, found);
+                }
+                found.forEach(node -> cfgNodesToPdgNodes.put(node, statement));
             }
 
-            Set<Node> found = new IdentityArraySet<>();
-            for (final Tree tree : statements) {
-                TreeScanner<Void, Set<Node>> scanner = new TreeScanner<>() {
-                    @Override
-                    public Void scan(final Tree tree, final Set<Node> found) {
-                        // final Set<Node> rec = recursiveScan(tree, cfg);
+            final Map<Tree, Set<Node>> collect = cfgNodesToPdgNodes.entrySet().stream().collect(
+                    Collectors.groupingBy(
+                            Map.Entry::getValue,
+                            Collectors.mapping(Map.Entry::getKey, Collectors.toSet())
+                    )
+            );
+            collect.forEach((k, v) -> System.out.println(k + " -> " + v));
 
-                        if (tree != null) {
-                            final Set<Node> nodes = cfg.getNodesCorrespondingToTree(tree);
-
-                            System.out.println("Tree: " + tree + " " + tree.getClass());
-
-
-                            if (nodes != null) {
-                                System.out.println("Nodes: " + nodes);
-                                found.addAll(nodes);
-                                for (final Node node : nodes) {
-                                    final Collection<Node> transitiveOperands = node.getTransitiveOperands();
-                                    found.addAll(transitiveOperands);
-                                    System.out.println("   Transitive:" + transitiveOperands);
-                                }
-                            } else {
-                                System.out.println("No nodes for tree");
-                            }
-                        }
-                        return super.scan(tree, found);
-                    }
-
-                    private Set<Node> recursiveScan(final Tree tree, final ControlFlowGraph cfg) {
-                        final Set<Node> result = new IdentityArraySet<>();
-                        final Set<Node> nodes = cfg.getNodesCorrespondingToTree(tree);
-
-                        if (nodes == null) {
-                            return result;
-                        }
-                        result.addAll(nodes);
-
-                        for (final Node node : nodes) {
-                            if (node.getTree() != tree) {
-                                final Set<Node> newNodes = recursiveScan(node.getTree(), cfg);
-                                result.addAll(newNodes);
-                            }
-                        }
-                        return result;
-                    }
-                };
-                scanner.scan(tree, found);
-            }
             cfgResults.put(method, cfg);
-            cfgNodes.put(method, found);
+            nodeMap.put(method, cfgNodesToPdgNodes);
         }
         super.typeProcessingOver();
     }
@@ -134,7 +113,8 @@ public class FileProcessor extends BasicTypeProcessor {
         return lineMap;
     }
 
-    public Map<MethodTree, Set<Node>> getCfgNodes() {
-        return cfgNodes;
+    public Map<MethodTree, Map<Node, Tree>> getNodeMap() {
+        return nodeMap;
     }
+
 }

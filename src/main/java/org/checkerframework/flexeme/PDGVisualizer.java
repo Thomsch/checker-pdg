@@ -2,7 +2,8 @@ package org.checkerframework.flexeme;
 
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
-import com.sun.source.tree.MethodTree;
+import com.sun.source.tree.Tree;
+import com.sun.source.util.TreeScanner;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -16,6 +17,7 @@ import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
 import org.checkerframework.javacutil.TypesUtils;
+import org.checkerframework.org.plumelib.util.IdentityArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +38,8 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
     private final String cluster;
     private final LineMap lineMap;
     private final CompilationUnitTree compilationUnitTree;
-    private final Set<Node> extractedNodes;
+    private final Map<Node, Tree> nodeMap;
+    private final ControlFlowGraph controlFlowGraph;
 
     private String lastStatementInBlock;
     private List<Edge> cfgEdges;
@@ -61,12 +64,13 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
         return nodes;
     }
 
-    public PDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Set<Node> extractedNodes) {
+    public PDGVisualizer(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Map<Node, Tree> nodeMap, final ControlFlowGraph controlFlowGraph) {
         super();
         this.cluster = cluster;
         this.lineMap = lineMap;
         this.compilationUnitTree = compilationUnitTree;
-        this.extractedNodes = extractedNodes;
+        this.nodeMap = nodeMap;
+        this.controlFlowGraph = controlFlowGraph;
         this.cfgEdges = new ArrayList<>();
         this.lastStatementInBlock = null;
         this.statementFlowMap = new HashMap<>();
@@ -455,16 +459,27 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
         } else {
             JCTree jct = ((JCTree) t.getTree());
 
-            System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ")");
-            if (!extractedNodes.contains(t)) {
-                // TODO Look how the artificial nodes are stored in the look up, to know which Tree was associated with it.
+            // For each node in the CFG, find the corresponding node in the PDG.
+            Set<Node> found = new IdentityArraySet<>();
+            TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(controlFlowGraph);
+            scanner.scan(t.getTree(), found);
+
+            System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ") (uid=" + t.getUid() + ") (hash=" + t.hashCode());
+
+            found.forEach(node -> {
+                if (nodeMap.containsKey(node)) {
+                    nodeMap.put(t, nodeMap.get(node));
+                }
+            });
+
+            if (!nodeMap.containsKey(t)) {
                 logger.error("Node '" + t + "'is has no linked node in the PDG.");
             }
 
             long lineStart = lineMap.getLineNumber(jct.getStartPosition());
             long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
 
-            String label = t.getTree().toString() + " ("+ jct.getTag() + ") " + (extractedNodes.contains(t) ? "MATCHED" : "NOT MATCHED");
+            String label = t.getTree().toString() + " ("+ jct.getTag() + ") ";
             return formatStatementNode(String.valueOf(t.getUid()), label, lineStart, lineEnd);
         }
     }
@@ -524,7 +539,6 @@ public class PDGVisualizer extends DOTCFGVisualizer<VariableReference, DataflowS
     public String visualizeBlockTransferInputAfter(Block bb, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         return "";
     }
-
 
     private String methodSignature(UnderlyingAST.CFGMethod cfgMethod) {
         List<String> types = cfgMethod.getMethod().getParameters().stream()

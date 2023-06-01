@@ -122,7 +122,7 @@ public class PdgExtractor {
         UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
 
         String cluster = makeClusterLabel(null, method1.getSimpleClassName(), method1.getMethodName(), method1.getMethod().getParameters());
-        PDGVisualizer viz = new PDGVisualizer(cluster, processor.getLineMap(), null, processor.getCfgNodes().get(methodTree));
+        PDGVisualizer viz = new PDGVisualizer(cluster, processor.getLineMap(), null, processor.getNodeMap().get(methodTree), processor.getMethodCfgs().get(methodTree));
         viz.init(args);
         Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
         viz.shutdown();
