@@ -1,5 +1,6 @@
 package org.checkerframework.flexeme;
 
+import com.google.common.collect.Sets;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.TreeScanner;
@@ -117,4 +118,11 @@ public class FileProcessor extends BasicTypeProcessor {
         return nodeMap;
     }
 
+    public Set<Tree> getPdgNodes(MethodTree methodTree) {
+        return Sets.newHashSet(nodeMap.get(methodTree).values());
+    }
+
+    public ClassTree getClassTree(final MethodTree methodTree) {
+        return methodScanner.getClassMap().get(methodTree);
+    }
 }

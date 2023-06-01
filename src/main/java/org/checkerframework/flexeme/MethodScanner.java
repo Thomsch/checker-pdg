@@ -57,6 +57,10 @@ public class MethodScanner extends TreePathScanner<Void, Void> {
         return classMap.get(method);
     }
 
+    public Map<MethodTree, ClassTree> getClassMap() {
+        return classMap;
+    }
+
     public List<MethodTree> getMethodTrees() {
         return methodTrees;
     }
