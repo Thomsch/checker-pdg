@@ -23,6 +23,24 @@ class StatementScanner extends TreeScanner<Void, Set<Tree>> {
     }
 
     @Override
+    public Void visitCompoundAssignment(final CompoundAssignmentTree node, final Set<Tree> statements) {
+        statements.add(node);
+        return super.visitCompoundAssignment(node, statements);
+    }
+
+    @Override
+    public Void visitParenthesized(final ParenthesizedTree node, final Set<Tree> statements) {
+        statements.add(node.getExpression());
+        return super.visitParenthesized(node, statements);
+    }
+
+    @Override
+    public Void visitForLoop(final ForLoopTree node, final Set<Tree> statements) {
+        statements.add(node.getCondition());
+        return super.visitForLoop(node, statements);
+    }
+
+    @Override
     public Void visitReturn(final ReturnTree node, final Set<Tree> statements) {
         statements.add(node);
         return super.visitReturn(node, statements);
@@ -32,6 +50,12 @@ class StatementScanner extends TreeScanner<Void, Set<Tree>> {
     public Void visitMethodInvocation(final MethodInvocationTree node, final Set<Tree> statements) {
         statements.add(node);
         return super.visitMethodInvocation(node, statements);
+    }
+
+    @Override
+    public Void visitAssignment(final AssignmentTree node, final Set<Tree> trees) {
+        trees.add(node);
+        return super.visitAssignment(node, trees);
     }
 
     @Override

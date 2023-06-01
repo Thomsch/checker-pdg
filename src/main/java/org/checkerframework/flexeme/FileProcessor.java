@@ -64,29 +64,39 @@ public class FileProcessor extends BasicTypeProcessor {
             Set<Tree> statements = new IdentityArraySet<>();
             statementScanner.scan(method, statements);
 
-            Set<Node> found = new IdentityArraySet<>();
-            // System.out.println(cfg.toStringDebug());
+            System.out.println(cfg.toStringDebug());
 
+            System.out.println("Statements: " + statements.size());
             for (final Tree tree : statements) {
-                System.out.println("Statement: " + tree);
+                System.out.println(tree);
+            }
 
-                TreeScanner<Void, Void> scanner = new TreeScanner<>() {
+            Set<Node> found = new IdentityArraySet<>();
+            for (final Tree tree : statements) {
+                TreeScanner<Void, Set<Node>> scanner = new TreeScanner<>() {
                     @Override
-                    public Void scan(final Tree tree, final Void unused) {
-                        final Set<Node> rec = recursiveScan(tree, cfg);
+                    public Void scan(final Tree tree, final Set<Node> found) {
+                        // final Set<Node> rec = recursiveScan(tree, cfg);
 
                         if (tree != null) {
+                            final Set<Node> nodes = cfg.getNodesCorrespondingToTree(tree);
+
                             System.out.println("Tree: " + tree + " " + tree.getClass());
-                            System.out.println("Nodes: " + rec);
-                            for (final Node node : rec) {
-                                System.out.println("Operands: " + node.getOperands());
-                                for (final Node operand : node.getOperands()) {
-                                    System.out.println("Operand: " + operand.getClass());
+
+
+                            if (nodes != null) {
+                                System.out.println("Nodes: " + nodes);
+                                found.addAll(nodes);
+                                for (final Node node : nodes) {
+                                    final Collection<Node> transitiveOperands = node.getTransitiveOperands();
+                                    found.addAll(transitiveOperands);
+                                    System.out.println("   Transitive:" + transitiveOperands);
                                 }
+                            } else {
+                                System.out.println("No nodes for tree");
                             }
-                            found.addAll(rec);
                         }
-                        return super.scan(tree, unused);
+                        return super.scan(tree, found);
                     }
 
                     private Set<Node> recursiveScan(final Tree tree, final ControlFlowGraph cfg) {
@@ -107,7 +117,7 @@ public class FileProcessor extends BasicTypeProcessor {
                         return result;
                     }
                 };
-                scanner.scan(tree, null);
+                scanner.scan(tree, found);
             }
             cfgResults.put(method, cfg);
             cfgNodes.put(method, found);
