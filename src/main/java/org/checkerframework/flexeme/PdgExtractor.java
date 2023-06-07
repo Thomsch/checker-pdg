@@ -1,9 +1,6 @@
 package org.checkerframework.flexeme;
 
-import com.google.common.graph.MutableNetwork;
-import com.google.common.graph.Network;
-import com.google.common.graph.NetworkBuilder;
-import com.sun.source.tree.ClassTree;
+import com.google.common.graph.EndpointPair;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.tree.VariableTree;
@@ -17,10 +14,6 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
-import org.checkerframework.flexeme.nameflow.NameFlowStore;
-import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
-import org.checkerframework.flexeme.nameflow.NameRecord;
-import org.checkerframework.javacutil.UserError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,9 +21,6 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -74,64 +64,74 @@ public class PdgExtractor {
     }
 
     public void run(String file, String sourcePath, String classPath, String path_out) {
-        // 1. Compile file and dependencies.
+        // Compile file and build CFGs.
         FileProcessor processor = compileFile(file, compileOut, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
-        // 2. Run analysis for each method and build the dataflow graph.
-        // TODO: This is extremely tangled. The construction of the PDG and it's visualization are tangled. We should refactor this.
-        StringBuilder graphs = new StringBuilder("digraph {");
-        Set<PdgGraph> graphs2 = new HashSet<>();
-        processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            Set<Tree> pdgNodes = processor.getPdgNodes(methodTree);
-
+        Set<PdgGraph> graphs = new HashSet<>();
+        for (final MethodTree methodTree : processor.getMethods()) {
+            // Build graph nodes
             PdgGraph pdgGraph = new PdgGraph(processor, processor.getClassTree(methodTree), methodTree);
-
-            for (Tree node : pdgNodes) {
+            for (Tree node : processor.getPdgNodes(methodTree)) {
                 pdgGraph.addNode(node);
             }
 
-            ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
-            PDGVisualizer visualizer = runVisualization(analysis, controlFlowGraph, processor, methodTree);
-            String graph = visualizer.getGraph();
-            graphs.append(graph);
-            graphs2.add(pdgGraph);
-        });
+            final ControlFlowGraph controlFlowGraph = processor.getMethodCfgs().get(methodTree);
+            pdgGraph.addEntryNode(controlFlowGraph.getEntryBlock());
+            pdgGraph.addExitNode(controlFlowGraph.getRegularExitBlock());
+            pdgGraph.addExceptionalExitNode(controlFlowGraph.getExceptionalExitBlock());
 
-        printDot(graphs2);
+            // Extract CFG edges and convert them to PDG edges.
+            CfgTraverser cfgTraverser = new CfgTraverser("", processor.getLineMap(), null, processor.getNodeMap().get(methodTree), processor.getMethodCfgs().get(methodTree));
+            Set<PdgEdge> edges = cfgTraverser.traverseEdges(pdgGraph, controlFlowGraph);
 
-        // Method invocation edges.
-        PDGVisualizer.invocations.forEach((nodeId, methodName) -> {
-            String blockId = PDGVisualizer.methods.get(methodName);
-            if (blockId != null) {
-                graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]").append(System.lineSeparator());
-            }
-        });
+            graphs.add(pdgGraph);
+        }
 
-        // TODO: The creation of the graph should be decoupled from printing the results
-        // 3. Run nameflow analysis and add it to the graph.
-        processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-            ForwardAnalysis<NameRecord, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
-            analysis.performAnalysis(controlFlowGraph);
 
-            final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
-            exitStore.getXi().forEach((variable, names) -> {
-                names.forEach(nameRecord -> {
-                    // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
-                    if (PDGVisualizer.getNodes().contains(nameRecord.getUid()) && PDGVisualizer.getNodes().contains(variable)) {
-                        graphs.append(nameRecord.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
-                    }
-                });
-            });
-        });
+        // 3. Traverse CFG and add control edges to graph
 
-        graphs.append("}");
+        // processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
+        //     ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = runAnalysis(controlFlowGraph);
+        //     CfgTraverser visualizer = runVisualization(analysis, controlFlowGraph, processor, methodTree);
+        //     String graph = visualizer.getGraph();
+        // });
+
+        // 3. Print the graph.
+        printDot(graphs);
+
+        // // Method invocation edges.
+        // CfgTraverser.invocations.forEach((nodeId, methodName) -> {
+        //     String blockId = CfgTraverser.methods.get(methodName);
+        //     if (blockId != null) {
+        //         graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]").append(System.lineSeparator());
+        //     }
+        // });
+
+        // // TODO: The creation of the graph should be decoupled from printing the results
+        // // 3. Run nameflow analysis and add it to the graph.
+        // processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
+        //     ForwardAnalysis<NameRecord, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
+        //     analysis.performAnalysis(controlFlowGraph);
+        //
+        //     final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
+        //     exitStore.getXi().forEach((variable, names) -> {
+        //         names.forEach(nameRecord -> {
+        //             // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
+        //             if (CfgTraverser.getNodes().contains(nameRecord.getUid()) && CfgTraverser.getNodes().contains(variable)) {
+        //                 graphs.append(nameRecord.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
+        //             }
+        //         });
+        //     });
+        // });
+        //
+        // graphs.append("}");
 
         // 3. Print dot file.
-        try (BufferedWriter out = new BufferedWriter(new FileWriter(path_out))) {
-            out.write(graphs.toString());
-        } catch (IOException e) {
-            throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
-        }
+        // try (BufferedWriter out = new BufferedWriter(new FileWriter(path_out))) {
+        //     out.write(graphs.toString());
+        // } catch (IOException e) {
+        //     throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
+        // }
     }
 
     /**
@@ -162,7 +162,14 @@ public class PdgExtractor {
         }
 
         // Print edges
-        // TODO
+        for (final EndpointPair<PdgNode> edge : graph.edges()) {
+            Optional<PdgEdge.Type> edgeType = graph.edgeValue(edge);
+            if (edgeType.isPresent()) {
+                System.out.printf("n%d -> n%d [key=%d, style=%s, color=%s];%n", edge.source().getId(), edge.target().getId(), edgeType.get().getKey(), edgeType.get().getStyle(), edgeType.get().getColor());
+            } else {
+                logger.error("Edge type is empty for edge: " + edge);
+            }
+        }
 
         System.out.println("}");
     }
@@ -183,7 +190,7 @@ public class PdgExtractor {
      * @param methodTree
      * @return The visualizer object containing the PDG for the method.
      */
-    private static PDGVisualizer runVisualization(ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, FileProcessor processor, final MethodTree methodTree) {
+    private static CfgTraverser runVisualization(ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, FileProcessor processor, final MethodTree methodTree) {
         Map<String, Object> args = new HashMap<>(2);
         args.put("outdir", "out");
         args.put("verbose", true);
@@ -192,7 +199,7 @@ public class PdgExtractor {
         UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
 
         String cluster = makeClusterLabel(null, method1.getSimpleClassName(), method1.getMethodName(), method1.getMethod().getParameters());
-        PDGVisualizer viz = new PDGVisualizer(cluster, processor.getLineMap(), null, processor.getNodeMap().get(methodTree), processor.getMethodCfgs().get(methodTree));
+        CfgTraverser viz = new CfgTraverser(cluster, processor.getLineMap(), null, processor.getNodeMap().get(methodTree), processor.getMethodCfgs().get(methodTree));
         viz.init(args);
         Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
         viz.shutdown();

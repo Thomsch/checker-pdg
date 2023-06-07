@@ -71,14 +71,14 @@ public class FileProcessor extends BasicTypeProcessor {
             statementScanner.scan(method, statements);
 
             System.out.println(cfg.toStringDebug());
-            System.out.println(cfg);
-            System.out.println(method);
-            System.out.println("Statements: " + statements.size());
+            // System.out.println(cfg);
+            // System.out.println(method);
+            // System.out.println("Statements: " + statements.size());
 
             final UnmodifiableIdentityHashMap<UnaryTree, BinaryTree> postfixNodeLookup = cfg.getPostfixNodeLookup();
 
-            // Using an equality hashmap instead of identity hashmap because we want that different cfg nodes represent the same node
-            HashMap<Node, Tree> cfgNodesToPdgNodes = new HashMap<>();
+            // An identity hashmap is needed so that the nodes are compared by reference instead of equality.
+            Map<Node, Tree> cfgNodesToPdgNodes = new IdentityHashMap<>();
             for (final Tree statement : statements) {
                 Set<Node> found = new IdentityArraySet<>();
                 TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(cfg);
@@ -87,6 +87,9 @@ public class FileProcessor extends BasicTypeProcessor {
                 final BinaryTree binaryTree = postfixNodeLookup.get(statement);
                 if (binaryTree != null) {
                     scanner.scan(binaryTree, found);
+                }
+                for (final Node node : found) {
+                    System.out.println("Found node: " + node + " (uid:" + node.getUid() + ")");
                 }
                 found.forEach(node -> cfgNodesToPdgNodes.put(node, statement));
             }
@@ -124,5 +127,9 @@ public class FileProcessor extends BasicTypeProcessor {
 
     public ClassTree getClassTree(final MethodTree methodTree) {
         return methodScanner.getClassMap().get(methodTree);
+    }
+
+    public Set<MethodTree> getMethods() {
+        return cfgResults.keySet();
     }
 }

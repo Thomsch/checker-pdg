@@ -4,13 +4,13 @@ import com.sun.source.tree.Tree;
 
 public class PdgNode {
     private long id;
-    private final Tree tree;
+    private final String label;
     private long startLine;
     private long endLine;
 
-    public PdgNode(final long nodeId, final Tree tree, final long lineStart, final long lineEnd, final Tree tree1) {
+    public PdgNode(final long nodeId, final String label, final long lineStart, final long lineEnd) {
         this.id = nodeId;
-        this.tree = tree;
+        this.label = label;
         this.startLine = lineStart;
         this.endLine = lineEnd;
     }
@@ -29,6 +29,6 @@ public class PdgNode {
 
     @Override
     public String toString() {
-        return tree.toString();
+        return label;
     }
 }
