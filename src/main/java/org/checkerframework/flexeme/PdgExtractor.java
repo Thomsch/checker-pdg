@@ -14,6 +14,7 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
+import org.checkerframework.javacutil.UserError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,9 @@ import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.ToolProvider;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
@@ -97,7 +101,8 @@ public class PdgExtractor {
         // });
 
         // 3. Print the graph.
-        printDot(graphs);
+        String dotGraphForFile = printDot(graphs);
+        System.out.println(dotGraphForFile);
 
         // // Method invocation edges.
         // CfgTraverser.invocations.forEach((nodeId, methodName) -> {
@@ -126,12 +131,12 @@ public class PdgExtractor {
         //
         // graphs.append("}");
 
-        // 3. Print dot file.
-        // try (BufferedWriter out = new BufferedWriter(new FileWriter(path_out))) {
-        //     out.write(graphs.toString());
-        // } catch (IOException e) {
-        //     throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
-        // }
+        // Print dot file.
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(path_out))) {
+            out.write(dotGraphForFile);
+        } catch (IOException e) {
+            throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
+        }
     }
 
     /**
@@ -139,47 +144,62 @@ public class PdgExtractor {
      * @param graphs The PDGs graphs from a file to print.
      */
     private String printDot(Set<PdgGraph> graphs) {
-        // StringBuilder dotGraph = new StringBuilder("digraph {");
-        System.out.println("digraph {");
+        StringBuilder stringBuilder = new StringBuilder("digraph {");
         int counter = 0;
         for (final PdgGraph graph : graphs) {
-            printGraph(graph, counter);
+            stringBuilder.append(printGraph(graph, counter));
+            stringBuilder.append(System.lineSeparator());
             counter++;
         }
 
         // TODO: All the edges are printed at the end (that's what C# PDG does)
-        System.out.println("}");
-        return "";
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 
-    private void printGraph(PdgGraph graph, int cluster) {
-        System.out.println("subgraph " + "cluster_" + cluster + " {");
-        printSubgraphLabel(graph);
+/**
+     * Print a PDG graph as a dot subgraph.
+     * @param graph The PDG graph to print.
+     * @param cluster The cluster number.
+     */
+    private String printGraph(PdgGraph graph, int cluster) {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("subgraph " + "cluster_").append(cluster).append(" {");
+        stringBuilder.append(System.lineSeparator());
+        stringBuilder.append(printSubgraphLabel(graph));
+        stringBuilder.append(System.lineSeparator());
 
         // Print nodes
         for (final PdgNode node : graph.nodes()) {
-            printNode(node);
+            stringBuilder.append(printNode(node));
+            stringBuilder.append(System.lineSeparator());
         }
 
         // Print edges
         for (final EndpointPair<PdgNode> edge : graph.edges()) {
             Optional<PdgEdge.Type> edgeType = graph.edgeValue(edge);
             if (edgeType.isPresent()) {
-                System.out.printf("n%d -> n%d [key=%d, style=%s, color=%s];%n", edge.source().getId(), edge.target().getId(), edgeType.get().getKey(), edgeType.get().getStyle(), edgeType.get().getColor());
+                stringBuilder.append(printEdge(edge, edgeType.get()));
+                stringBuilder.append(System.lineSeparator());
             } else {
                 logger.error("Edge type is empty for edge: " + edge);
             }
         }
 
-        System.out.println("}");
+        stringBuilder.append("}");
+        return stringBuilder.toString();
     }
 
-    private void printNode(final PdgNode node) {
-        System.out.printf("n%d [label=\"%s\", span=\"%d-%d\"];%n", node.getId(), node, node.getStartLine(), node.getEndLine());
+    private static String printEdge(final EndpointPair<PdgNode> edge, final PdgEdge.Type edgeType) {
+        return String.format("n%d -> n%d [key=%d, style=%s, color=%s];", edge.source().getId(), edge.target().getId(), edgeType.getKey(), edgeType.getStyle(), edgeType.getColor());
     }
 
-    private void printSubgraphLabel(final PdgGraph graph) {
-        System.out.printf("label = \"%s.%s()\";%n", graph.getClassName(), graph.getMethodName());
+    private String printNode(final PdgNode node) {
+        return String.format("n%d [label=\"%s\", span=\"%d-%d\"];", node.getId(), node, node.getStartLine(), node.getEndLine());
+    }
+
+    private String printSubgraphLabel(final PdgGraph graph) {
+        return String.format("label = \"%s.%s()\";", graph.getClassName(), graph.getMethodName());
     }
 
     /**
