@@ -103,7 +103,9 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 for (final Block successor : block.getSuccessors()) {
                     PdgNode to = findToNode(successor);
 
-                    if (!from.equals(to)) {
+                    if (to == null) {
+                        logger.error("No to node found for from node: " + from);
+                    } else if (!from.equals(to)) {
                         PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
                         pdgGraph.addEdge(edge);
                     }
@@ -471,20 +473,19 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             invocations.put("n"+ t.getUid(), signature);
         }
 
+        System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ") (uid=" + t.getUid() + ") (hash=" + t.hashCode() + ")");
+        System.out.println("is in node map: " + nodeMap.containsKey(t));
         if (t.getTree() != null) {
-            JCTree jct = ((JCTree) t.getTree());
-
-            // For each node in the CFG, find the corresponding node in the PDG.
+            // Find all the nodes in the AST tree that are related to the CFG node.
             Set<Node> found = new IdentityArraySet<>();
             TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(controlFlowGraph);
             scanner.scan(t.getTree(), found);
 
-            System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ") (uid=" + t.getUid() + ") (hash=" + t.hashCode());
-            // Block: RegularBlock([omega, w, z, (w + z), omega = (w + z), omega, omega, 1, (omega + 1), omega = (omega + 1), omega, return omega])
             for (final Node node : found) {
-                System.out.println("Node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + nodeMap.get(node));
+                System.out.println("- related node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + nodeMap.get(node));
             }
-            System.out.println();
+
+            // Update the node map with the found nodes to have a same statement node as the current CFG node.
             found.forEach(node -> {
                 if (nodeMap.containsKey(node)) {
                     nodeMap.put(t, nodeMap.get(node));
@@ -501,6 +502,9 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                     logger.error("Node '" + t + "'is has no linked node in the PDG.");
                 }
             }
+            System.out.println();
+        } else {
+            logger.warn("Node '" + t + "' has no tree.");
         }
         return null;
     }

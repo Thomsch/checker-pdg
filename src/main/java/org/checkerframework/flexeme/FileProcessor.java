@@ -71,9 +71,11 @@ public class FileProcessor extends BasicTypeProcessor {
             statementScanner.scan(method, statements);
 
             System.out.println(cfg.toStringDebug());
-            // System.out.println(cfg);
-            // System.out.println(method);
-            // System.out.println("Statements: " + statements.size());
+            System.out.println("Statements: " + statements.size());
+            for (final Tree statement : statements) {
+                System.out.println("Statement: " + statement);
+            }
+            System.out.println();
 
             final UnmodifiableIdentityHashMap<UnaryTree, BinaryTree> postfixNodeLookup = cfg.getPostfixNodeLookup();
 
@@ -89,11 +91,15 @@ public class FileProcessor extends BasicTypeProcessor {
                     scanner.scan(binaryTree, found);
                 }
                 for (final Node node : found) {
-                    System.out.println("Found node: " + node + " (uid:" + node.getUid() + ")");
+                    System.out.println("Found node: " + node + " (uid:" + node.getUid() + ") -> " + statement);
                 }
                 found.forEach(node -> cfgNodesToPdgNodes.put(node, statement));
             }
+            System.out.println();
 
+            // Show all the nodes associated with a statement.
+            // The map is reversed so that the statement is the key.
+            System.out.println("Statement -> Nodes");
             final Map<Tree, Set<Node>> collect = cfgNodesToPdgNodes.entrySet().stream().collect(
                     Collectors.groupingBy(
                             Map.Entry::getValue,
@@ -101,6 +107,7 @@ public class FileProcessor extends BasicTypeProcessor {
                     )
             );
             collect.forEach((k, v) -> System.out.println(k + " -> " + v));
+            System.out.println();
 
             cfgResults.put(method, cfg);
             nodeMap.put(method, cfgNodesToPdgNodes);
