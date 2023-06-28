@@ -3,15 +3,16 @@ import java.util.Optional;
 
 class BasicTests {
 
-    float f = 3;
-
-    void foo() {
-        int a = bar(1, 2);
-        int b = bar(3);
-    }
-
+    // float f = 3;
+    //
+    // void foo() {
+    //     int a = bar(1, 2);
+    //     int b = bar(3);
+    // }
+    //
     int bar(int w, int z) {
         int omega = w + z;
+        omega = omega + 1;
         return omega;
     }
 
@@ -19,10 +20,13 @@ class BasicTests {
         return y + 1;
     }
 
-    void loopy(int x) {
-        int a = 0;
-        for (int i = 0; i < x; x++) {
-            a += x;
+    void conditional() {
+        int x = 0;
+
+        if (x == 0) {
+            x = 1;
+        } else {
+            x = 2;
         }
     }
 
@@ -31,8 +35,6 @@ class BasicTests {
         int b = y;
         List<String> oh = o;
 
-        //bar(a, b); // Unsupported.
-        // This is a comment
         if (a == 3 || a == 2) {
             if (b < 0) {
                 boolean c = true && false;
@@ -47,31 +49,36 @@ class BasicTests {
         return a + b;
     }
 
-    void exceptionTest(int x) {
-        int a = x;
+    // void justThrow() {
+    //     throw new RuntimeException("Just throw");
+    // }
 
-        try {
-            int b = a / x;
-        } catch (Exception e) {
-            int c = x;
-        }
-    }
-
-    void anonymousMethod(Integer x) {
-        Integer a = x;
-        Optional<Integer> optX = Optional.of(x);
-        optX.ifPresent(n -> System.out.println(n));
-
-        Integer b = optX.get();
-    }
-
-    void anonymousClass() {
-        int a = 0;
-        Runnable r = new Runnable() {
-            public void run() {
-                int b = a;
-            }
-        };
-        r.run();
-    }
+    //
+    // void exceptionTest(int x) {
+    //     int a = x;
+    //
+    //     try {
+    //         int b = a / x;
+    //     } catch (Exception e) {
+    //         int c = x;
+    //     }
+    // }
+    //
+    // void anonymousMethod(Integer x) {
+    //     Integer a = x;
+    //     Optional<Integer> optX = Optional.of(x);
+    //     optX.ifPresent(n -> System.out.println(n));
+    //
+    //     Integer b = optX.get();
+    // }
+    //
+    // void anonymousClass() {
+    //     int a = 0;
+    //     Runnable r = new Runnable() {
+    //         public void run() {
+    //             int b = a;
+    //         }
+    //     };
+    //     r.run();
+    // }
 }

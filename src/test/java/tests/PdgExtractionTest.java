@@ -76,6 +76,14 @@ public class PdgExtractionTest {
     }
 
     @Test
+    public void testLoops() {
+        String inputFile = "src/test/resources/Loops.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Loops.dot");
+    }
+
+    @Test
     public void testNested() {
         String inputFile = "src/test/resources/Nested.java";
 
