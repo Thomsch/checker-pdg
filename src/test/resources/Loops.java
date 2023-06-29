@@ -44,6 +44,12 @@ class Loops {
         return sum;
     }
 
+    public void infiniteLoop() {
+        while (true) {
+            System.out.println("Hello");
+        }
+    }
+
     // // Method with varargs
     // public void printNumbers(int... numbers) {
     //     for (int number : numbers) {
