@@ -6,7 +6,6 @@ import com.sun.source.tree.LineMap;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.JCTree;
-import org.checkerframework.dataflow.cfg.block.Block;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
 
@@ -36,7 +35,7 @@ public class PdgGraph {
         // this.graph = NetworkBuilder.directed().allowsSelfLoops(true).allowsParallelEdges(true).build();
         this.treeToNodeMap = new HashMap<>();
         this.blockToPdgNode = new HashMap<>();
-        this.cfgNodeToPdgTree = processor.getNodeMap().get(methodTree);
+        this.cfgNodeToPdgTree = processor.getCfgNodeToPdgElementMaps().get(methodTree);
     }
 
     public String getClassName() {

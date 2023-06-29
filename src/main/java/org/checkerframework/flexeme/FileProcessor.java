@@ -70,42 +70,42 @@ public class FileProcessor extends BasicTypeProcessor {
             // TODO: Move everything below out of this method.
             ControlFlowGraph cfg = CFGBuilder.build(compilationUnitTree, method, classTree, processingEnv);
 
-            // TODO: Refactor to return the set of statements by overriding `reduce`.
-            TreeScanner<Void, Set<Tree>> statementScanner = new StatementScanner(method);
-            Set<Tree> statements = new IdentityArraySet<>();
-            statementScanner.scan(method, statements);
+            // TODO: Refactor to return the set of pdgElements by overriding `reduce`.
+            TreeScanner<Void, Set<Tree>> pdgElementScanner = new PdgElementScanner(method);
+            Set<Tree> pdgElements = new IdentityArraySet<>();
+            pdgElementScanner.scan(method, pdgElements);
 
             System.out.println(cfg.toStringDebug());
-            System.out.println("Statements: " + statements.size());
-            for (final Tree statement : statements) {
-                System.out.println("Statement: " + statement);
+            System.out.println("PDG Elements: " + pdgElements.size());
+            for (final Tree statement : pdgElements) {
+                System.out.println("PDG Element: " + statement);
             }
             System.out.println();
 
             final UnmodifiableIdentityHashMap<UnaryTree, BinaryTree> postfixNodeLookup = cfg.getPostfixNodeLookup();
 
             // An identity hashmap is needed so that the nodes are compared by reference instead of equality.
-            Map<Node, Tree> cfgNodesToPdgNodes = new IdentityHashMap<>();
-            for (final Tree statement : statements) {
+            Map<Node, Tree> cfgNodesToPdgElements = new IdentityHashMap<>();
+            for (final Tree pdgElement : pdgElements) {
                 Set<Node> found = new IdentityArraySet<>();
                 TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(cfg);
-                scanner.scan(statement, found);
+                scanner.scan(pdgElement, found);
 
-                final BinaryTree binaryTree = postfixNodeLookup.get(statement);
+                final BinaryTree binaryTree = postfixNodeLookup.get(pdgElement);
                 if (binaryTree != null) {
                     scanner.scan(binaryTree, found);
                 }
                 for (final Node node : found) {
-                    System.out.println("Found node: " + node + " (uid:" + node.getUid() + ") -> " + statement);
+                    System.out.println("Found node: " + node + " (uid:" + node.getUid() + ") -> " + pdgElement);
                 }
-                found.forEach(node -> cfgNodesToPdgNodes.put(node, statement));
+                found.forEach(node -> cfgNodesToPdgElements.put(node, pdgElement));
             }
             System.out.println();
 
             // Show all the nodes associated with a statement.
             // The map is reversed so that the statement is the key.
-            System.out.println("Statement -> Nodes");
-            final Map<Tree, Set<Node>> collect = cfgNodesToPdgNodes.entrySet().stream().collect(
+            System.out.println("PDG Elements -> Nodes");
+            final Map<Tree, Set<Node>> collect = cfgNodesToPdgElements.entrySet().stream().collect(
                     Collectors.groupingBy(
                             Map.Entry::getValue,
                             Collectors.mapping(Map.Entry::getKey, Collectors.toSet())
@@ -115,7 +115,7 @@ public class FileProcessor extends BasicTypeProcessor {
             System.out.println();
 
             cfgResults.put(method, cfg);
-            nodeMap.put(method, cfgNodesToPdgNodes);
+            nodeMap.put(method, cfgNodesToPdgElements);
         }
         super.typeProcessingOver();
     }
@@ -129,7 +129,7 @@ public class FileProcessor extends BasicTypeProcessor {
         return lineMap;
     }
 
-    public Map<MethodTree, Map<Node, Tree>> getNodeMap() {
+    public Map<MethodTree, Map<Node, Tree>> getCfgNodeToPdgElementMaps() {
         return nodeMap;
     }
 

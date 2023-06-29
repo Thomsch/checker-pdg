@@ -36,7 +36,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
     private final String cluster;
     private final LineMap lineMap;
     private final CompilationUnitTree compilationUnitTree;
-    private final Map<Node, Tree> nodeMap;
+    private final Map<Node, Tree> cfgNodeToPdgElementMap;
     private final ControlFlowGraph controlFlowGraph;
     private Set<PdgEdge> cfgEdges2;
 
@@ -56,12 +56,12 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
     private static Set<String> nodes = new HashSet<>();
     private PdgGraph pdgGraph;
 
-    public CfgTraverser(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Map<Node, Tree> nodeMap, final ControlFlowGraph controlFlowGraph) {
+    public CfgTraverser(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Map<Node, Tree> cfgNodeToPdgElementMap, final ControlFlowGraph controlFlowGraph) {
         super();
         this.cluster = cluster;
         this.lineMap = lineMap;
         this.compilationUnitTree = compilationUnitTree;
-        this.nodeMap = nodeMap;
+        this.cfgNodeToPdgElementMap = cfgNodeToPdgElementMap;
         this.controlFlowGraph = controlFlowGraph;
         this.cfgEdges = new ArrayList<>();
         this.lastStatementInBlock = null;
@@ -501,12 +501,13 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 }
             });
 
-            if (!nodeMap.containsKey(t)) {
+            if (!cfgNodeToPdgElementMap.containsKey(t)) {
                 // Some artificial tree nodes cannot be found in the node map because they are never encountered in the AST tree by visiting the nodes.
                 // To associate every node in the CFG to a PDG node, we find a similar node to associate the CFG node to. In practice, these nodes are the same on the AST tree.
                 Node node = findSimilarNode(t, t.getBlock());
                 if (node != null) {
-                    nodeMap.put(t, nodeMap.get(node));
+                    System.out.println("Found similar node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + cfgNodeToPdgElementMap.get(node));
+                    cfgNodeToPdgElementMap.put(t, cfgNodeToPdgElementMap.get(node));
                 } else {
                     logger.error("Node '" + t + "'is has no linked node in the PDG.");
                 }
