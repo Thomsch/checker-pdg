@@ -5,6 +5,7 @@ import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
+import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
@@ -52,9 +53,10 @@ public class PdgGraph {
 
     public void addNode(final Tree tree) {
         final LineMap lineMap = processor.getLineMap();
+        final EndPosTable endPosTable = processor.getEndPosTable();
         JCTree jct = (JCTree) tree;
         long lineStart = lineMap.getLineNumber(jct.getStartPosition());
-        long lineEnd = lineMap.getLineNumber(jct.getPreferredPosition());
+        long lineEnd = lineMap.getLineNumber(jct.getEndPosition(endPosTable));
         PdgNode node = new PdgNode(nodeId, tree.toString(), lineStart, lineEnd);
         treeToNodeMap.put(tree, node);
         graph.addNode(node);

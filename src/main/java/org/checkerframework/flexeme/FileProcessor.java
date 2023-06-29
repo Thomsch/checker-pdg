@@ -4,6 +4,8 @@ import com.google.common.collect.Sets;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePathScanner;
 import com.sun.source.util.TreeScanner;
+import com.sun.tools.javac.tree.EndPosTable;
+import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.builder.CFGBuilder;
 import org.checkerframework.dataflow.cfg.node.Node;
@@ -35,6 +37,7 @@ public class FileProcessor extends BasicTypeProcessor {
     private final Map<MethodTree, Map<Node, Tree>> nodeMap;
 
     private final MethodScanner methodScanner;
+    private EndPosTable endPosTable;
 
     public FileProcessor() {
         cfgResults = new HashMap<>();
@@ -45,6 +48,14 @@ public class FileProcessor extends BasicTypeProcessor {
     @Override
     protected TreePathScanner<?, ?> createTreePathScanner(CompilationUnitTree root) {
         compilationUnitTree = root;
+
+        if (root instanceof JCTree.JCCompilationUnit) {
+            JCTree.JCCompilationUnit jcCompilationUnit = (JCTree.JCCompilationUnit) root;
+            endPosTable = jcCompilationUnit.endPositions;
+        } else {
+            logger.warn("CompilationUnitTree is not an instance of JCTree.JCCompilationUnit");
+        }
+
         lineMap = root.getLineMap();
         return methodScanner;
     }
@@ -127,6 +138,10 @@ public class FileProcessor extends BasicTypeProcessor {
 
     public LineMap getLineMap() {
         return lineMap;
+    }
+
+    public EndPosTable getEndPosTable() {
+        return endPosTable;
     }
 
     public Map<MethodTree, Map<Node, Tree>> getCfgNodeToPdgElementMaps() {
