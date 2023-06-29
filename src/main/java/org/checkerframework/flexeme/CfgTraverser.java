@@ -117,7 +117,16 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             for (final Node node : block.getNodes()) {
                 if (previousNode != null) {
                     PdgNode from = pdgGraph.getNode(previousNode);
+
+                    if (from == null) {
+                        throw new RuntimeException("No from node found for node: " + node);
+                    }
+
                     PdgNode to = pdgGraph.getNode(node);
+
+                    if (to == null) {
+                        throw new RuntimeException("No to node found for node: " + node + " (from: " + from + ")");
+                    }
 
                     // System.out.println("Edge from " + previousNode + " to " + node);
                     // System.out.println("-> " + from + " to " + to);
