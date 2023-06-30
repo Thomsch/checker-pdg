@@ -13,13 +13,13 @@ import static org.junit.Assert.assertTrue;
 public class SwitchStatementTest {
     static FileProcessor processor;
     @BeforeClass
-    public static void setUp() throws Exception {
+    public static void setUp() {
         processor = PdgExtractor.compileFile("src/test/resources/Switches.java", "build/", false, "", "");
     }
 
     private PdgExtractor pdgExtractor;
     @Before
-    public void setUpMethod() throws Exception {
+    public void setUpMethod() {
         pdgExtractor = new PdgExtractor();
     }
 
