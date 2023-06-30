@@ -3,8 +3,6 @@ package org.checkerframework.flexeme;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
-import com.sun.source.util.TreeScanner;
-import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
@@ -15,7 +13,6 @@ import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
 import org.checkerframework.javacutil.TypesUtils;
-import org.checkerframework.org.plumelib.util.IdentityArraySet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,6 +52,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
 
     private static Set<String> nodes = new HashSet<>();
     private PdgGraph pdgGraph;
+    private Map<String, List<Node>> artificialNodeMap = new HashMap<>();
 
     public CfgTraverser(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Map<Node, Tree> cfgNodeToPdgElementMap, final ControlFlowGraph controlFlowGraph) {
         super();
@@ -90,24 +88,46 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         makeStatementNodes(blocks, analysis);
 
         for (final Block block : blocks) {
-            System.out.println("Block: " + block);
+            System.out.println("BLOCK: " + block);
+            System.out.println("--------------------");
+
+            // TODO If the block has no PDG elements, skip it.
 
             // Convert CFG edges between blocks to PDG edges between PDG nodes.
             if (block.equals(cfg.getRegularExitBlock())) { // Exit block, create edge between last statements and exit
-                PdgNode from = findFromNode(block);
-                PdgNode to = findToNode(cfg.getEntryBlock());
-                PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.EXIT);
-                pdgGraph.addEdge(edge);
-            } else {
-                PdgNode from = findFromNode(block);
-                for (final Block successor : block.getSuccessors()) {
-                    PdgNode to = findToNode(successor);
 
-                    if (to == null) {
-                        logger.error("No to node found for from node: " + from);
-                    } else if (!from.equals(to)) {
-                        PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
+                List<PdgNode> fromNodes = findFromNodes(block);
+                List<PdgNode> toNodes = findToNodes(cfg.getEntryBlock());
+                for (PdgNode from : fromNodes) {
+                    for (PdgNode to : toNodes) {
+                        PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.EXIT);
                         pdgGraph.addEdge(edge);
+                    }
+                }
+            } else {
+                List<PdgNode> fromNodes = findFromNodes(block);
+
+                if (fromNodes.size() == 0) {
+                    logger.debug("No from node found for block: " + block);
+                    continue;
+                }
+                List<PdgNode> toNodes = new ArrayList<>();
+                for (final Block successor : block.getSuccessors()) {
+                    toNodes.addAll(findToNodes(successor));
+                }
+
+                if (toNodes.size() == 0) {
+                    logger.debug("No to node found for block: " + block);
+                    continue;
+                }
+
+                for(PdgNode from : fromNodes) {
+                    for(PdgNode to : toNodes) {
+                        if (!from.equals(to)) {
+                            PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
+                            System.out.println(edge);
+                            pdgGraph.addEdge(edge);
+                        }
                     }
                 }
             }
@@ -117,29 +137,24 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             for (final Node node : block.getNodes()) {
                 if (previousNode != null) {
                     PdgNode from = pdgGraph.getNode(previousNode);
-
-                    if (from == null) {
-                        throw new RuntimeException("No from node found for node: " + node);
-                    }
-
                     PdgNode to = pdgGraph.getNode(node);
 
-                    if (to == null) {
-                        throw new RuntimeException("No to node found for node: " + node + " (from: " + from + ")");
-                    }
-
-                    // System.out.println("Edge from " + previousNode + " to " + node);
-                    // System.out.println("-> " + from + " to " + to);
-
-                    // Skip self-edges on PDG nodes unless there is a true self loop in the CFG.
-                    if (!from.equals(to)) {
+                    if (from == null) {
+                        logger.error("No from node found for node: " + previousNode);
+                        continue;
+                    } else if (to == null) {
+                        logger.error("No to node found for node: " + node);
+                        continue;
+                    } else if (!from.equals(to)) { // Skip self-edges on PDG nodes unless there is a true self loop in the CFG.
                         PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
+                        System.out.println(edge);
                         pdgGraph.addEdge(edge);
                     }
-                    System.out.println();
                 }
                 previousNode = node;
             }
+
+            System.out.println();
 
         }
 
@@ -158,23 +173,36 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
      * @param block the block to find the outgoing node for
      * @return the outgoing node
      */
-    private PdgNode findFromNode(final Block block) {
+    private List<PdgNode> findFromNodes(final Block block) {
         switch (block.getType()) {
             case REGULAR_BLOCK:
-                return pdgGraph.getNode(block.getLastNode());
-            case CONDITIONAL_BLOCK:
-                if (block.getPredecessors().size() > 1) {
-                    logger.error("Conditional block has more than one predecessor");
+                ListIterator<Node> iterator = block.getNodes().listIterator(block.getNodes().size());
+                while(iterator.hasPrevious()) {
+                    Node previous = iterator.previous();
+                    if (pdgGraph.getNode(previous) != null) {
+                        return List.of(pdgGraph.getNode(previous));
+                    }
                 }
+
+                System.out.println("Second pass, visiting predecessors of " + block);
+                List<PdgNode> predecessorNodes1 = new ArrayList<>();
                 for (final Block predecessor : block.getPredecessors()) {
-                    return findFromNode(predecessor);
+                    System.out.println("    " + predecessor);
+                    predecessorNodes1.addAll(findFromNodes(predecessor));
                 }
-                throw new IllegalStateException("Conditional block has no predecessor");
+                return predecessorNodes1;
+
+            case CONDITIONAL_BLOCK:
+                List<PdgNode> predecessorNodes2 = new ArrayList<>();
+                for (final Block predecessor : block.getPredecessors()) {
+                    predecessorNodes2.addAll(findFromNodes(predecessor));
+                }
+                return predecessorNodes2;
             case SPECIAL_BLOCK:
-                return pdgGraph.getNode((SpecialBlock) block);
+                return List.of(pdgGraph.getNode((SpecialBlock) block));
             case EXCEPTION_BLOCK:
                 ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                return pdgGraph.getNode(exceptionBlock.getNode());
+                return List.of(pdgGraph.getNode(exceptionBlock.getNode()));
             default:
                 throw new IllegalStateException("Unexpected value: " + block.getType());
         }
@@ -185,23 +213,36 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
      * @param block the block to find the incoming node for
      * @return the incoming node
      */
-    private PdgNode findToNode(final Block block) {
+    private List<PdgNode> findToNodes(final Block block) {
         switch (block.getType()) {
             case REGULAR_BLOCK:
-                return pdgGraph.getNode(block.getNodes().get(0));
+                System.out.println("First pass, visiting nodes of " + block);
+                for (Node node : block.getNodes()) {
+                    System.out.println("    " + node);
+                    if (pdgGraph.getNode(node) != null) {
+                        return List.of(pdgGraph.getNode(node));
+                    }
+                }
+
+                System.out.println("Second pass, visiting successors of " + block);
+
+                List<PdgNode> successorsNodes1 = new ArrayList<>();
+                for (final Block successor : block.getSuccessors()) {
+                    successorsNodes1.addAll(findToNodes(successor));
+                }
+                return successorsNodes1;
+
             case CONDITIONAL_BLOCK:
-                if (block.getPredecessors().size() > 1) {
-                    logger.error("Conditional block has more than one predecessor");
+                List<PdgNode> successorsNodes2 = new ArrayList<>();
+                for (final Block successor : block.getSuccessors()) {
+                    successorsNodes2.addAll(findToNodes(successor));
                 }
-                for (final Block predecessor : block.getPredecessors()) {
-                    return findFromNode(predecessor);
-                }
-                throw new IllegalStateException("Conditional block has no predecessor");
+                return successorsNodes2;
             case SPECIAL_BLOCK:
-                return pdgGraph.getNode((SpecialBlock) block);
+                return List.of(pdgGraph.getNode((SpecialBlock) block));
             case EXCEPTION_BLOCK:
                 ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                return pdgGraph.getNode(exceptionBlock.getNode());
+                return List.of(pdgGraph.getNode(exceptionBlock.getNode()));
             default:
                 throw new IllegalStateException("Unexpected value: " + block.getType());
         }
@@ -482,40 +523,118 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             invocations.put("n"+ t.getUid(), signature);
         }
 
+        // This method adds more nodes to the nodeMap.
+
+        // TODO Map artificial variable declaration with references using the name.
+
         System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ") (uid=" + t.getUid() + ") (hash=" + t.hashCode() + ")");
-        System.out.println("is in node map: " + nodeMap.containsKey(t));
-        if (t.getTree() != null) {
-            // Find all the nodes in the AST tree that are related to the CFG node.
-            Set<Node> found = new IdentityArraySet<>();
-            TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(controlFlowGraph);
-            scanner.scan(t.getTree(), found);
-
-            for (final Node node : found) {
-                System.out.println("- related node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + nodeMap.get(node));
-            }
-
-            // Update the node map with the found nodes to have a same statement node as the current CFG node.
-            found.forEach(node -> {
-                if (nodeMap.containsKey(node)) {
-                    nodeMap.put(t, nodeMap.get(node));
-                }
-            });
-
-            if (!cfgNodeToPdgElementMap.containsKey(t)) {
-                // Some artificial tree nodes cannot be found in the node map because they are never encountered in the AST tree by visiting the nodes.
-                // To associate every node in the CFG to a PDG node, we find a similar node to associate the CFG node to. In practice, these nodes are the same on the AST tree.
-                Node node = findSimilarNode(t, t.getBlock());
-                if (node != null) {
-                    System.out.println("Found similar node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + cfgNodeToPdgElementMap.get(node));
-                    cfgNodeToPdgElementMap.put(t, cfgNodeToPdgElementMap.get(node));
-                } else {
-                    logger.error("Node '" + t + "'is has no linked node in the PDG.");
-                }
-            }
-            System.out.println();
-        } else {
-            logger.warn("Node '" + t + "' has no tree.");
-        }
+        // System.out.println("    In node map: " + cfgNodeToPdgElementMap.containsKey(t));
+        System.out.println("    In source: " + t.getInSource());
+        // if (!t.getInSource()) {
+        //     System.out.println("    Artificial node in source");
+        //     // TODO Refactor this to use a visitor to get the name.
+        //     if (t instanceof VariableDeclarationNode) {
+        //         VariableDeclarationNode variableDeclarationNode = (VariableDeclarationNode) t;
+        //
+        //         if (artificialNodeMap.containsKey(variableDeclarationNode.getName())) {
+        //             System.out.println("    Artificial node already in map: " + artificialNodeMap.get(variableDeclarationNode.getName()));
+        //             artificialNodeMap.get(variableDeclarationNode.getName()).add(variableDeclarationNode);
+        //         } else {
+        //             System.out.println("    Adding artificial node to map: " + variableDeclarationNode);
+        //             List<Node> nodes = new ArrayList<>();
+        //             nodes.add(variableDeclarationNode);
+        //             artificialNodeMap.put(variableDeclarationNode.getName(), nodes);
+        //         }
+        //     } else if (t instanceof LocalVariableNode) {
+        //         LocalVariableNode localVariableNode = (LocalVariableNode) t;
+        //
+        //         if (artificialNodeMap.containsKey(localVariableNode.getName())) {
+        //             System.out.println("    Artificial node already in map: " + artificialNodeMap.get(localVariableNode.getName()));
+        //             artificialNodeMap.get(localVariableNode.getName()).add(localVariableNode);
+        //         } else {
+        //             System.out.println("    Adding artificial node to map: " + localVariableNode);
+        //             List<Node> nodes = new ArrayList<>();
+        //             nodes.add(localVariableNode);
+        //             artificialNodeMap.put(localVariableNode.getName(), nodes);
+        //         }
+        //     } else {
+        //         System.out.println("    Unsupported artificial node: " + t + " (" + t.getClass() + ")");
+        //     }
+        // }
+        //
+        // if (t.getTree() != null) {
+        //     // Find all the nodes in the AST tree that are related to the CFG node.
+        //     Set<Node> found = new IdentityArraySet<>();
+        //     TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(controlFlowGraph);
+        //     scanner.scan(t.getTree(), found);
+        //
+        //     if (cfgNodeToPdgElementMap.containsKey(t)) {
+        //         // Update descendants to point to t
+        //         for (final Node node : found) {
+        //             // System.out.println("- related node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + nodeMap.get(node));
+        //             System.out.println("Update descendant node " + node + "(" + node.getClass() + ") (" + node.getUid() + ") " + " to node " + t + " node map -> " + cfgNodeToPdgElementMap.get(node));
+        //             cfgNodeToPdgElementMap.put(node, cfgNodeToPdgElementMap.get(t));
+        //         }
+        //     } else { // Try to find a mapped node in its descendants.
+        //         final Set<Node> mappedNodes = new IdentityArraySet<>();
+        //         for (final Node node : found) {
+        //             if (cfgNodeToPdgElementMap.containsKey(node)) {
+        //                 mappedNodes.add(node);
+        //             }
+        //         }
+        //         if (mappedNodes.size() > 1) {
+        //             // If this ever happen, we log a warning for debug purposes.
+        //             logger.warn("Competing nodes found for CFG node " + t + ": " + mappedNodes);
+        //         }
+        //
+        //         if (mappedNodes.size() == 0) {
+        //             // If no mapped node is found, we log a warning for debug purposes.
+        //             logger.warn("No mapped node found for CFG node " + t);
+        //             if (t instanceof VariableDeclarationNode) {
+        //                 VariableDeclarationNode variableDeclarationNode = (VariableDeclarationNode) t;
+        //                 artificialNodeMap.get(variableDeclarationNode.getName()).forEach(artificialNode -> {
+        //                     System.out.println("    Artificial node: " + artificialNode + " -> " + cfgNodeToPdgElementMap.get(artificialNode));
+        //                 });
+        //             } else if (t instanceof LocalVariableNode) {
+        //                 LocalVariableNode localVariableNode = (LocalVariableNode) t;
+        //                 artificialNodeMap.get(localVariableNode.getName()).forEach(artificialNode -> {
+        //                     System.out.println("    Artificial node: " + artificialNode + " -> " + cfgNodeToPdgElementMap.get(artificialNode));
+        //                 });
+        //             }
+        //         }
+        //
+        //         // Update t with the mapped node.
+        //         mappedNodes.forEach(mappedNode -> {
+        //             System.out.println("Update t node " + mappedNode + "(" + mappedNode.getClass() + ") (" + mappedNode.getUid() + ") " + " with mapped node " + mappedNode + " -> " + cfgNodeToPdgElementMap.get(mappedNode));
+        //             cfgNodeToPdgElementMap.put(t, cfgNodeToPdgElementMap.get(mappedNode));
+        //         });
+        //
+        //         // Update all other nodes with the mapped node.
+        //         mappedNodes.forEach(mappedNode -> {
+        //             found.forEach(node -> {
+        //                 if (cfgNodeToPdgElementMap.containsKey(node)) {
+        //                     System.out.println("Updating descendant node " + node + "(" + node.getClass() + ") (" + node.getUid() + ") with mapped node " + mappedNode + " -> " + cfgNodeToPdgElementMap.get(node));
+        //                     cfgNodeToPdgElementMap.put(node, cfgNodeToPdgElementMap.get(mappedNode));
+        //                 }
+        //             });
+        //         });
+        //     }
+        //
+        //     if (!cfgNodeToPdgElementMap.containsKey(t)) {
+        //         // Some artificial tree nodes cannot be found in the node map because they are never encountered in the AST tree by visiting the nodes.
+        //         // To associate every node in the CFG to a PDG node, we find a similar node to associate the CFG node to. In practice, these nodes are the same on the AST tree.
+        //         Node node = findSimilarNode(t, t.getBlock());
+        //         if (node != null) {
+        //             System.out.println("Found similar node: " + node + "(" + node.getClass() + ") (" + node.getUid() + ") -> " + cfgNodeToPdgElementMap.get(node));
+        //             cfgNodeToPdgElementMap.put(t, cfgNodeToPdgElementMap.get(node));
+        //         } else {
+        //             logger.error("Node '" + t + "'is has no linked node in the PDG.");
+        //         }
+        //     }
+        //     System.out.println();
+        // } else {
+        //     logger.warn("Node '" + t + "' has no tree.");
+        // }
         return null;
     }
 
