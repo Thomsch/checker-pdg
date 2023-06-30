@@ -91,11 +91,10 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             System.out.println("BLOCK: " + block);
             System.out.println("--------------------");
 
-            // TODO If the block has no PDG elements, skip it.
+            // TODO If the block has no PDG elements, skip it (there won't be any "from" node to see).
 
             // Convert CFG edges between blocks to PDG edges between PDG nodes.
             if (block.equals(cfg.getRegularExitBlock())) { // Exit block, create edge between last statements and exit
-
                 List<PdgNode> fromNodes = findFromNodes(block);
                 List<PdgNode> toNodes = findToNodes(cfg.getEntryBlock());
                 for (PdgNode from : fromNodes) {
@@ -111,6 +110,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                     logger.debug("No from node found for block: " + block);
                     continue;
                 }
+
                 List<PdgNode> toNodes = new ArrayList<>();
                 for (final Block successor : block.getSuccessors()) {
                     toNodes.addAll(findToNodes(successor));
@@ -135,16 +135,19 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             // Convert CFG edges in a block to PDG edges between PDG nodes.
             Node previousNode = null;
             for (final Node node : block.getNodes()) {
+                // Ignore nodes that are not in the PDG.
+                if (pdgGraph.getNode(node) == null) {
+                    continue;
+                }
+
                 if (previousNode != null) {
                     PdgNode from = pdgGraph.getNode(previousNode);
                     PdgNode to = pdgGraph.getNode(node);
 
                     if (from == null) {
                         logger.error("No from node found for node: " + previousNode);
-                        continue;
                     } else if (to == null) {
                         logger.error("No to node found for node: " + node);
-                        continue;
                     } else if (!from.equals(to)) { // Skip self-edges on PDG nodes unless there is a true self loop in the CFG.
                         PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
                         System.out.println(edge);
@@ -202,7 +205,12 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 return List.of(pdgGraph.getNode((SpecialBlock) block));
             case EXCEPTION_BLOCK:
                 ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                return List.of(pdgGraph.getNode(exceptionBlock.getNode()));
+                PdgNode node = pdgGraph.getNode(exceptionBlock.getNode());
+                if (node == null) {
+                    return List.of();
+                } else {
+                    return List.of(node);
+                }
             default:
                 throw new IllegalStateException("Unexpected value: " + block.getType());
         }
@@ -242,7 +250,16 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 return List.of(pdgGraph.getNode((SpecialBlock) block));
             case EXCEPTION_BLOCK:
                 ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                return List.of(pdgGraph.getNode(exceptionBlock.getNode()));
+                PdgNode node = pdgGraph.getNode(exceptionBlock.getNode());
+                if (node == null) {
+                    final List<PdgNode> successorsNodes3 = new ArrayList<>();
+                    for (final Block successor : block.getSuccessors()) {
+                        successorsNodes3.addAll(findToNodes(successor));
+                    }
+                    return successorsNodes3;
+                } else {
+                    return List.of(node);
+                }
             default:
                 throw new IllegalStateException("Unexpected value: " + block.getType());
         }

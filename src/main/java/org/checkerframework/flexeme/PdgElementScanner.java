@@ -62,6 +62,12 @@ class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     }
 
     @Override
+    public Void visitThrow(final ThrowTree node, final Set<Tree> pdgElements) {
+        pdgElements.add(node);
+        return super.visitThrow(node, pdgElements);
+    }
+
+    @Override
     public Void visitReturn(final ReturnTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
         return super.visitReturn(node, pdgElements);
