@@ -74,20 +74,7 @@ public class PdgExtractor {
         Set<PdgGraph> graphs = new HashSet<>();
         for (final MethodTree methodTree : processor.getMethods()) {
             // Build graph nodes
-            PdgGraph pdgGraph = new PdgGraph(processor, processor.getClassTree(methodTree), methodTree);
-            for (Tree node : processor.getPdgElements(methodTree)) {
-                pdgGraph.addNode(node);
-            }
-
-            final ControlFlowGraph controlFlowGraph = processor.getMethodCfgs().get(methodTree);
-            pdgGraph.addEntryNode(controlFlowGraph.getEntryBlock());
-            pdgGraph.addExitNode(controlFlowGraph.getRegularExitBlock());
-            pdgGraph.addExceptionalExitNode(controlFlowGraph.getExceptionalExitBlock());
-
-            // Extract CFG edges and convert them to PDG edges.
-            CfgTraverser cfgTraverser = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
-            cfgTraverser.traverseEdges(pdgGraph, controlFlowGraph);
-
+            PdgGraph pdgGraph = buildPdgGraph(processor, methodTree);
             graphs.add(pdgGraph);
         }
 
@@ -137,6 +124,23 @@ public class PdgExtractor {
         } catch (IOException e) {
             throw new UserError("Error creating dot file (is the path valid?): all.dot", e);
         }
+    }
+
+    public PdgGraph buildPdgGraph(final FileProcessor processor, final MethodTree methodTree) {
+        PdgGraph pdgGraph = new PdgGraph(processor, processor.getClassTree(methodTree), methodTree);
+        for (Tree node : processor.getPdgElements(methodTree)) {
+            pdgGraph.addNode(node);
+        }
+
+        final ControlFlowGraph controlFlowGraph = processor.getMethodCfgs().get(methodTree);
+        pdgGraph.registerSpecialBlock(controlFlowGraph.getEntryBlock(), "Entry");
+        pdgGraph.registerSpecialBlock(controlFlowGraph.getRegularExitBlock(), "Exit");
+        pdgGraph.registerSpecialBlock(controlFlowGraph.getExceptionalExitBlock(), "ExceptionalExit");
+
+        // Extract CFG edges and convert them to PDG edges.
+        CfgTraverser cfgTraverser = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
+        cfgTraverser.traverseEdges(pdgGraph, controlFlowGraph);
+        return pdgGraph;
     }
 
     /**

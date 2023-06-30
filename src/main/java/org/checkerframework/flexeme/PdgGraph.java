@@ -71,23 +71,18 @@ public class PdgGraph {
         return graph.edgeValue(edge);
     }
 
-    public void addEntryNode(final SpecialBlock entryBlock) {
-        final PdgNode node = new PdgNode(nodeId, "Entry", 0, 0); // Flexeme requires to have "Entry" node (case sensitive)
-        blockToPdgNode.put(entryBlock, node);
+    /**
+     * Registers a special block in the PDG and pre-creates a PDG node with the correct label.
+     * The PDG node will be ready to use when associated with an PDG edge.
+     * @param block the special block to register
+     * @param label the label to use for the PDG node
+     */
+    public void registerSpecialBlock(final SpecialBlock block, final String label) {
+        final PdgNode node = new PdgNode(nodeId, label, 0, 0);
+        blockToPdgNode.put(block, node);
         nodeId++;
     }
 
-    public void addExitNode(final SpecialBlock regularExitBlock) {
-        final PdgNode node = new PdgNode(nodeId, "Exit", 0, 0); // Flexeme requires to have "Exit" node (case sensitive)
-        blockToPdgNode.put(regularExitBlock, node);
-        nodeId++;
-    }
-
-    public void addExceptionalExitNode(final SpecialBlock exceptionalExitBlock) {
-        final PdgNode node = new PdgNode(nodeId, "ExceptionalExit", 0, 0);
-        blockToPdgNode.put(exceptionalExitBlock, node);
-        nodeId++;
-    }
 
     public PdgNode getNode(final SpecialBlock block) {
         return blockToPdgNode.get(block);
