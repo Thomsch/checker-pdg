@@ -42,7 +42,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
     // Stores the methods signature and their location in the DOT graph. The key is the method's signature. The value is the node id of the START node for the method.
     public static Map<String, String> methods = new HashMap<>();
 
-    private PdgGraph pdgGraph;
+    private PdgMethod pdgMethod;
 
     public CfgTraverser(CompilationUnitTree compilationUnitTree, Map<Node, Tree> cfgNodeToPdgElementMap, final ControlFlowGraph controlFlowGraph) {
         super();
@@ -51,8 +51,8 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         this.controlFlowGraph = controlFlowGraph;
     }
 
-    public void traverseEdges(final PdgGraph pdgGraph, final ControlFlowGraph controlFlowGraph) {
-        this.pdgGraph = pdgGraph;
+    public void traverseEdges(final PdgMethod pdgMethod, final ControlFlowGraph controlFlowGraph) {
+        this.pdgMethod = pdgMethod;
         // Traverse the blocks.
         visualizeGraphWithoutHeaderAndFooter(controlFlowGraph, controlFlowGraph.getEntryBlock(), null);
     }
@@ -82,7 +82,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 for (PdgNode from : fromNodes) {
                     for (PdgNode to : toNodes) {
                         PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.EXIT);
-                        pdgGraph.addEdge(edge);
+                        pdgMethod.addEdge(edge);
                     }
                 }
             } else {
@@ -108,7 +108,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                         if (!from.equals(to)) {
                             PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
                             System.out.println(edge);
-                            pdgGraph.addEdge(edge);
+                            pdgMethod.addEdge(edge);
                         }
                     }
                 }
@@ -118,13 +118,13 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
             Node previousNode = null;
             for (final Node node : block.getNodes()) {
                 // Ignore nodes that are not in the PDG.
-                if (pdgGraph.getNode(node) == null) {
+                if (pdgMethod.getNode(node) == null) {
                     continue;
                 }
 
                 if (previousNode != null) {
-                    PdgNode from = pdgGraph.getNode(previousNode);
-                    PdgNode to = pdgGraph.getNode(node);
+                    PdgNode from = pdgMethod.getNode(previousNode);
+                    PdgNode to = pdgMethod.getNode(node);
 
                     if (from == null) {
                         logger.error("No from node found for node: " + previousNode);
@@ -133,7 +133,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                     } else if (!from.equals(to)) { // Skip self-edges on PDG nodes unless there is a true self loop in the CFG.
                         PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
                         System.out.println(edge);
-                        pdgGraph.addEdge(edge);
+                        pdgMethod.addEdge(edge);
                     }
                 }
                 previousNode = node;
@@ -164,8 +164,8 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 ListIterator<Node> iterator = block.getNodes().listIterator(block.getNodes().size());
                 while(iterator.hasPrevious()) {
                     Node previous = iterator.previous();
-                    if (pdgGraph.getNode(previous) != null) {
-                        return List.of(pdgGraph.getNode(previous));
+                    if (pdgMethod.getNode(previous) != null) {
+                        return List.of(pdgMethod.getNode(previous));
                     }
                 }
 
@@ -184,10 +184,10 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 }
                 return predecessorNodes2;
             case SPECIAL_BLOCK:
-                return List.of(pdgGraph.getNode((SpecialBlock) block));
+                return List.of(pdgMethod.getNode((SpecialBlock) block));
             case EXCEPTION_BLOCK:
                 ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                PdgNode node = pdgGraph.getNode(exceptionBlock.getNode());
+                PdgNode node = pdgMethod.getNode(exceptionBlock.getNode());
                 if (node == null) {
                     return List.of();
                 } else {
@@ -209,8 +209,8 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 System.out.println("First pass, visiting nodes of " + block);
                 for (Node node : block.getNodes()) {
                     System.out.println("    " + node);
-                    if (pdgGraph.getNode(node) != null) {
-                        return List.of(pdgGraph.getNode(node));
+                    if (pdgMethod.getNode(node) != null) {
+                        return List.of(pdgMethod.getNode(node));
                     }
                 }
 
@@ -229,10 +229,10 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 }
                 return successorsNodes2;
             case SPECIAL_BLOCK:
-                return List.of(pdgGraph.getNode((SpecialBlock) block));
+                return List.of(pdgMethod.getNode((SpecialBlock) block));
             case EXCEPTION_BLOCK:
                 ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                PdgNode node = pdgGraph.getNode(exceptionBlock.getNode());
+                PdgNode node = pdgMethod.getNode(exceptionBlock.getNode());
                 if (node == null) {
                     final List<PdgNode> successorsNodes3 = new ArrayList<>();
                     for (final Block successor : block.getSuccessors()) {

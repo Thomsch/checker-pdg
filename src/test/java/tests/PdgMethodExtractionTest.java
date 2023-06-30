@@ -1,17 +1,12 @@
 package tests;
 
-import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
-import org.checkerframework.flexeme.PdgGraph;
-import org.junit.BeforeClass;
 import org.junit.Test;
-
-import static org.junit.Assert.*;
 
 /**
  * General tests for the PDG extraction.
  */
-public class PdgExtractionTest {
+public class PdgMethodExtractionTest {
 
     // TODO: Check number of PDG elements is right and that the PDG elements are right.
     @Test

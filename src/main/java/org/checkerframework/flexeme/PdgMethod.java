@@ -15,8 +15,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Represent the Program Dependence Graph (PDG) of a method.
+ */
 @SuppressWarnings("UnstableApiUsage")
-public class PdgGraph {
+public class PdgMethod {
     private final FileProcessor processor;
     private final ClassTree classTree;
     private final MethodTree methodTree;
@@ -28,7 +31,7 @@ public class PdgGraph {
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
     private HashMap<Tree, PdgNode> treeToNodeMap;
 
-    PdgGraph(FileProcessor processor, final ClassTree classTree, final MethodTree methodTree) {
+    PdgMethod(FileProcessor processor, final ClassTree classTree, final MethodTree methodTree) {
         this.processor = processor;
         this.classTree = classTree;
         this.methodTree = methodTree;
