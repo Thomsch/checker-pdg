@@ -231,19 +231,6 @@ public class PdgExtractor {
     }
 
     /**
-     * Creates the label for the cluster attribute in the dot file.
-     */
-    private static String makeClusterLabel(String packageName, String className, String methodName, java.util.List<? extends VariableTree> parameters) {
-        StringJoiner sjParameters = new StringJoiner(",");
-
-        for (VariableTree parameter : parameters) {
-            sjParameters.add(parameter.getType().toString());
-        }
-
-        return packageName + "." + className + "." + methodName + "(" + sjParameters + ")";
-    }
-
-    /**
      * Runs the dataflow analysis for a given method.
      * @param methodControlFlowGraph The CFG of the method to analyze
      * @return The spent dataflow analysis.
