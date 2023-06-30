@@ -8,6 +8,7 @@ import org.junit.Test;
  */
 public class PdgExtractionTest {
 
+    // TODO: Check number of PDG elements is right and that the PDG elements are right.
     @Test
     public void testSourcePath() throws Throwable {
 
