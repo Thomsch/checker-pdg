@@ -87,11 +87,10 @@ class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
 
     @Override
     public Void visitVariable(final VariableTree node, final Set<Tree> pdgElements) {
-        if (!method.getParameters().contains(node)) {
-            // System.out.println("Variable: " + node);
+        if (!method.getParameters().contains(node)) { // exclude method parameters
             pdgElements.add(node);
         }
-        return super.visitVariable(node, pdgElements);
+        return null;
     }
 
     @Override
