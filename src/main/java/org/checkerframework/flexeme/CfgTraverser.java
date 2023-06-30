@@ -42,8 +42,6 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
 
     Logger logger = LoggerFactory.getLogger(CfgTraverser.class);
 
-    private Map<Block, BlockFlow> statementFlowMap;
-
     // Stores the invocations of methods. The key is the node calling the method. The value is the accessed method signature.
     public static Map<String, String> invocations = new HashMap<>();
 
@@ -63,7 +61,6 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         this.controlFlowGraph = controlFlowGraph;
         this.cfgEdges = new ArrayList<>();
         this.lastStatementInBlock = null;
-        this.statementFlowMap = new HashMap<>();
         this.cfgEdges2 = new HashSet<>();
     }
 
@@ -296,235 +293,6 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         }
     }
 
-    /**
-     * Records the in and out flow node for a {@link Block}.
-     * The inNode is the first node in the CFG to enter the block.
-     * The outNodes are the last in the block before flowing to nodes in another block.
-     */
-    private class BlockFlow {
-        private final Node inNode;
-        private Node outNode;
-
-        private BlockFlow(Node inNode) {
-            Objects.requireNonNull(inNode);
-            this.inNode = inNode;
-        }
-
-        public Node getInNode() {
-            return inNode;
-        }
-
-        public Node getOutNode() {
-            return outNode;
-        }
-
-        public void setOutNode(Node outNode) {
-            this.outNode = outNode;
-        }
-    }
-
-    private StringBuilder makeDataflowDotEdges(ControlFlowGraph cfg, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
-        DataflowStore dataflowStore = analysis.getRegularExitStore();
-        if (dataflowStore == null) {
-            dataflowStore = analysis.getResult().getStoreAfter(cfg.getExceptionalExitBlock());
-        }
-
-        Set<org.checkerframework.flexeme.dataflow.Edge> edges = dataflowStore.getEdges();
-        StringBuilder sbDotDataflowEdges = new StringBuilder();
-
-        for (org.checkerframework.flexeme.dataflow.Edge edge : edges) {
-            Node from = edge.getFrom().getReference();
-
-            String fromUuid;
-            String label = "undefined";
-
-            if (from.getBlock() == null) { // Parameters
-                fromUuid = "b" + cfg.getEntryBlock().getUid();
-                TypeMirror type = from.getType();
-                label = TypesUtils.getTypeElement(type).getQualifiedName().toString();
-            } else { // Local Variables
-                fromUuid = "n" + edge.getFrom().getReference().getUid();
-
-                if (from instanceof LocalVariableNode) {
-                    LocalVariableNode lvnFrom = ((LocalVariableNode) from);
-                    label = lvnFrom.getName();
-                } else if (from instanceof FieldAccessNode) {
-                    FieldAccessNode fanFrom = ((FieldAccessNode) from);
-                    label = fanFrom.getFieldName();
-                } else if (from instanceof VariableDeclarationNode) {
-                    VariableDeclarationNode vdnFrom = ((VariableDeclarationNode) from);
-                    label = vdnFrom.getName();
-                } else {
-                    logger.error("Unsupported 'from' dataflow edge: {}", from);
-                }
-            }
-        }
-        return sbDotDataflowEdges;
-    }
-
-    private StringBuilder makeIntraBlockDotEdges(Set<Block> blocks) {
-        for (Block block : blocks) {
-            // Make edges for this block (if applicable)
-            if (block.getType() == Block.BlockType.REGULAR_BLOCK) {
-                RegularBlock regularBlock = ((RegularBlock) block);
-                Node from = null;
-                for (Node node : regularBlock.getNodes()) {
-                    if (from != null) {
-                        // cfgEdges2.add(new PdgEdge(from, node, PdgEdge.Type.CONTROL));
-                    }
-                    from = node;
-                }
-
-            }
-        }
-        return new StringBuilder();
-    }
-
-    private StringBuilder makeExitEntryDotEdge(ControlFlowGraph cfg) {
-        // TODO verify that Flexeme's extractor also doesn't add an exit edge if the method always throws an exception.
-        // final SpecialBlock regularExitBlock = cfg.getRegularExitBlock();
-        // final BlockFlow exitBlockFlow = statementFlowMap.get(regularExitBlock);
-        //
-        // // If a method throws an exception instead of returning, then the regular exit block is null.
-        // if (exitBlockFlow != null) {
-        //     cfgEdges2.add(new PdgEdge(exitBlockFlow.outNode, statementFlowMap.get(cfg.getEntryBlock()).inNode, PdgEdge.Type.EXIT));
-        // }
-        return new StringBuilder();
-    }
-
-    private StringBuilder makeInterBlockDotEdges(Set<Block> blocks, ControlFlowGraph cfg) {
-
-        // Build the block flow map which keeps track of which node represents the block on the dot graph.
-        for (Block block : blocks) {
-            switch (block.getType()){
-                case REGULAR_BLOCK:
-                    final BlockFlow flow = new BlockFlow(block.getNodes().get(0));
-                    Node lastNode = block.getLastNode();
-                    if (lastNode != null) {
-                        flow.setOutNode(lastNode);
-                    } else {
-                        logger.error("Block {} has no last node", block);
-                    }
-                    statementFlowMap.put(block, flow);
-                    break;
-
-                case SPECIAL_BLOCK:
-                    System.out.println("SPECIAL_BLOCK: " + block);
-                    // // TODO Refactor
-                    // final BlockFlow specialFlow = new BlockFlow(specialNode);
-                    // if (block.equals(cfg.getEntryBlock())) {
-                    //     specialFlow.setOutNode(specialNode);
-                    // } else if (block.equals(cfg.getRegularExitBlock())) {
-                    //     block.getLastNode();
-                    //     specialFlow.setOutNode(block.getNodes().get(0));
-                    // } else if (block.equals(cfg.getExceptionalExitBlock())) {
-                    //     specialFlow.setOutNode(block.getNodes().get(0)); // Add Exceptional Exit -> Exit edge
-                    // } else {
-                    //     logger.error("Special block {} not supported", block);
-                    // }
-                    // statementFlowMap.put(block, specialFlow);
-                    break;
-
-                case EXCEPTION_BLOCK:
-                    ExceptionBlock exceptionBlock = (ExceptionBlock) block;
-                    final BlockFlow exceptionFlow = new BlockFlow(exceptionBlock.getNode());
-                    exceptionFlow.setOutNode(exceptionBlock.getNode());
-                    statementFlowMap.put(exceptionBlock, exceptionFlow);
-                    break;
-
-                case CONDITIONAL_BLOCK:
-                    // TODO: Assest that `block.getLastNode()` isn't null.
-                    final BlockFlow conditionalFlow = new BlockFlow(block.getLastNode());
-                    statementFlowMap.put(block, conditionalFlow);
-
-                    break;
-            }
-        }
-
-        // Walk inter-block edge map
-        for (Block block : blocks) {
-            if (statementFlowMap.get(block) == null) {
-                continue;
-            }
-            Node from = statementFlowMap.get(block).outNode;
-            switch (block.getType()) {
-                case REGULAR_BLOCK:
-                    RegularBlock regularBlock = ((RegularBlock) block);
-
-                    if (regularBlock.getRegularSuccessor() instanceof ConditionalBlock) {
-                        ConditionalBlock conditionalSuccessor = (ConditionalBlock) regularBlock.getRegularSuccessor();
-                        // cfgEdges2.add(new PdgEdge(from, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, PdgEdge.Type.CONTROL));
-                        // cfgEdges2.add(new PdgEdge(from, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, PdgEdge.Type.CONTROL));
-                    } else {
-                        if (statementFlowMap.get(regularBlock.getRegularSuccessor()) != null) {
-                            // cfgEdges2.add(new PdgEdge(from, statementFlowMap.get(regularBlock.getRegularSuccessor()).inNode, PdgEdge.Type.CONTROL));
-                        } else {
-                            System.out.println("Block " + block + " has " + regularBlock.getRegularSuccessor() + "as successor");
-                        }
-                    }
-                    break;
-                case CONDITIONAL_BLOCK:
-                    break;
-                case SPECIAL_BLOCK:
-                    SpecialBlock specialBlock = ((SpecialBlock) block);
-
-                    for (Block successor : specialBlock.getSuccessors()) {
-                        // cfgEdges2.add(new PdgEdge(from, statementFlowMap.get(successor).inNode, PdgEdge.Type.CONTROL));
-                    }
-                    break;
-                case EXCEPTION_BLOCK:
-                    ExceptionBlock exceptionBlock = ((ExceptionBlock) block);
-
-                    // Add control edge to normal execution successor
-
-                    // When the exception block doesn't have a successor, it means it's throwing an exception and there is
-                    // no successor
-                    if (exceptionBlock.getSuccessor() != null) {
-
-                        if (exceptionBlock.getSuccessor() instanceof ConditionalBlock) {
-                            ConditionalBlock conditionalSuccessor = (ConditionalBlock) exceptionBlock.getSuccessor();
-
-                            // cfgEdges2.add(new PdgEdge(statementFlowMap.get(block).outNode, statementFlowMap.get(conditionalSuccessor.getThenSuccessor()).inNode, PdgEdge.Type.CONTROL));
-                            // cfgEdges2.add(new PdgEdge(statementFlowMap.get(block).outNode, statementFlowMap.get(conditionalSuccessor.getElseSuccessor()).inNode, PdgEdge.Type.CONTROL));
-                        } else {
-                            if (statementFlowMap.get(exceptionBlock.getSuccessor()) != null) {
-                                // cfgEdges2.add(new PdgEdge(from, statementFlowMap.get(exceptionBlock.getSuccessor()).inNode, PdgEdge.Type.CONTROL));
-                            } else {
-                                System.out.println("Unsupported successor: " + exceptionBlock.getSuccessor() + " for block " + block + "");
-                            }
-                        }
-                    }
-
-                    // Add control edges to exceptional execution successors
-                    // for (Map.Entry<TypeMirror, Set<Block>> entry : exceptionBlock.getExceptionalSuccessors().entrySet()) {
-                    //     for (Block exception : entry.getValue()) {
-                    //         // FIX: May create duplicates when there are multiple entries for EXCEPTIONAL_EXIT.
-                    //         cfgEdges2.add(new PdgEdge(from, statementFlowMap.get(exception).inNode, PdgEdge.Type.CONTROL));
-                    //     }
-                    // }
-                    break;
-            }
-
-            assertNoConditionalSuccessor(block);
-
-        }
-        return new StringBuilder();
-    }
-
-    /**
-     * Logs an error if a non RegularBlock has a ConditionalBlock as successor.
-     */
-    private void assertNoConditionalSuccessor(Block block) {
-        if (block.getType() == Block.BlockType.CONDITIONAL_BLOCK
-                || block.getType() == Block.BlockType.SPECIAL_BLOCK){
-            for (Block successor : block.getSuccessors()) {
-                if (successor instanceof ConditionalBlock) {
-                    logger.error("Wrong assumption: Block {} of type {} has a successor that is conditional ({})", block, block.getType(), block.getSuccessors());
-                }
-            }
-        }
-    }
-
     private void makeStatementNodes(Set<Block> blocks, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         // Definition of all nodes including their labels.
         for (Block v : blocks) {
@@ -544,9 +312,9 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
 
         // TODO Map artificial variable declaration with references using the name.
 
-        System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ") (uid=" + t.getUid() + ") (hash=" + t.hashCode() + ")");
+        // System.out.println("Analyzing CFG node: '" + t + "' (" + t.getClass() + ") (uid=" + t.getUid() + ") (hash=" + t.hashCode() + ")");
         // System.out.println("    In node map: " + cfgNodeToPdgElementMap.containsKey(t));
-        System.out.println("    In source: " + t.getInSource());
+        // System.out.println("    In source: " + t.getInSource());
         // if (!t.getInSource()) {
         //     System.out.println("    Artificial node in source");
         //     // TODO Refactor this to use a visitor to get the name.
@@ -652,21 +420,6 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         // } else {
         //     logger.warn("Node '" + t + "' has no tree.");
         // }
-        return null;
-    }
-
-    /**
-     * Find another node in the block that is equal to this node.
-     * @param node The node to find a similar node for.
-     * @param block The block to search in.
-     * @return The similar node or null if no similar node was found.
-     */
-    private Node findSimilarNode(final Node node, final Block block) {
-        for (final Node aNode : block.getNodes()) {
-            if (node.equals(aNode) && node != aNode) {
-                return aNode;
-            }
-        }
         return null;
     }
 

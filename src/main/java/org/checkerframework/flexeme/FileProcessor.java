@@ -34,14 +34,14 @@ public class FileProcessor extends BasicTypeProcessor {
 
     final private Map<MethodTree, ControlFlowGraph> cfgResults;
 
-    private final Map<MethodTree, Map<Node, Tree>> nodeMap;
+    private final Map<MethodTree, Map<Node, Tree>> cfgNodesToPdgElementsMaps;
 
     private final MethodScanner methodScanner;
     private EndPosTable endPosTable;
 
     public FileProcessor() {
         cfgResults = new HashMap<>();
-        nodeMap = new HashMap<>();
+        cfgNodesToPdgElementsMaps = new HashMap<>();
         methodScanner = new MethodScanner();
     }
 
@@ -126,7 +126,7 @@ public class FileProcessor extends BasicTypeProcessor {
             System.out.println();
 
             cfgResults.put(method, cfg);
-            nodeMap.put(method, cfgNodesToPdgElements);
+            cfgNodesToPdgElementsMaps.put(method, cfgNodesToPdgElements);
         }
         super.typeProcessingOver();
     }
@@ -145,11 +145,11 @@ public class FileProcessor extends BasicTypeProcessor {
     }
 
     public Map<MethodTree, Map<Node, Tree>> getCfgNodeToPdgElementMaps() {
-        return nodeMap;
+        return cfgNodesToPdgElementsMaps;
     }
 
-    public Set<Tree> getPdgNodes(MethodTree methodTree) {
-        return Sets.newHashSet(nodeMap.get(methodTree).values());
+    public Set<Tree> getPdgElements(MethodTree methodTree) {
+        return Sets.newHashSet(cfgNodesToPdgElementsMaps.get(methodTree).values());
     }
 
     public ClassTree getClassTree(final MethodTree methodTree) {
