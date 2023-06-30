@@ -145,6 +145,7 @@ public class PdgExtractor {
      */
     private String printDot(Set<PdgGraph> graphs) {
         StringBuilder stringBuilder = new StringBuilder("digraph {");
+        stringBuilder.append(System.lineSeparator());
         int counter = 0;
         for (final PdgGraph graph : graphs) {
             stringBuilder.append(printGraph(graph, counter));
