@@ -55,6 +55,13 @@ class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     }
 
     @Override
+    public Void visitEnhancedForLoop(final EnhancedForLoopTree node, final Set<Tree> pdgElements) {
+        pdgElements.add(node.getVariable());
+        pdgElements.add(node.getExpression());
+        return super.visitEnhancedForLoop(node, pdgElements);
+    }
+
+    @Override
     public Void visitReturn(final ReturnTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
         return super.visitReturn(node, pdgElements);
