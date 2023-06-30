@@ -13,6 +13,11 @@ import java.util.Set;
 public class DotPrinter {
     private static final Logger logger = LoggerFactory.getLogger(DotPrinter.class);
 
+    public static void printPdg(final PdgMethod pdg) {
+        final String printd = new DotPrinter().printDot(Set.of(pdg));
+        System.out.println(printd);
+    }
+
     /**
      * Print PDGs graphs as one dot file.
      * @param graphs The PDGs graphs from a file to print.
