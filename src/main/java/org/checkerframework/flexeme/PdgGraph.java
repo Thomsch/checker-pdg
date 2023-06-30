@@ -96,4 +96,33 @@ public class PdgGraph {
     public void addEdge(final PdgEdge edge) {
         graph.putEdgeValue(edge.from, edge.to, edge.type);
     }
+
+    /**
+     * Checks if the graph contains a node with the given label.
+     * @param nodeLabel the label to find
+     * @return true if the graph contains a node with the given label, false otherwise
+     */
+    public boolean containsNode(final String nodeLabel) {
+        for (PdgNode node : graph.nodes()) {
+            if (node.toString().equals(nodeLabel)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Checks if the graph contains an edge with the given labels.
+     * @param fromLabel the label of the source node
+     * @param toLabel the label of the target node
+     * @return true if the graph contains an edge with the given labels, false otherwise
+     */
+    public boolean containsEdge(final String fromLabel, final String toLabel) {
+        for (EndpointPair<PdgNode> edge : graph.edges()) {
+            if (edge.nodeU().toString().equals(fromLabel) && edge.nodeV().toString().equals(toLabel)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

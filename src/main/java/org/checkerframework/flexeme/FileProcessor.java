@@ -159,4 +159,22 @@ public class FileProcessor extends BasicTypeProcessor {
     public Set<MethodTree> getMethods() {
         return cfgResults.keySet();
     }
+
+    /**
+     * Returns the method tree with the given name.
+     * If multiple methods with the same name exists, the first one is returned.
+     *
+     * @param methodName the name of the method to find.
+     * @return the method tree with the given name.
+     * @throws NoSuchElementException if no method with the given name exists.
+     */
+    public MethodTree getMethod(final String methodName) {
+        for (final MethodTree methodTree : cfgResults.keySet()) {
+            System.out.println("Method: " + methodTree.getName());
+            if (methodTree.getName().toString().equals(methodName)) {
+                return methodTree;
+            }
+        }
+        throw new NoSuchElementException("No method with name " + methodName + " exists.");
+    }
 }

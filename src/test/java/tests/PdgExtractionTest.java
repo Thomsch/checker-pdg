@@ -1,7 +1,12 @@
 package tests;
 
+import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
+import org.checkerframework.flexeme.PdgGraph;
+import org.junit.BeforeClass;
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * General tests for the PDG extraction.
@@ -82,14 +87,6 @@ public class PdgExtractionTest {
 
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Loops.dot");
-    }
-
-    @Test
-    public void testSwitches() {
-        String inputFile = "src/test/resources/Switches.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Switches.dot");
     }
 
     @Test

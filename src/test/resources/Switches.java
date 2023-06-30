@@ -1,8 +1,8 @@
 public class Switches {
 
     void basicSwitch(int x) {
-        int a = x;
-        switch (a) {
+        int a;
+        switch (x) {
             case 1:
                 a = 1;
                 break;
