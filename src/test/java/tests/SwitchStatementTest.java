@@ -25,7 +25,7 @@ public class SwitchStatementTest {
 
     @Test
     public void testBasicSwitch() {
-        PdgMethod pdgMethod = pdgExtractor.buildPdgGraph(processor, processor.getMethod("basicSwitch"));
+        PdgMethod pdgMethod = pdgExtractor.buildPdg(processor, processor.getMethod("basicSwitch"));
 
         assertEquals(7, pdgMethod.nodes().size());
 
@@ -52,7 +52,7 @@ public class SwitchStatementTest {
      */
     @Test
     public void testFallThrough() {
-        PdgMethod pdgMethod = pdgExtractor.buildPdgGraph(processor, processor.getMethod("fallThrough"));
+        PdgMethod pdgMethod = pdgExtractor.buildPdg(processor, processor.getMethod("fallThrough"));
 
         assertEquals(7, pdgMethod.nodes().size());
         assertFalse(pdgMethod.containsNode("ExceptionalExit"));
