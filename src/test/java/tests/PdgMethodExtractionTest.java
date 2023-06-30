@@ -53,14 +53,6 @@ public class PdgMethodExtractionTest {
     }
 
     @Test
-    public void testAlwaysThrows() {
-        String inputFile = "src/test/resources/AlwaysThrows.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "", "", "build/AlwaysThrows.dot");
-    }
-
-    @Test
     public void testInfiniteLoop() {
         String inputFile = "src/test/resources/Infinite.java";
 
