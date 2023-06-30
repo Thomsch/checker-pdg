@@ -84,6 +84,13 @@ public class PdgExtractionTest {
     }
 
     @Test
+    public void testSwitches() {
+        String inputFile = "src/test/resources/Switches.java";
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Switches.dot");
+    }
+    @Test
     public void testNested() {
         String inputFile = "src/test/resources/Nested.java";
 

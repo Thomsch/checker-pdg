@@ -3,80 +3,52 @@ import java.util.Optional;
 
 class BasicTests {
 
-    // float f = 3;
-    //
-    // void foo() {
-    //     int a = bar(1, 2);
-    //     int b = bar(3);
-    // }
-    //
-    // int bar(int w, int z) {
-    //     int omega = w + z;
-    //     omega = omega + 1;
-    //     return omega;
-    // }
-    //
-    // int bar(int y) {
-    //     return y + 1;
-    // }
-    //
-    // void conditional() {
-    //     int x = 0;
-    //
-    //     if (x == 0) {
-    //         x = 1;
-    //     } else {
-    //         x = 2;
-    //     }
-    // }
-    //
-    // int sample(int x, int y, List<String> o) {
-    //     int a = x;
-    //     int b = y;
-    //     List<String> oh = o;
-    //
-    //     if (a == 3 || a == 2) {
-    //         if (b < 0) {
-    //             boolean c = true && false;
-    //         }
-    //
-    //         a = y;
-    //         y++;
-    //     }
-    //
-    //     b = x;
-    //     a = y;
-    //     return a + b;
-    // }
+    float f = 3;
 
-    // void justThrow() {
-    //     throw new RuntimeException("Just throw");
-    // }
+    void foo() {
+        int a = bar(1, 2);
+        int b = bar(3);
+    }
 
-    // void exceptionTest(int x) {
-    //     int a = x;
-    //
-    //     try {
-    //         int b = a / x;
-    //     } catch (Exception e) {
-    //         int c = x;
-    //     }
-    // }
+    int bar(int w, int z) {
+        int omega = w + z;
+        omega = omega + 1;
+        omega++;
+        return omega;
+    }
 
-    // void switchTest(int x) {
-    //     int a = x;
-    //     switch (a) {
-    //         case 1:
-    //             a = 1;
-    //             break;
-    //         case 2:
-    //             a = 2;
-    //             break;
-    //         default:
-    //             a = 3;
-    //             break;
-    //     }
-    // }
+    int bar(int y) {
+        return y + 1;
+    }
+
+    void conditional() {
+        int x = 0;
+
+        if (x == 0) {
+            x = 1;
+        } else {
+            x = 2;
+        }
+    }
+
+    int sample(int x, int y, List<String> o) {
+        int a = x;
+        int b = y;
+        List<String> oh = o;
+
+        if (a == 3 || a == 2) {
+            if (b < 0) {
+                boolean c = true && false;
+            }
+
+            a = y;
+            y++;
+        }
+
+        b = x;
+        a = y;
+        return a + b;
+    }
 
     //
     // void anonymousMethod(Integer x) {
