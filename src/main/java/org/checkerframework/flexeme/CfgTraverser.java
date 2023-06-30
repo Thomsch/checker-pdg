@@ -1,23 +1,23 @@
 package org.checkerframework.flexeme;
 
 import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.tree.LineMap;
 import com.sun.source.tree.Tree;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.checkerframework.dataflow.analysis.Analysis;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.block.*;
-import org.checkerframework.dataflow.cfg.node.*;
+import org.checkerframework.dataflow.cfg.block.Block;
+import org.checkerframework.dataflow.cfg.block.ExceptionBlock;
+import org.checkerframework.dataflow.cfg.block.SpecialBlock;
+import org.checkerframework.dataflow.cfg.node.MethodAccessNode;
+import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.DOTCFGVisualizer;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
-import org.checkerframework.javacutil.TypesUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.Name;
-import javax.lang.model.type.TypeMirror;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -30,15 +30,9 @@ import java.util.stream.Collectors;
  *  2) Run through the graph and visualize it, not using the DOTCFGVisualizer.
  */
 public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowStore, DataflowTransfer> {
-    private final String cluster;
-    private final LineMap lineMap;
     private final CompilationUnitTree compilationUnitTree;
     private final Map<Node, Tree> cfgNodeToPdgElementMap;
     private final ControlFlowGraph controlFlowGraph;
-    private Set<PdgEdge> cfgEdges2;
-
-    private String lastStatementInBlock;
-    private List<Edge> cfgEdges;
 
     Logger logger = LoggerFactory.getLogger(CfgTraverser.class);
 
@@ -48,28 +42,19 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
     // Stores the methods signature and their location in the DOT graph. The key is the method's signature. The value is the node id of the START node for the method.
     public static Map<String, String> methods = new HashMap<>();
 
-    private static Set<String> nodes = new HashSet<>();
     private PdgGraph pdgGraph;
-    private Map<String, List<Node>> artificialNodeMap = new HashMap<>();
 
-    public CfgTraverser(String cluster, LineMap lineMap, CompilationUnitTree compilationUnitTree, Map<Node, Tree> cfgNodeToPdgElementMap, final ControlFlowGraph controlFlowGraph) {
+    public CfgTraverser(CompilationUnitTree compilationUnitTree, Map<Node, Tree> cfgNodeToPdgElementMap, final ControlFlowGraph controlFlowGraph) {
         super();
-        this.cluster = cluster;
-        this.lineMap = lineMap;
         this.compilationUnitTree = compilationUnitTree;
         this.cfgNodeToPdgElementMap = cfgNodeToPdgElementMap;
         this.controlFlowGraph = controlFlowGraph;
-        this.cfgEdges = new ArrayList<>();
-        this.lastStatementInBlock = null;
-        this.cfgEdges2 = new HashSet<>();
     }
 
-    public Set<PdgEdge> traverseEdges(final PdgGraph pdgGraph, final ControlFlowGraph controlFlowGraph) {
+    public void traverseEdges(final PdgGraph pdgGraph, final ControlFlowGraph controlFlowGraph) {
         this.pdgGraph = pdgGraph;
-        this.cfgEdges2 = new HashSet<>();
         // Traverse the blocks.
         visualizeGraphWithoutHeaderAndFooter(controlFlowGraph, controlFlowGraph.getEntryBlock(), null);
-        return cfgEdges2;
     }
 
     /**

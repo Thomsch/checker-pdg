@@ -75,7 +75,7 @@ public class PdgExtractor {
         for (final MethodTree methodTree : processor.getMethods()) {
             // Build graph nodes
             PdgGraph pdgGraph = new PdgGraph(processor, processor.getClassTree(methodTree), methodTree);
-            for (Tree node : processor.getPdgNodes(methodTree)) {
+            for (Tree node : processor.getPdgElements(methodTree)) {
                 pdgGraph.addNode(node);
             }
 
@@ -85,8 +85,8 @@ public class PdgExtractor {
             pdgGraph.addExceptionalExitNode(controlFlowGraph.getExceptionalExitBlock());
 
             // Extract CFG edges and convert them to PDG edges.
-            CfgTraverser cfgTraverser = new CfgTraverser("", processor.getLineMap(), null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
-            Set<PdgEdge> edges = cfgTraverser.traverseEdges(pdgGraph, controlFlowGraph);
+            CfgTraverser cfgTraverser = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
+            cfgTraverser.traverseEdges(pdgGraph, controlFlowGraph);
 
             graphs.add(pdgGraph);
         }
@@ -219,8 +219,7 @@ public class PdgExtractor {
         UnderlyingAST underlyingAST = methodControlFlowGraph.getUnderlyingAST();
         UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
 
-        String cluster = makeClusterLabel(null, method1.getSimpleClassName(), method1.getMethodName(), method1.getMethod().getParameters());
-        CfgTraverser viz = new CfgTraverser(cluster, processor.getLineMap(), null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
+        CfgTraverser viz = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
         viz.init(args);
         Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
         viz.shutdown();
