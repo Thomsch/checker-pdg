@@ -196,7 +196,7 @@ public class PdgExtractor {
     }
 
     private String printNode(final PdgNode node) {
-        return String.format("n%d [label=\"%s\", span=\"%d-%d\"];", node.getId(), node, node.getStartLine(), node.getEndLine());
+        return String.format("n%d [label=\"%s\", span=\"%d-%d\"];", node.getId(), node.toString().replace("\"", "'"), node.getStartLine(), node.getEndLine());
     }
 
     private String printSubgraphLabel(final PdgGraph graph) {
