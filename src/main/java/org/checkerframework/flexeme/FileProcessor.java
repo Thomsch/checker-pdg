@@ -87,9 +87,10 @@ public class FileProcessor extends BasicTypeProcessor {
             pdgElementScanner.scan(method, pdgElements);
 
             System.out.println(cfg.toStringDebug());
+            System.out.println();
             System.out.println("PDG Elements: " + pdgElements.size());
             for (final Tree statement : pdgElements) {
-                System.out.println("PDG Element: " + statement);
+                System.out.println("    " + statement);
             }
             System.out.println();
 
