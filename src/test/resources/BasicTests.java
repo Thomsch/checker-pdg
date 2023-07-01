@@ -49,15 +49,4 @@ class BasicTests {
         a = y;
         return a + b;
     }
-
-    //
-    // void anonymousClass() {
-    //     int a = 0;
-    //     Runnable r = new Runnable() {
-    //         public void run() {
-    //             int b = a;
-    //         }
-    //     };
-    //     r.run();
-    // }
 }
