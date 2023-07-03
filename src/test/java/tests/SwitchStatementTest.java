@@ -14,7 +14,8 @@ public class SwitchStatementTest {
     static FileProcessor processor;
     @BeforeClass
     public static void setUp() {
-        processor = PdgExtractor.compileFile("src/test/resources/Switches.java", "build/", false, "", "");
+        PdgExtractor extractor = new PdgExtractor();
+        processor = extractor.compileFile("src/test/resources/Switches.java", "build/", false, "", "");
     }
 
     private PdgExtractor pdgExtractor;

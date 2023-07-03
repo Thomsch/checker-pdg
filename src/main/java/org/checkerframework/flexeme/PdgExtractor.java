@@ -191,7 +191,7 @@ public class PdgExtractor {
      * @param classPath class path for the compilation
      * @return the processor with the compilation results
      */
-    public static FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose, String sourcePath, String classPath) {
+    public FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose, String sourcePath, String classPath) {
         java.util.List<String> arguments = new ArrayList<>();
         arguments.add("-d");
         arguments.add(compile_out);

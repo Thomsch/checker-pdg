@@ -15,7 +15,8 @@ public class AnonymousMethodTest {
     static FileProcessor processor;
     @BeforeClass
     public static void setUp() {
-        processor = PdgExtractor.compileFile("src/test/resources/AnonymousMethods.java", "build/", false, "", "");
+        PdgExtractor extractor = new PdgExtractor();
+        processor = extractor.compileFile("src/test/resources/AnonymousMethods.java", "build/", false, "", "");
     }
 
     private PdgExtractor pdgExtractor;
@@ -27,8 +28,6 @@ public class AnonymousMethodTest {
     @Test
     public void testAnonymousMethod() {
         final MethodPdg pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousMethod"));
-
-        DotPrinter.printPdg(pdg);
 
         assertEquals(7, pdg.nodes().size());
         assertTrue(pdg.containsNode("Integer a = x"));

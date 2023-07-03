@@ -15,7 +15,8 @@ public class MethodPdgExtractionTest {
         String inputFile = "src/test/resources/org/a/A.java";
         String sourcepath = "src/test/resources";
 
-        PdgExtractor.compileFile(inputFile, "build/", false, sourcepath, "");
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.compileFile(inputFile, "build/", false, sourcepath, "");
     }
 
     @Test
@@ -24,16 +25,20 @@ public class MethodPdgExtractionTest {
         String inputFile = "src/test/resources/org/C.java";
         String classpath = "src/test/resources/guava-31.1-jre.jar";
 
-        PdgExtractor.compileFile(inputFile, "build/", false, "", classpath);
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.compileFile(inputFile, "build/", false, "", classpath);
     }
 
     @Test
     public void testDataFlow() {
         String inputFile1 = "src/test/resources/BasicTests.java";
-        PdgExtractor.compileFile(inputFile1, "build/", false, "", "");
+
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.compileFile(inputFile1, "build/", false, "", "");
 
         String inputFile2 = "src/test/resources/DataFlowTests.java";
-        PdgExtractor.compileFile(inputFile2, "build/", false, "", "");
+
+        extractor.compileFile(inputFile2, "build/", false, "", "");
     }
 
     @Test
