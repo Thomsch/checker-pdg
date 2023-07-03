@@ -2,8 +2,8 @@ package tests;
 
 import org.checkerframework.flexeme.DotPrinter;
 import org.checkerframework.flexeme.FileProcessor;
+import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.checkerframework.flexeme.PdgExtractor;
-import org.checkerframework.flexeme.PdgMethod;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,7 +26,7 @@ public class AnonymousMethodTest {
 
     @Test
     public void testAnonymousMethod() {
-        final PdgMethod pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousMethod"));
+        final MethodPdg pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousMethod"));
 
         DotPrinter.printPdg(pdg);
 

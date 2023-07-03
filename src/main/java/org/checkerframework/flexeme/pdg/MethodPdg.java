@@ -1,4 +1,4 @@
-package org.checkerframework.flexeme;
+package org.checkerframework.flexeme.pdg;
 
 import com.google.common.graph.*;
 import com.sun.source.tree.ClassTree;
@@ -9,6 +9,7 @@ import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
+import org.checkerframework.flexeme.FileProcessor;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -19,7 +20,7 @@ import java.util.Set;
  * Represent the Program Dependence Graph (PDG) of a method.
  */
 @SuppressWarnings("UnstableApiUsage")
-public class PdgMethod {
+public class MethodPdg {
     private final FileProcessor processor;
     private final ClassTree classTree;
     private final MethodTree methodTree;
@@ -31,7 +32,7 @@ public class PdgMethod {
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
     private HashMap<Tree, PdgNode> treeToNodeMap;
 
-    PdgMethod(FileProcessor processor, final ClassTree classTree, final MethodTree methodTree) {
+    public MethodPdg(FileProcessor processor, final ClassTree classTree, final MethodTree methodTree) {
         this.processor = processor;
         this.classTree = classTree;
         this.methodTree = methodTree;

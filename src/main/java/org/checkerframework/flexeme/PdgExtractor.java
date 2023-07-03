@@ -12,6 +12,7 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
+import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.checkerframework.javacutil.UserError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,10 +70,10 @@ public class PdgExtractor {
         FileProcessor processor = compileFile(file, compileOut, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
 
         // Build the PDG for each method in the compile file.
-        Set<PdgMethod> graphs = new HashSet<>();
+        Set<MethodPdg> graphs = new HashSet<>();
         for (final MethodTree methodTree : processor.getMethods()) {
-            PdgMethod pdgMethod = buildPdg(processor, methodTree);
-            graphs.add(pdgMethod);
+            MethodPdg methodPdg = buildPdg(processor, methodTree);
+            graphs.add(methodPdg);
         }
 
         // Print the PDGs as a dot graph on the console
@@ -130,21 +131,21 @@ public class PdgExtractor {
      * @param methodTree The method to build the PDG for.
      * @return The PDG for the method.
      */
-    public PdgMethod buildPdg(final FileProcessor processor, final MethodTree methodTree) {
-        PdgMethod pdgMethod = new PdgMethod(processor, processor.getClassTree(methodTree), methodTree);
+    public MethodPdg buildPdg(final FileProcessor processor, final MethodTree methodTree) {
+        MethodPdg methodPdg = new MethodPdg(processor, processor.getClassTree(methodTree), methodTree);
         for (Tree node : processor.getPdgElements(methodTree)) {
-            pdgMethod.addNode(node);
+            methodPdg.addNode(node);
         }
 
         final ControlFlowGraph controlFlowGraph = processor.getMethodCfgs().get(methodTree);
-        pdgMethod.registerSpecialBlock(controlFlowGraph.getEntryBlock(), "Entry");
-        pdgMethod.registerSpecialBlock(controlFlowGraph.getRegularExitBlock(), "Exit");
-        pdgMethod.registerSpecialBlock(controlFlowGraph.getExceptionalExitBlock(), "ExceptionalExit");
+        methodPdg.registerSpecialBlock(controlFlowGraph.getEntryBlock(), "Entry");
+        methodPdg.registerSpecialBlock(controlFlowGraph.getRegularExitBlock(), "Exit");
+        methodPdg.registerSpecialBlock(controlFlowGraph.getExceptionalExitBlock(), "ExceptionalExit");
 
         // Extract CFG edges and convert them to PDG edges.
         CfgTraverser cfgTraverser = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
-        cfgTraverser.traverseEdges(pdgMethod, controlFlowGraph);
-        return pdgMethod;
+        cfgTraverser.traverseEdges(methodPdg, controlFlowGraph);
+        return methodPdg;
     }
 
     /**

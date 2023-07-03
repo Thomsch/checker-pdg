@@ -1,9 +1,8 @@
 package tests;
 
-import org.checkerframework.flexeme.DotPrinter;
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
-import org.checkerframework.flexeme.PdgMethod;
+import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,7 +26,7 @@ public class AnonymousClassTest {
 
     @Test
     public void testAnonymousClass() {
-        final PdgMethod pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousClass"));
+        final MethodPdg pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousClass"));
 
         assertEquals(6, pdg.nodes().size());
         assertTrue(pdg.containsNode("int a = 0"));

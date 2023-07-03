@@ -1,6 +1,9 @@
 package org.checkerframework.flexeme;
 
 import com.google.common.graph.EndpointPair;
+import org.checkerframework.flexeme.pdg.MethodPdg;
+import org.checkerframework.flexeme.pdg.PdgEdge;
+import org.checkerframework.flexeme.pdg.PdgNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -8,12 +11,12 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * This class prints a Program Dependence Graph {@link PdgMethod} in the DOT format.
+ * This class prints a Program Dependence Graph {@link MethodPdg} in the DOT format.
  */
 public class DotPrinter {
     private static final Logger logger = LoggerFactory.getLogger(DotPrinter.class);
 
-    public static void printPdg(final PdgMethod pdg) {
+    public static void printPdg(final MethodPdg pdg) {
         final String printd = new DotPrinter().printDot(Set.of(pdg));
         System.out.println(printd);
     }
@@ -22,11 +25,11 @@ public class DotPrinter {
      * Print PDGs graphs as one dot file.
      * @param graphs The PDGs graphs from a file to print.
      */
-    public String printDot(Set<PdgMethod> graphs) {
+    public String printDot(Set<MethodPdg> graphs) {
         StringBuilder stringBuilder = new StringBuilder("digraph {");
         stringBuilder.append(System.lineSeparator());
         int counter = 0;
-        for (final PdgMethod graph : graphs) {
+        for (final MethodPdg graph : graphs) {
             stringBuilder.append(printGraph(graph, counter));
             stringBuilder.append(System.lineSeparator());
             counter++;
@@ -44,7 +47,7 @@ public class DotPrinter {
      * @param cluster The cluster number.
      */
     @SuppressWarnings("UnstableApiUsage")
-    public String printGraph(PdgMethod graph, int cluster) {
+    public String printGraph(MethodPdg graph, int cluster) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("subgraph " + "cluster_").append(cluster).append(" {");
         stringBuilder.append(System.lineSeparator());
@@ -81,7 +84,7 @@ public class DotPrinter {
         return String.format("n%d [label=\"%s\", span=\"%d-%d\"];", node.getId(), node.toString().replace("\"", "'"), node.getStartLine(), node.getEndLine());
     }
 
-    public String printSubgraphLabel(final PdgMethod graph) {
+    public String printSubgraphLabel(final MethodPdg graph) {
         return String.format("label = \"%s.%s()\";", graph.getClassName(), graph.getMethodName());
     }
 }

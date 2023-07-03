@@ -1,6 +1,4 @@
-package org.checkerframework.flexeme;
-
-import org.checkerframework.dataflow.cfg.node.Node;
+package org.checkerframework.flexeme.pdg;
 
 public class PdgEdge {
 
@@ -19,7 +17,7 @@ public class PdgEdge {
         return String.format("%s -> %s [color=%s, style=%s];", from, to, type.getColor(), type.getStyle());
     }
 
-    enum Type {
+    public enum Type {
         CONTROL(0, "black", "solid"), DATA(1, "darkseagreen4", "dashed"), CALL(2, "black", "dotted"), NAME(3, "darkorchid", "bold"), EXIT(0, "blue", "bold");
 
         private final int key;

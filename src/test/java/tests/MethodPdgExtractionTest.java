@@ -6,7 +6,7 @@ import org.junit.Test;
 /**
  * General tests for the PDG extraction.
  */
-public class PdgMethodExtractionTest {
+public class MethodPdgExtractionTest {
 
     // TODO: Check number of PDG elements is right and that the PDG elements are right.
     @Test

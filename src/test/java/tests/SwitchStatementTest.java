@@ -2,7 +2,7 @@ package tests;
 
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
-import org.checkerframework.flexeme.PdgMethod;
+import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -25,26 +25,26 @@ public class SwitchStatementTest {
 
     @Test
     public void testBasicSwitch() {
-        PdgMethod pdgMethod = pdgExtractor.buildPdg(processor, processor.getMethod("basicSwitch"));
+        MethodPdg methodPdg = pdgExtractor.buildPdg(processor, processor.getMethod("basicSwitch"));
 
-        assertEquals(7, pdgMethod.nodes().size());
+        assertEquals(7, methodPdg.nodes().size());
 
-        assertTrue(pdgMethod.containsNode("int a"));
-        assertTrue(pdgMethod.containsNode("x")); // switch variable evaluation
-        assertTrue(pdgMethod.containsNode("a = 1"));
-        assertTrue(pdgMethod.containsNode("a = 2"));
-        assertTrue(pdgMethod.containsNode("a = 3"));
-        assertFalse(pdgMethod.containsNode("ExceptionalExit"));
+        assertTrue(methodPdg.containsNode("int a"));
+        assertTrue(methodPdg.containsNode("x")); // switch variable evaluation
+        assertTrue(methodPdg.containsNode("a = 1"));
+        assertTrue(methodPdg.containsNode("a = 2"));
+        assertTrue(methodPdg.containsNode("a = 3"));
+        assertFalse(methodPdg.containsNode("ExceptionalExit"));
 
-        assertTrue(pdgMethod.containsEdge("Entry", "int a"));
-        assertTrue(pdgMethod.containsEdge("int a", "x"));
-        assertTrue(pdgMethod.containsEdge("x", "a = 1"));
-        assertTrue(pdgMethod.containsEdge("x", "a = 2"));
-        assertTrue(pdgMethod.containsEdge("x", "a = 3"));
-        assertTrue(pdgMethod.containsEdge("a = 1", "Exit"));
-        assertTrue(pdgMethod.containsEdge("a = 2", "Exit"));
-        assertTrue(pdgMethod.containsEdge("a = 3", "Exit"));
-        assertTrue(pdgMethod.containsEdge("Exit", "Entry"));
+        assertTrue(methodPdg.containsEdge("Entry", "int a"));
+        assertTrue(methodPdg.containsEdge("int a", "x"));
+        assertTrue(methodPdg.containsEdge("x", "a = 1"));
+        assertTrue(methodPdg.containsEdge("x", "a = 2"));
+        assertTrue(methodPdg.containsEdge("x", "a = 3"));
+        assertTrue(methodPdg.containsEdge("a = 1", "Exit"));
+        assertTrue(methodPdg.containsEdge("a = 2", "Exit"));
+        assertTrue(methodPdg.containsEdge("a = 3", "Exit"));
+        assertTrue(methodPdg.containsEdge("Exit", "Entry"));
     }
 
     /**
@@ -52,20 +52,20 @@ public class SwitchStatementTest {
      */
     @Test
     public void testFallThrough() {
-        PdgMethod pdgMethod = pdgExtractor.buildPdg(processor, processor.getMethod("fallThrough"));
+        MethodPdg methodPdg = pdgExtractor.buildPdg(processor, processor.getMethod("fallThrough"));
 
-        assertEquals(7, pdgMethod.nodes().size());
-        assertFalse(pdgMethod.containsNode("ExceptionalExit"));
+        assertEquals(7, methodPdg.nodes().size());
+        assertFalse(methodPdg.containsNode("ExceptionalExit"));
 
-        assertTrue(pdgMethod.containsEdge("Entry", "int a"));
-        assertTrue(pdgMethod.containsEdge("int a", "x"));
-        assertTrue(pdgMethod.containsEdge("x", "a = 1"));
-        assertTrue(pdgMethod.containsEdge("x", "a = 2"));
-        assertTrue(pdgMethod.containsEdge("x", "a = 3"));
-        assertTrue(pdgMethod.containsEdge("a = 1", "a = 2")); // fall through
-        assertFalse(pdgMethod.containsEdge("a = 1", "Exit")); // fall through
-        assertTrue(pdgMethod.containsEdge("a = 2", "Exit"));
-        assertTrue(pdgMethod.containsEdge("a = 3", "Exit"));
-        assertTrue(pdgMethod.containsEdge("Exit", "Entry"));
+        assertTrue(methodPdg.containsEdge("Entry", "int a"));
+        assertTrue(methodPdg.containsEdge("int a", "x"));
+        assertTrue(methodPdg.containsEdge("x", "a = 1"));
+        assertTrue(methodPdg.containsEdge("x", "a = 2"));
+        assertTrue(methodPdg.containsEdge("x", "a = 3"));
+        assertTrue(methodPdg.containsEdge("a = 1", "a = 2")); // fall through
+        assertFalse(methodPdg.containsEdge("a = 1", "Exit")); // fall through
+        assertTrue(methodPdg.containsEdge("a = 2", "Exit"));
+        assertTrue(methodPdg.containsEdge("a = 3", "Exit"));
+        assertTrue(methodPdg.containsEdge("Exit", "Entry"));
     }
 }
