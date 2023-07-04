@@ -2,6 +2,7 @@ package org.checkerframework.flexeme;
 
 import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
+import com.sun.source.util.TreeScanner;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
@@ -12,11 +13,17 @@ import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.VariableReference;
+import org.checkerframework.flexeme.pdg.FilePdg;
 import org.checkerframework.flexeme.pdg.MethodPdg;
+import org.checkerframework.flexeme.pdg.PdgEdge;
+import org.checkerframework.flexeme.pdg.PdgNode;
+import org.checkerframework.javacutil.ElementUtils;
+import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.javacutil.UserError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -55,10 +62,6 @@ public class PdgExtractor {
         PdgExtractor extractor = new PdgExtractor();
         try {
             extractor.run(file, sourcePath, classPath, path_out);
-            // Compile file
-            // Run analysis
-            // Build graph
-            // Print graph
         } catch (Throwable e) {
             logger.error("Error while running the PDG extractor: " + e.getMessage(), e);
             System.exit(1);
@@ -67,27 +70,15 @@ public class PdgExtractor {
 
     public void run(String file, String sourcePath, String classPath, String path_out) {
         // Compile file and build CFGs.
-        FileProcessor processor = compileFile(file, compileOut, false, sourcePath, classPath); // Returns the spent processor with the compilation results.
+        FileProcessor processor = compileFile(file, compileOut, false, sourcePath, classPath);
 
-        // Build the PDG for each method in the compile file.
-        Set<MethodPdg> graphs = new HashSet<>();
-        for (final MethodTree methodTree : processor.getMethods()) {
-            MethodPdg methodPdg = buildPdg(processor, methodTree);
-            graphs.add(methodPdg);
-        }
+        // Build the PDG for each method in the compiled file.
+        FilePdg filePdg = buildPdgs(processor);
 
         // Print the PDGs as a dot graph on the console
         DotPrinter printer = new DotPrinter();
-        String dotGraphForFile = printer.printDot(graphs);
+        String dotGraphForFile = printer.printDot(filePdg);
         System.out.println(dotGraphForFile);
-
-        // // Method invocation edges.
-        // CfgTraverser.invocations.forEach((nodeId, methodName) -> {
-        //     String blockId = CfgTraverser.methods.get(methodName);
-        //     if (blockId != null) {
-        //         graphs.append(nodeId).append(" -> ").append(blockId).append(" [key=2, style=dotted]").append(System.lineSeparator());
-        //     }
-        // });
 
         // // TODO: The creation of the graph should be decoupled from printing the results
         // // 3. Run nameflow analysis and add it to the graph.
@@ -109,6 +100,55 @@ public class PdgExtractor {
         // graphs.append("}");
 
         writePdgOnDisk(dotGraphForFile, path_out);
+    }
+
+    /**
+     * Build the PDGs for each method in the file.
+     * @param processor The processor containing the compilation results for the file
+     * @return A holder object for the PDGs for the file
+     */
+    public FilePdg buildPdgs(final FileProcessor processor) {
+
+        // Build the PDG for each method in the compiled file.
+        Set<MethodPdg> graphs = new HashSet<>();
+        for (final MethodTree methodTree : processor.getMethods()) {
+            MethodPdg methodPdg = buildPdg(processor, methodTree);
+            graphs.add(methodPdg);
+        }
+
+        // Build the method calls between files.
+        HashMap<String, MethodPdg> methodNames = new HashMap<>();
+        // Register local method invocations.
+        for (final MethodPdg pdg : graphs) {
+            final ExecutableElement executableElement = TreeUtils.elementFromDeclaration(pdg.getTree());
+            String methodName = ElementUtils.getQualifiedName(executableElement);
+            methodNames.put(methodName, pdg);
+        }
+
+        Set<PdgEdge> localCalls = new HashSet<>();
+        for (MethodPdg methodPdg : graphs) {
+            for (Tree pdgElement : processor.getPdgElements(methodPdg.getTree())) {
+                TreeScanner<Set<ExecutableElement>, Void> c = new LocalMethodCallVisitor();
+                Set<ExecutableElement> methodCalls = c.scan(pdgElement, null);
+
+                if (methodCalls == null) {
+                    continue;
+                }
+
+                for (final ExecutableElement methodCall : methodCalls) {
+                    String methodName = ElementUtils.getQualifiedName(methodCall);
+                    if (methodNames.containsKey(methodName)) {
+                        PdgNode from = methodPdg.getNode(pdgElement);
+                        final MethodPdg targetPdg = methodNames.get(methodName);
+                        PdgNode to = targetPdg.getStartNode();
+                        final PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CALL);
+                        localCalls.add(edge);
+                    }
+                }
+            }
+        }
+
+        return new FilePdg(graphs, localCalls);
     }
 
     /**
@@ -137,14 +177,14 @@ public class PdgExtractor {
             methodPdg.addNode(node);
         }
 
+        // Extract CFG edges and convert them to PDG edges.
         final ControlFlowGraph controlFlowGraph = processor.getMethodCfgs().get(methodTree);
         methodPdg.registerSpecialBlock(controlFlowGraph.getEntryBlock(), "Entry");
         methodPdg.registerSpecialBlock(controlFlowGraph.getRegularExitBlock(), "Exit");
         methodPdg.registerSpecialBlock(controlFlowGraph.getExceptionalExitBlock(), "ExceptionalExit");
-
-        // Extract CFG edges and convert them to PDG edges.
         CfgTraverser cfgTraverser = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
         cfgTraverser.traverseEdges(methodPdg, controlFlowGraph);
+
         return methodPdg;
     }
 

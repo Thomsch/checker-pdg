@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import javax.lang.model.element.Name;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * Visualizes the control flow graph and dataflow of a method.

@@ -11,10 +11,8 @@ import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.flexeme.FileProcessor;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import javax.lang.model.element.ExecutableElement;
+import java.util.*;
 
 /**
  * Represent the Program Dependence Graph (PDG) of a method.
@@ -61,7 +59,7 @@ public class MethodPdg {
         JCTree jct = (JCTree) tree;
         long lineStart = lineMap.getLineNumber(jct.getStartPosition());
         long lineEnd = lineMap.getLineNumber(jct.getEndPosition(endPosTable));
-        PdgNode node = new PdgNode(nodeId, tree.toString(), lineStart, lineEnd);
+        PdgNode node = new PdgNode(this, nodeId, tree.toString(), lineStart, lineEnd);
         treeToNodeMap.put(tree, node);
         graph.addNode(node);
         nodeId++;
@@ -82,7 +80,7 @@ public class MethodPdg {
      * @param label the label to use for the PDG node
      */
     public void registerSpecialBlock(final SpecialBlock block, final String label) {
-        final PdgNode node = new PdgNode(nodeId, label, 0, 0);
+        final PdgNode node = new PdgNode(this, nodeId, label, 0, 0);
         blockToPdgNode.put(block, node);
         nodeId++;
     }
@@ -94,6 +92,10 @@ public class MethodPdg {
 
     public PdgNode getNode(final Node node) {
         final Tree tree = cfgNodeToPdgTree.get(node);
+        return treeToNodeMap.get(tree);
+    }
+
+    public PdgNode getNode(final Tree tree) {
         return treeToNodeMap.get(tree);
     }
 
@@ -128,5 +130,22 @@ public class MethodPdg {
             }
         }
         return false;
+    }
+
+    /**
+     * Returns the AST method tree associated with this PDG.
+     * @return the AST method tree
+     */
+    public MethodTree getTree() {
+        return methodTree;
+    }
+
+    /**
+     * Returns the {@link PdgNode} that represents the entry point of the PDG.
+     * @return the entry point of the PDG
+     */
+    public PdgNode getStartNode() {
+        final SpecialBlock entryBlock = processor.getMethodCfgs().get(methodTree).getEntryBlock();
+        return getNode(entryBlock);
     }
 }

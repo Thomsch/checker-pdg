@@ -1,6 +1,7 @@
 package org.checkerframework.flexeme;
 
 import com.google.common.graph.EndpointPair;
+import org.checkerframework.flexeme.pdg.FilePdg;
 import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.checkerframework.flexeme.pdg.PdgEdge;
 import org.checkerframework.flexeme.pdg.PdgNode;
@@ -17,25 +18,42 @@ public class DotPrinter {
     private static final Logger logger = LoggerFactory.getLogger(DotPrinter.class);
 
     public static void printPdg(final MethodPdg pdg) {
-        final String printd = new DotPrinter().printDot(Set.of(pdg));
-        System.out.println(printd);
+        final String printedPdg = new DotPrinter().printDot(new FilePdg(Set.of(pdg), Set.of()));
+        System.out.println(printedPdg);
+    }
+
+    /**
+     * Convenience method to print the PDGs of a file.
+     *
+     * @param filePdg The PDGs to print.
+     */
+    public static void printFilePdg(final FilePdg filePdg) {
+        final String printedPdg = new DotPrinter().printDot(filePdg);
+        System.out.println(printedPdg);
     }
 
     /**
      * Print PDGs graphs as one dot file.
-     * @param graphs The PDGs graphs from a file to print.
+     *
+     * @param filePdg The PDGs to print.
+     * @return The dot file as a string.
      */
-    public String printDot(Set<MethodPdg> graphs) {
-        StringBuilder stringBuilder = new StringBuilder("digraph {");
+    public String printDot(FilePdg filePdg) {
+        final StringBuilder stringBuilder = new StringBuilder("digraph {");
         stringBuilder.append(System.lineSeparator());
         int counter = 0;
-        for (final MethodPdg graph : graphs) {
+        for (final MethodPdg graph : filePdg.getGraphs()) {
             stringBuilder.append(printGraph(graph, counter));
             stringBuilder.append(System.lineSeparator());
             counter++;
         }
 
-        // TODO: All the edges are printed at the end (that's what C# PDG does)
+        // Print local method calls
+        for (final PdgEdge localCall : filePdg.getLocalCalls()) {
+            stringBuilder.append(printEdge(localCall));
+            stringBuilder.append(System.lineSeparator());
+        }
+
         stringBuilder.append("}");
         return stringBuilder.toString();
     }
@@ -78,6 +96,10 @@ public class DotPrinter {
     @SuppressWarnings("UnstableApiUsage")
     public static String printEdge(final EndpointPair<PdgNode> edge, final PdgEdge.Type edgeType) {
         return String.format("n%d -> n%d [key=%d, style=%s, color=%s];", edge.source().getId(), edge.target().getId(), edgeType.getKey(), edgeType.getStyle(), edgeType.getColor());
+    }
+
+    public static String printEdge(final PdgEdge edge) {
+        return String.format("n%d -> n%d [key=%d, style=%s, color=%s];", edge.from.getId(), edge.to.getId(), edge.type.getKey(), edge.type.getStyle(), edge.type.getColor());
     }
 
     public String printNode(final PdgNode node) {
