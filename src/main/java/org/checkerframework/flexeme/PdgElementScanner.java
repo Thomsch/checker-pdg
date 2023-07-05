@@ -37,18 +37,6 @@ public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     }
 
     @Override
-    public Void visitCompoundAssignment(final CompoundAssignmentTree node, final Set<Tree> pdgElements) {
-        pdgElements.add(node);
-        return super.visitCompoundAssignment(node, pdgElements);
-    }
-
-    @Override
-    public Void visitParenthesized(final ParenthesizedTree node, final Set<Tree> pdgElements) {
-        pdgElements.add(node.getExpression());
-        return super.visitParenthesized(node, pdgElements);
-    }
-
-    @Override
     public Void visitForLoop(final ForLoopTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node.getCondition());
         return super.visitForLoop(node, pdgElements);
@@ -62,27 +50,39 @@ public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     }
 
     @Override
+    public Void visitCompoundAssignment(final CompoundAssignmentTree node, final Set<Tree> pdgElements) {
+        pdgElements.add(node);
+        return null;
+    }
+
+    @Override
+    public Void visitParenthesized(final ParenthesizedTree node, final Set<Tree> pdgElements) {
+        pdgElements.add(node.getExpression());
+        return null;
+    }
+
+    @Override
     public Void visitThrow(final ThrowTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
-        return super.visitThrow(node, pdgElements);
+        return null;
     }
 
     @Override
     public Void visitReturn(final ReturnTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
-        return super.visitReturn(node, pdgElements);
+        return null;
     }
 
     @Override
     public Void visitMethodInvocation(final MethodInvocationTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
-        return super.visitMethodInvocation(node, pdgElements);
+        return null;
     }
 
     @Override
     public Void visitAssignment(final AssignmentTree node, final Set<Tree> trees) {
         trees.add(node);
-        return super.visitAssignment(node, trees);
+        return null;
     }
 
     @Override
@@ -96,12 +96,12 @@ public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     @Override
     public Void visitUnary(final UnaryTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
-        return super.visitUnary(node, pdgElements);
+        return null;
     }
 
     @Override
     public Void visitExpressionStatement(final ExpressionStatementTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node.getExpression());
-        return super.visitExpressionStatement(node, pdgElements);
+        return null;
     }
 }

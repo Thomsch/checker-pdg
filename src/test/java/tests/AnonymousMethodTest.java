@@ -31,6 +31,8 @@ public class AnonymousMethodTest {
     public void testAnonymousMethod() {
         final MethodPdg pdg = pdgBuilder.buildPdg(processor, processor.getMethod("anonymousMethod"));
 
+        DotPrinter.printPdg(pdg);
+
         assertEquals(7, pdg.nodes().size());
         assertTrue(pdg.containsNode("Integer a = x"));
         assertTrue(pdg.containsNode("Optional optX = Optional.of(x)"));
