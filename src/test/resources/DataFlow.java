@@ -1,7 +1,4 @@
-import java.util.List;
-import java.util.Optional;
-
-class DataFlowTests {
+class DataFlow {
 
     int a = 0;
 

@@ -1,6 +1,10 @@
 package tests;
 
+import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
+import org.checkerframework.flexeme.pdg.FilePdg;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
+import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -9,7 +13,6 @@ import org.junit.Test;
  */
 public class CrashTest {
 
-    // TODO: Check number of PDG elements is right and that the PDG elements are right.
     @Test
     public void testSourcePath() throws Throwable {
 
@@ -31,23 +34,19 @@ public class CrashTest {
     }
 
     @Test
-    public void testDataFlow() {
-        String inputFile1 = "src/test/resources/BasicTests.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.compileFile(inputFile1, "build/", false, "", "");
-
-        String inputFile2 = "src/test/resources/DataFlowTests.java";
-
-        extractor.compileFile(inputFile2, "build/", false, "", "");
-    }
-
-    @Test
     public void testEnum() {
         String inputFile1 = "src/test/resources/MyEnum.java";
 
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile1, "", "", "build/Enum.dot");
+    }
+
+    @Test
+    public void testAllLanguageFeatures() {
+        PdgExtractor pdgExtractor = new PdgExtractor();
+        PdgBuilder pdgBuilder = new PdgBuilder();
+        FileProcessor processor = pdgExtractor.compileFile("src/test/resources/AllLanguageFeatures.java", "build/", false, "", "");
+        pdgBuilder.buildPdgForFile(processor);
     }
 
     @Test
@@ -64,14 +63,6 @@ public class CrashTest {
 
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Infinite.dot");
-    }
-
-    @Test
-    public void testAnonymous() {
-        String inputFile = "src/test/resources/BasicTests.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/BasicTests.dot");
     }
 
     @Test
