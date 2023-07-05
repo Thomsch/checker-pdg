@@ -33,7 +33,7 @@ public class CfgNodesScanner extends TreeScanner<Void, Set<Node>> {
                     // System.out.println("   Transitive:" + transitiveOperands);
                 }
             } else {
-                System.out.println("No nodes for tree");
+                // System.out.println("No nodes for tree");
             }
         }
         return super.scan(tree, found);

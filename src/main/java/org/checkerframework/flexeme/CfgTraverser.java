@@ -74,8 +74,8 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         makeStatementNodes(blocks, analysis);
 
         for (final Block block : blocks) {
-            System.out.println("BLOCK: " + block);
-            System.out.println("--------------------");
+            // System.out.println("BLOCK: " + block);
+            // System.out.println("--------------------");
 
             // TODO If the block has no PDG elements, skip it (there won't be any "from" node to see).
 
@@ -111,7 +111,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                     for(PdgNode to : toNodes) {
                         if (!from.equals(to)) {
                             PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
-                            System.out.println(edge);
+                            // System.out.println(edge);
                             methodPdg.addEdge(edge);
                         }
                     }
@@ -136,7 +136,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                         logger.error("No to node found for node: " + node);
                     } else if (!from.equals(to)) { // Skip self-edges on PDG nodes unless there is a true self loop in the CFG.
                         PdgEdge edge = new PdgEdge(from, to, PdgEdge.Type.CONTROL);
-                        System.out.println(edge);
+                        // System.out.println(edge);
                         methodPdg.addEdge(edge);
                     }
                 }
@@ -173,10 +173,10 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                     }
                 }
 
-                System.out.println("Second pass, visiting predecessors of " + block);
+                // System.out.println("Second pass, visiting predecessors of " + block);
                 List<PdgNode> predecessorNodes1 = new ArrayList<>();
                 for (final Block predecessor : block.getPredecessors()) {
-                    System.out.println("    " + predecessor);
+                    // System.out.println("    " + predecessor);
                     predecessorNodes1.addAll(findFromNodes(predecessor));
                 }
                 return predecessorNodes1;
@@ -210,15 +210,15 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
     private List<PdgNode> findToNodes(final Block block) {
         switch (block.getType()) {
             case REGULAR_BLOCK:
-                System.out.println("First pass, visiting nodes of " + block);
+                // System.out.println("First pass, visiting nodes of " + block);
                 for (Node node : block.getNodes()) {
-                    System.out.println("    " + node);
+                    // System.out.println("    " + node);
                     if (methodPdg.getNode(node) != null) {
                         return List.of(methodPdg.getNode(node));
                     }
                 }
 
-                System.out.println("Second pass, visiting successors of " + block);
+                // System.out.println("Second pass, visiting successors of " + block);
 
                 List<PdgNode> successorsNodes1 = new ArrayList<>();
                 for (final Block successor : block.getSuccessors()) {
