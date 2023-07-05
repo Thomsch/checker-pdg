@@ -43,6 +43,12 @@ public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     }
 
     @Override
+    public Void visitSwitch(final SwitchTree node, final Set<Tree> pdgElements) {
+        pdgElements.add(node.getExpression());
+        return super.visitSwitch(node, pdgElements);
+    }
+
+    @Override
     public Void visitEnhancedForLoop(final EnhancedForLoopTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node.getVariable());
         pdgElements.add(node.getExpression());
@@ -52,12 +58,6 @@ public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
     @Override
     public Void visitCompoundAssignment(final CompoundAssignmentTree node, final Set<Tree> pdgElements) {
         pdgElements.add(node);
-        return null;
-    }
-
-    @Override
-    public Void visitParenthesized(final ParenthesizedTree node, final Set<Tree> pdgElements) {
-        pdgElements.add(node.getExpression());
         return null;
     }
 
