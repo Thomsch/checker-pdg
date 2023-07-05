@@ -4,9 +4,10 @@ import org.checkerframework.flexeme.PdgExtractor;
 import org.junit.Test;
 
 /**
- * General tests for the PDG extraction.
+ * Pass / Fail tests for the PDG extractor.
+ * This test class contains high-level tests that check that the PDG extractor does not crash on certain inputs.
  */
-public class MethodPdgExtractionTest {
+public class CrashTest {
 
     // TODO: Check number of PDG elements is right and that the PDG elements are right.
     @Test
