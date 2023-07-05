@@ -73,11 +73,6 @@ public class FileProcessor extends BasicTypeProcessor {
                 logger.error("Class tree is null");
             }
 
-            // Skip empty static constructors.
-            if (method.getName().toString().equals("<init>") && method.getBody().getStatements().size() == 1) {
-                continue;
-            }
-
             // TODO: Move everything below out of this method.
             ControlFlowGraph cfg = CFGBuilder.build(compilationUnitTree, method, classTree, processingEnv);
 

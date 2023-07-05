@@ -2,7 +2,6 @@ package org.checkerframework.flexeme;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.MethodTree;
-import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePathScanner;
 import org.checkerframework.javacutil.TreeUtils;
 import org.slf4j.Logger;
@@ -28,18 +27,20 @@ public class MethodScanner extends TreePathScanner<Void, Void> {
     }
 
     @Override
-    public Void visitMethod(MethodTree node, Void p) {
-        ExecutableElement el = TreeUtils.elementFromDeclaration(node);
+    public Void visitMethod(MethodTree methodAst, Void p) {
+        ExecutableElement el = TreeUtils.elementFromDeclaration(methodAst);
 
         // If the method is abstract (interface, enum, abstract class), we don't need to build the CFG.
-        if (el == null || node.getBody() == null || classTree == null) {
+        if (el == null || methodAst.getBody() == null || classTree == null) {
             return null;
         }
 
-        methodTrees.add(node);
-        classMap.put(node, classTree);
+        if (!(methodAst.getName().toString().equals("<init>") && methodAst.getBody().getStatements().size() == 1)) {
+            methodTrees.add(methodAst);
+            classMap.put(methodAst, classTree);
+        }
 
-        return super.visitMethod(node, p);
+        return super.visitMethod(methodAst, p);
     }
 
     @Override
