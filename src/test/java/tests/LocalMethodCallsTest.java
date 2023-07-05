@@ -3,6 +3,7 @@ package tests;
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
 import org.checkerframework.flexeme.pdg.FilePdg;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -14,16 +15,14 @@ import static org.junit.Assert.assertTrue;
  * an edge between the two methods in the graph.
  */
 public class LocalMethodCallsTest {
-    private static FileProcessor processor;
-    private static PdgExtractor pdgExtractor;
     private static FilePdg filePdg;
 
     @BeforeClass
     public static void setUp() {
-        PdgExtractor extractor = new PdgExtractor();
-        processor = extractor.compileFile("src/test/resources/LocalMethodCalls.java", "build/", false, "", "");
-        pdgExtractor = new PdgExtractor();
-        filePdg = pdgExtractor.buildPdgs(processor);
+        PdgExtractor pdgExtractor = new PdgExtractor();
+        FileProcessor processor = pdgExtractor.compileFile("src/test/resources/LocalMethodCalls.java", "build/", false, "", "");
+        PdgBuilder pdgBuilder = new PdgBuilder();
+        filePdg = pdgBuilder.buildPdgForFile(processor);
     }
 
     @Test

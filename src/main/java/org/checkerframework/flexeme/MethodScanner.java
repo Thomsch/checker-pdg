@@ -8,22 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.ExecutableElement;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MethodScanner extends TreePathScanner<Void, Void> {
     private static final Logger logger = LoggerFactory.getLogger(MethodScanner.class);
 
-    final private List<MethodTree> methodTrees;
-
-    final private Map<MethodTree, ClassTree> classMap;
+    final private Map<MethodTree, ClassTree> methodToClassAstMap;
     private ClassTree classTree;
 
     public MethodScanner() {
-        methodTrees = new ArrayList<>();
-        classMap = new HashMap<>();
+        methodToClassAstMap = new HashMap<>();
     }
 
     @Override
@@ -32,12 +26,14 @@ public class MethodScanner extends TreePathScanner<Void, Void> {
 
         // If the method is abstract (interface, enum, abstract class), we don't need to build the CFG.
         if (el == null || methodAst.getBody() == null || classTree == null) {
+            if (classTree == null) {
+                logger.error("Class tree is null");
+            }
             return null;
         }
 
         if (!(methodAst.getName().toString().equals("<init>") && methodAst.getBody().getStatements().size() == 1)) {
-            methodTrees.add(methodAst);
-            classMap.put(methodAst, classTree);
+            methodToClassAstMap.put(methodAst, classTree);
         }
 
         return super.visitMethod(methodAst, p);
@@ -55,14 +51,14 @@ public class MethodScanner extends TreePathScanner<Void, Void> {
     }
 
     public ClassTree hasClassTree(final MethodTree method) {
-        return classMap.get(method);
+        return methodToClassAstMap.get(method);
     }
 
-    public Map<MethodTree, ClassTree> getClassMap() {
-        return classMap;
+    public Map<MethodTree, ClassTree> getMethodToClassAstMap() {
+        return methodToClassAstMap;
     }
 
-    public List<MethodTree> getMethodTrees() {
-        return methodTrees;
+    public Set<MethodTree> getMethodTrees() {
+        return methodToClassAstMap.keySet();
     }
 }

@@ -22,7 +22,7 @@ import java.util.Set;
  * However, their conditional expressions and body's statements are PDG elements.
  *
  */
-class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
+public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
 
     private final MethodTree method;
 

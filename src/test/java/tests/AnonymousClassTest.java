@@ -3,6 +3,7 @@ package tests;
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
 import org.checkerframework.flexeme.pdg.MethodPdg;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -19,15 +20,15 @@ public class AnonymousClassTest {
         processor = extractor.compileFile("src/test/resources/AnonymousClass.java", "build/", false, "", "");
     }
 
-    private PdgExtractor pdgExtractor;
+    private PdgBuilder pdgBuilder;
     @Before
     public void setUpMethod() {
-        pdgExtractor = new PdgExtractor();
+        pdgBuilder = new PdgBuilder();
     }
 
     @Test
     public void testAnonymousClass() {
-        final MethodPdg pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousClass"));
+        final MethodPdg pdg = pdgBuilder.buildPdg(processor, processor.getMethod("anonymousClass"));
 
         assertEquals(6, pdg.nodes().size());
         assertTrue(pdg.containsNode("int a = 0"));

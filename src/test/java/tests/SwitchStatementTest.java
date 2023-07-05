@@ -3,6 +3,7 @@ package tests;
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
 import org.checkerframework.flexeme.pdg.MethodPdg;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -12,21 +13,22 @@ import static org.junit.Assert.assertTrue;
 
 public class SwitchStatementTest {
     static FileProcessor processor;
+    private PdgBuilder pdgBuilder;
+
     @BeforeClass
     public static void setUp() {
         PdgExtractor extractor = new PdgExtractor();
         processor = extractor.compileFile("src/test/resources/Switches.java", "build/", false, "", "");
     }
 
-    private PdgExtractor pdgExtractor;
     @Before
     public void setUpMethod() {
-        pdgExtractor = new PdgExtractor();
+        pdgBuilder = new PdgBuilder();
     }
 
     @Test
     public void testBasicSwitch() {
-        MethodPdg methodPdg = pdgExtractor.buildPdg(processor, processor.getMethod("basicSwitch"));
+        final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("basicSwitch"));
 
         assertEquals(7, methodPdg.nodes().size());
 
@@ -53,7 +55,7 @@ public class SwitchStatementTest {
      */
     @Test
     public void testFallThrough() {
-        MethodPdg methodPdg = pdgExtractor.buildPdg(processor, processor.getMethod("fallThrough"));
+        final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("fallThrough"));
 
         assertEquals(7, methodPdg.nodes().size());
         assertFalse(methodPdg.containsNode("ExceptionalExit"));

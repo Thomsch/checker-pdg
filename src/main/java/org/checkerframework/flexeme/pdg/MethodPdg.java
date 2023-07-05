@@ -7,11 +7,11 @@ import com.sun.source.tree.MethodTree;
 import com.sun.source.tree.Tree;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
+import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.flexeme.FileProcessor;
 
-import javax.lang.model.element.ExecutableElement;
 import java.util.*;
 
 /**
@@ -20,33 +20,35 @@ import java.util.*;
 @SuppressWarnings("UnstableApiUsage")
 public class MethodPdg {
     private final FileProcessor processor;
-    private final ClassTree classTree;
-    private final MethodTree methodTree;
+    private final ClassTree classAst;
+    private final MethodTree methodAst;
+    private final ControlFlowGraph methodCfg;
 
     private final MutableValueGraph<PdgNode, PdgEdge.Type> graph;
 
     private static long nodeId = 0; // TODO: Refactor nodeId to be a field of PdgNode
     private final HashMap<SpecialBlock, PdgNode> blockToPdgNode;
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
-    private HashMap<Tree, PdgNode> treeToNodeMap;
+    private HashMap<Tree, PdgNode> pdgElementToPdgNodeMap;
 
-    public MethodPdg(FileProcessor processor, final ClassTree classTree, final MethodTree methodTree) {
+    public MethodPdg(FileProcessor processor, final ClassTree classAst, final MethodTree methodAst, final ControlFlowGraph methodCfg, final Map<Node, Tree> cfgNodesToPdgElements) {
         this.processor = processor;
-        this.classTree = classTree;
-        this.methodTree = methodTree;
+        this.classAst = classAst;
+        this.methodAst = methodAst;
+        this.methodCfg = methodCfg;
         this.graph = ValueGraphBuilder.directed().allowsSelfLoops(true).build();
         // this.graph = NetworkBuilder.directed().allowsSelfLoops(true).allowsParallelEdges(true).build();
-        this.treeToNodeMap = new HashMap<>();
+        this.pdgElementToPdgNodeMap = new HashMap<>();
         this.blockToPdgNode = new HashMap<>();
-        this.cfgNodeToPdgTree = processor.getCfgNodeToPdgElementMaps().get(methodTree);
+        this.cfgNodeToPdgTree = cfgNodesToPdgElements;
     }
 
     public String getClassName() {
-        return classTree.getSimpleName().toString();
+        return classAst.getSimpleName().toString();
     }
 
     public String getMethodName() {
-        return methodTree.getName().toString();
+        return methodAst.getName().toString();
     }
 
     public Set<PdgNode> nodes() {
@@ -60,7 +62,7 @@ public class MethodPdg {
         long lineStart = lineMap.getLineNumber(jct.getStartPosition());
         long lineEnd = lineMap.getLineNumber(jct.getEndPosition(endPosTable));
         PdgNode node = new PdgNode(this, nodeId, tree.toString(), lineStart, lineEnd);
-        treeToNodeMap.put(tree, node);
+        pdgElementToPdgNodeMap.put(tree, node);
         graph.addNode(node);
         nodeId++;
     }
@@ -92,11 +94,11 @@ public class MethodPdg {
 
     public PdgNode getNode(final Node node) {
         final Tree tree = cfgNodeToPdgTree.get(node);
-        return treeToNodeMap.get(tree);
+        return pdgElementToPdgNodeMap.get(tree);
     }
 
     public PdgNode getNode(final Tree tree) {
-        return treeToNodeMap.get(tree);
+        return pdgElementToPdgNodeMap.get(tree);
     }
 
     public void addEdge(final PdgEdge edge) {
@@ -137,7 +139,7 @@ public class MethodPdg {
      * @return the AST method tree
      */
     public MethodTree getTree() {
-        return methodTree;
+        return methodAst;
     }
 
     /**
@@ -145,7 +147,11 @@ public class MethodPdg {
      * @return the entry point of the PDG
      */
     public PdgNode getStartNode() {
-        final SpecialBlock entryBlock = processor.getMethodCfgs().get(methodTree).getEntryBlock();
+        final SpecialBlock entryBlock = methodCfg.getEntryBlock();
         return getNode(entryBlock);
+    }
+
+    public Set<Tree> getPdgElements() {
+        return pdgElementToPdgNodeMap.keySet();
     }
 }

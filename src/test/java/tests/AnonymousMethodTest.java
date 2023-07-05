@@ -4,6 +4,7 @@ import org.checkerframework.flexeme.DotPrinter;
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.checkerframework.flexeme.PdgExtractor;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,21 +14,22 @@ import static org.junit.Assert.assertTrue;
 
 public class AnonymousMethodTest {
     static FileProcessor processor;
+    private PdgBuilder pdgBuilder;
+
     @BeforeClass
     public static void setUp() {
         PdgExtractor extractor = new PdgExtractor();
         processor = extractor.compileFile("src/test/resources/AnonymousMethods.java", "build/", false, "", "");
     }
 
-    private PdgExtractor pdgExtractor;
     @Before
     public void setUpMethod() {
-        pdgExtractor = new PdgExtractor();
+        pdgBuilder = new PdgBuilder();
     }
 
     @Test
     public void testAnonymousMethod() {
-        final MethodPdg pdg = pdgExtractor.buildPdg(processor, processor.getMethod("anonymousMethod"));
+        final MethodPdg pdg = pdgBuilder.buildPdg(processor, processor.getMethod("anonymousMethod"));
 
         assertEquals(7, pdg.nodes().size());
         assertTrue(pdg.containsNode("Integer a = x"));

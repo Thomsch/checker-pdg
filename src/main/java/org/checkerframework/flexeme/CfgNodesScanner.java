@@ -9,9 +9,9 @@ import java.util.Collection;
 import java.util.Set;
 
 /**
- * A scanner that retrieves all the nodes corresponding to a tree.
+ * A scanner that retrieves all the nodes corresponding to an AST.
  */
-class CfgNodesScanner extends TreeScanner<Void, Set<Node>> {
+public class CfgNodesScanner extends TreeScanner<Void, Set<Node>> {
     private final ControlFlowGraph cfg;
 
     public CfgNodesScanner(final ControlFlowGraph cfg) {

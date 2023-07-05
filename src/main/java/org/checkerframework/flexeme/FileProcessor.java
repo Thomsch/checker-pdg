@@ -1,54 +1,41 @@
 package org.checkerframework.flexeme;
 
-import com.google.common.collect.Sets;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePathScanner;
-import com.sun.source.util.TreeScanner;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.builder.CFGBuilder;
-import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BasicTypeProcessor;
-import org.checkerframework.org.plumelib.util.IdentityArraySet;
-import org.checkerframework.org.plumelib.util.UnmodifiableIdentityHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
- * A processor that stores the control flow graph for each method in the file.
+ * Processor for the file compilation. Stores the ASTs of the methods
+ * in the file and the line map of the compilation unit.
  */
 @SupportedAnnotationTypes("*")
 public class FileProcessor extends BasicTypeProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(FileProcessor.class);
 
-    private CompilationUnitTree compilationUnitTree;
-
-    private LineMap lineMap;
-
-    final private Map<MethodTree, ControlFlowGraph> cfgResults;
-
-    private final Map<MethodTree, Map<Node, Tree>> cfgNodesToPdgElementsMaps;
-
     private final MethodScanner methodScanner;
+    private final Map<MethodTree, ControlFlowGraph> methodAstToCfgMap;
+    private LineMap lineMap;
     private EndPosTable endPosTable;
 
     public FileProcessor() {
-        cfgResults = new HashMap<>();
-        cfgNodesToPdgElementsMaps = new HashMap<>();
         methodScanner = new MethodScanner();
+        methodAstToCfgMap = new HashMap<>();
     }
 
     @Override
     protected TreePathScanner<?, ?> createTreePathScanner(CompilationUnitTree root) {
-        compilationUnitTree = root;
-
         if (root instanceof JCTree.JCCompilationUnit) {
             JCTree.JCCompilationUnit jcCompilationUnit = (JCTree.JCCompilationUnit) root;
             endPosTable = jcCompilationUnit.endPositions;
@@ -60,70 +47,15 @@ public class FileProcessor extends BasicTypeProcessor {
         return methodScanner;
     }
 
-    public Map<MethodTree, ControlFlowGraph> getMethodCfgs() {
-        return cfgResults;
-    }
-
     @Override
     public void typeProcessingOver() {
-        // perform analysis for each method.
-        for (MethodTree method : methodScanner.getMethodTrees()) {
-            final ClassTree classTree = methodScanner.hasClassTree(method);
-            if (classTree == null) {
-                logger.error("Class tree is null");
-            }
+        methodScanner.getMethodToClassAstMap().forEach((methodTree, classTree) -> {
+            // The CFG builder has to be called in a {@link Processor}. Calling the builder outside a processor
+            // throws an exception because the Java compiler is terminated.
+            final ControlFlowGraph methodCfg = CFGBuilder.build(currentRoot, methodTree, classTree, processingEnv);
+            methodAstToCfgMap.put(methodTree, methodCfg);
+        });
 
-            // TODO: Move everything below out of this method.
-            ControlFlowGraph cfg = CFGBuilder.build(compilationUnitTree, method, classTree, processingEnv);
-
-            // TODO: Refactor to return the set of pdgElements by overriding `reduce`.
-            TreeScanner<Void, Set<Tree>> pdgElementScanner = new PdgElementScanner(method);
-            Set<Tree> pdgElements = new IdentityArraySet<>();
-            pdgElementScanner.scan(method, pdgElements);
-
-            System.out.println(cfg.toStringDebug());
-            System.out.println();
-            System.out.println("PDG Elements: " + pdgElements.size());
-            for (final Tree statement : pdgElements) {
-                System.out.println("    " + statement);
-            }
-            System.out.println();
-
-            final UnmodifiableIdentityHashMap<UnaryTree, BinaryTree> postfixNodeLookup = cfg.getPostfixNodeLookup();
-
-            // An identity hashmap is needed so that the nodes are compared by reference instead of equality.
-            Map<Node, Tree> cfgNodesToPdgElements = new IdentityHashMap<>();
-            for (final Tree pdgElement : pdgElements) {
-                Set<Node> found = new IdentityArraySet<>();
-                TreeScanner<Void, Set<Node>> scanner = new CfgNodesScanner(cfg);
-                scanner.scan(pdgElement, found);
-
-                final BinaryTree binaryTree = postfixNodeLookup.get(pdgElement);
-                if (binaryTree != null) {
-                    scanner.scan(binaryTree, found);
-                }
-                for (final Node node : found) {
-                    System.out.println("Found node: " + node + " (uid:" + node.getUid() + ") -> " + pdgElement);
-                }
-                found.forEach(node -> cfgNodesToPdgElements.put(node, pdgElement));
-            }
-            System.out.println();
-
-            // Show all the nodes associated with a statement.
-            // The map is reversed so that the statement is the key.
-            System.out.println("PDG Elements -> Nodes");
-            final Map<Tree, Set<Node>> collect = cfgNodesToPdgElements.entrySet().stream().collect(
-                    Collectors.groupingBy(
-                            Map.Entry::getValue,
-                            Collectors.mapping(Map.Entry::getKey, Collectors.toSet())
-                    )
-            );
-            collect.forEach((k, v) -> System.out.println(k + " -> " + v));
-            System.out.println();
-
-            cfgResults.put(method, cfg);
-            cfgNodesToPdgElementsMaps.put(method, cfgNodesToPdgElements);
-        }
         super.typeProcessingOver();
     }
 
@@ -140,20 +72,12 @@ public class FileProcessor extends BasicTypeProcessor {
         return endPosTable;
     }
 
-    public Map<MethodTree, Map<Node, Tree>> getCfgNodeToPdgElementMaps() {
-        return cfgNodesToPdgElementsMaps;
-    }
-
-    public Set<Tree> getPdgElements(MethodTree methodTree) {
-        return Sets.newHashSet(cfgNodesToPdgElementsMaps.get(methodTree).values());
-    }
-
     public ClassTree getClassTree(final MethodTree methodTree) {
-        return methodScanner.getClassMap().get(methodTree);
+        return methodScanner.getMethodToClassAstMap().get(methodTree);
     }
 
-    public Set<MethodTree> getMethods() {
-        return cfgResults.keySet();
+    public Set<MethodTree> getMethodsAst() {
+        return methodScanner.getMethodTrees();
     }
 
     /**
@@ -165,12 +89,23 @@ public class FileProcessor extends BasicTypeProcessor {
      * @throws NoSuchElementException if no method with the given name exists.
      */
     public MethodTree getMethod(final String methodName) {
-        for (final MethodTree methodTree : cfgResults.keySet()) {
-            System.out.println("Method: " + methodTree.getName());
+        for (final MethodTree methodTree : methodScanner.getMethodTrees()) {
             if (methodTree.getName().toString().equals(methodName)) {
                 return methodTree;
             }
         }
         throw new NoSuchElementException("No method with name " + methodName + " exists.");
+    }
+
+    public CompilationUnitTree getCompilationUnitTree() {
+        return currentRoot;
+    }
+
+    public ProcessingEnvironment getProcessingEnvironment() {
+        return processingEnv;
+    }
+
+    public ControlFlowGraph getMethodCfg(final MethodTree methodAst) {
+        return methodAstToCfgMap.get(methodAst);
     }
 }
