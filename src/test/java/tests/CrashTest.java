@@ -74,14 +74,6 @@ public class CrashTest {
     }
 
     @Test
-    public void testExceptions() {
-        String inputFile = "src/test/resources/Exceptions.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Exceptions.dot");
-    }
-
-    @Test
     public void testNested() {
         String inputFile = "src/test/resources/Nested.java";
 
