@@ -59,7 +59,11 @@ public class CrashTest {
 
     @Test
     public void testInfiniteLoop() {
-        String inputFile = "src/test/resources/Infinite.java";
+        PdgExtractor pdgExtractor = new PdgExtractor();
+        PdgBuilder pdgBuilder = new PdgBuilder();
+        FileProcessor processor = pdgExtractor.compileFile("src/test/resources/Conditional.java", "build/", false, "", "");
+        pdgBuilder.buildPdgForFile(processor);
+    }
 
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Infinite.dot");
