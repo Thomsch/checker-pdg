@@ -2,9 +2,7 @@ package tests;
 
 import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
-import org.checkerframework.flexeme.pdg.FilePdg;
 import org.checkerframework.flexeme.pdg.PdgBuilder;
-import org.junit.Assert;
 import org.junit.Test;
 
 /**
@@ -58,12 +56,16 @@ public class CrashTest {
     }
 
     @Test
-    public void testInfiniteLoop() {
+    public void testConditional() {
         PdgExtractor pdgExtractor = new PdgExtractor();
         PdgBuilder pdgBuilder = new PdgBuilder();
         FileProcessor processor = pdgExtractor.compileFile("src/test/resources/Conditional.java", "build/", false, "", "");
         pdgBuilder.buildPdgForFile(processor);
     }
+
+    @Test
+    public void testHangingAnalysis() {
+        String inputFile = "src/test/resources/DoesNotTerminate.java";
 
         PdgExtractor extractor = new PdgExtractor();
         extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Infinite.dot");

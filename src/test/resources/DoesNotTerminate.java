@@ -1,14 +1,11 @@
 import java.io.*;
-import java.util.List;
-import java.util.Optional;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 /**
- * Toy example from "RefiNym: Using Names to Refine Types" adapted to Java.
+ * Code snippet from a Defects4J bug that caused the analysis to hang.
  */
-class Infinite {
+class DoesNotTerminate {
     Map<String, String> parsePaxHeaders(InputStream i) throws IOException {
         Map<String, String> headers = new HashMap<String, String>();
         // Format is "length keyword=value\n";
