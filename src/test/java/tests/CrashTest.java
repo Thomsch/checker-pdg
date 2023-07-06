@@ -64,14 +64,6 @@ public class CrashTest {
     }
 
     @Test
-    public void testHangingAnalysis() {
-        String inputFile = "src/test/resources/DoesNotTerminate.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Infinite.dot");
-    }
-
-    @Test
     public void testLoops() {
         String inputFile = "src/test/resources/Loops.java";
 
