@@ -79,23 +79,13 @@ public class DotPrinter {
         }
 
         // Print edges
-        for (final EndpointPair<PdgNode> edge : graph.edges()) {
-            Optional<PdgEdge.Type> edgeType = graph.edgeValue(edge);
-            if (edgeType.isPresent()) {
-                stringBuilder.append(printEdge(edge, edgeType.get()));
-                stringBuilder.append(System.lineSeparator());
-            } else {
-                logger.error("Edge type is empty for edge: " + edge);
-            }
+        for (final PdgEdge edge : graph.edges()) {
+            stringBuilder.append(printEdge(edge));
+            stringBuilder.append(System.lineSeparator());
         }
 
         stringBuilder.append("}");
         return stringBuilder.toString();
-    }
-
-    @SuppressWarnings("UnstableApiUsage")
-    public static String printEdge(final EndpointPair<PdgNode> edge, final PdgEdge.Type edgeType) {
-        return String.format("n%d -> n%d [key=%d, style=%s, color=%s];", edge.source().getId(), edge.target().getId(), edgeType.getKey(), edgeType.getStyle(), edgeType.getColor());
     }
 
     public static String printEdge(final PdgEdge edge) {

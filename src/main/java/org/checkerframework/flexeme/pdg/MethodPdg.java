@@ -24,20 +24,19 @@ public class MethodPdg {
     private final MethodTree methodAst;
     private final ControlFlowGraph methodCfg;
 
-    private final MutableValueGraph<PdgNode, PdgEdge.Type> graph;
+    private final MutableNetwork<PdgNode, PdgEdge> graph;
 
     private static long nodeId = 0; // TODO: Refactor nodeId to be a field of PdgNode
     private final HashMap<SpecialBlock, PdgNode> blockToPdgNode;
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
-    private HashMap<Tree, PdgNode> pdgElementToPdgNodeMap;
+    private final HashMap<Tree, PdgNode> pdgElementToPdgNodeMap;
 
     public MethodPdg(FileProcessor processor, final ClassTree classAst, final MethodTree methodAst, final ControlFlowGraph methodCfg, final Map<Node, Tree> cfgNodesToPdgElements) {
         this.processor = processor;
         this.classAst = classAst;
         this.methodAst = methodAst;
         this.methodCfg = methodCfg;
-        this.graph = ValueGraphBuilder.directed().allowsSelfLoops(true).build();
-        // this.graph = NetworkBuilder.directed().allowsSelfLoops(true).allowsParallelEdges(true).build();
+        this.graph = NetworkBuilder.directed().allowsSelfLoops(true).allowsParallelEdges(true).build();
         this.pdgElementToPdgNodeMap = new HashMap<>();
         this.blockToPdgNode = new HashMap<>();
         this.cfgNodeToPdgTree = cfgNodesToPdgElements;
@@ -67,12 +66,8 @@ public class MethodPdg {
         nodeId++;
     }
 
-    public Set<EndpointPair<PdgNode>> edges() {
+    public Set<PdgEdge> edges() {
         return graph.edges();
-    }
-
-    public Optional<PdgEdge.Type> edgeValue(final EndpointPair<PdgNode> edge) {
-        return graph.edgeValue(edge);
     }
 
     /**
@@ -102,7 +97,7 @@ public class MethodPdg {
     }
 
     public void addEdge(final PdgEdge edge) {
-        graph.putEdgeValue(edge.from, edge.to, edge.type);
+        graph.addEdge(edge.from, edge.to, edge);
     }
 
     /**
@@ -126,8 +121,8 @@ public class MethodPdg {
      * @return true if the graph contains an edge with the given labels, false otherwise
      */
     public boolean containsEdge(final String fromLabel, final String toLabel) {
-        for (EndpointPair<PdgNode> edge : graph.edges()) {
-            if (edge.nodeU().toString().equals(fromLabel) && edge.nodeV().toString().equals(toLabel)) {
+        for (PdgEdge edge : graph.edges()) {
+            if (edge.from.toString().equals(fromLabel) && edge.to.toString().equals(toLabel)) {
                 return true;
             }
         }
