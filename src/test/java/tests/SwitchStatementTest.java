@@ -34,7 +34,6 @@ public class SwitchStatementTest {
     public void testBasicSwitch() {
         final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("basicSwitch"));
 
-        DotPrinter.printPdg(methodPdg);
         assertEquals(7, methodPdg.nodes().size());
 
         assertTrue(methodPdg.containsNode("int a"));

@@ -60,8 +60,6 @@ public class DataflowTest {
                 "Exit", "ExceptionalExit");
         PdgUtils.assertEquals(expectedNodes, methodPdg.nodes());
 
-        DotPrinter.printPdg(methodPdg);
-
         assertEdgeCount(8, PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int a = 1", "int d = a", PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int a = 1", "int z = a + b + c", PdgEdge.Type.DATA, methodPdg);
@@ -154,8 +152,6 @@ public class DataflowTest {
     @Test
     public void testReturnFlow() {
         final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("returnFlow"));
-
-        DotPrinter.printPdg(methodPdg);
 
         assertEdgeCount(1, PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int a = 0", "return a;", PdgEdge.Type.DATA, methodPdg);
