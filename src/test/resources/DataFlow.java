@@ -1,3 +1,5 @@
+import java.util.List;
+
 class DataFlow {
 
     int a = 0;
@@ -71,5 +73,16 @@ class DataFlow {
         }
 
         int d = a;
+    }
+
+    void loop() {
+        for (int j = 0; j < 10; j++) {
+            System.out.println(j);
+        }
+    }
+
+    int returnFlow() {
+        int a = 0;
+        return a;
     }
 }

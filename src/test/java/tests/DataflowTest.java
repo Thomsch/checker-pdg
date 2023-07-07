@@ -138,4 +138,27 @@ public class DataflowTest {
         assertContainsEdge("int b = a", "int d = a", PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int c = a", "int d = a", PdgEdge.Type.DATA, methodPdg);
     }
+
+    @Test
+    public void testLoop() {
+        final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("loop"));
+
+        assertEdgeCount(5, PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("int j = 0", "j < 10", PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("j < 10", "System.out.println(j)", PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("System.out.println(j)", "++j", PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("++j", "++j", PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("++j", "j < 10", PdgEdge.Type.DATA, methodPdg);
+    }
+
+    @Test
+    public void testReturnFlow() {
+        final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("returnFlow"));
+
+        DotPrinter.printPdg(methodPdg);
+
+        assertEdgeCount(1, PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("int a = 0", "return a;", PdgEdge.Type.DATA, methodPdg);
+        assertContainsEdge("int a = 0", "return a;", PdgEdge.Type.CONTROL, methodPdg);
+    }
 }

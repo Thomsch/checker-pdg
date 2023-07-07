@@ -204,7 +204,7 @@ public class PdgBuilder {
             }
             PdgNode to = methodPdg.getNode(edge.getTo().getReference());
 
-            if (from != null && to != null) {
+            if (from != null && to != null && edge.getFrom().getReference().getInSource() && edge.getTo().getReference().getInSource()) {
                 PdgEdge pdgEdge = new PdgEdge(from, to, PdgEdge.Type.DATA);
                 methodPdg.addEdge(pdgEdge);
             }
