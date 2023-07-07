@@ -5,11 +5,11 @@ import com.sun.source.util.TreeScanner;
 import org.checkerframework.dataflow.analysis.ForwardAnalysis;
 import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.builder.CFGBuilder;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.flexeme.*;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
+import org.checkerframework.flexeme.dataflow.Edge;
 import org.checkerframework.flexeme.dataflow.VariableReference;
 import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
@@ -84,7 +84,6 @@ public class PdgBuilder {
         // cfgResults.put(methodAst, methodCfg);
         // cfgNodesToPdgElementsMaps.put(methodAst, cfgNodesToPdgElements);
 
-
         // Add the nodes to the PDG.
         MethodPdg methodPdg = new MethodPdg(processor, classTree, methodAst, methodCfg, cfgNodesToPdgElements);
         for (Tree pdgElement : pdgElements) {
@@ -95,10 +94,10 @@ public class PdgBuilder {
         methodPdg.registerSpecialBlock(methodCfg.getEntryBlock(), "Entry");
         methodPdg.registerSpecialBlock(methodCfg.getRegularExitBlock(), "Exit");
         methodPdg.registerSpecialBlock(methodCfg.getExceptionalExitBlock(), "ExceptionalExit");
-        CfgTraverser cfgTraverser = new CfgTraverser(null, cfgNodesToPdgElements, methodCfg);
+        CfgTraverser cfgTraverser = new CfgTraverser();
         cfgTraverser.traverseEdges(methodPdg, methodCfg);
 
-        addDataFlowEdges(methodPdg, processor, methodAst);
+        addDataFlowEdges(methodPdg);
 
         return methodPdg;
     }
@@ -176,7 +175,43 @@ public class PdgBuilder {
         return localCalls;
     }
 
-    private void addDataFlowEdges(final MethodPdg methodPdg, final FileProcessor processor, final MethodTree methodTree) {
+    /**
+     * Add the data flow edges to the PDG.
+     * @param methodPdg The PDG to add the edges to.
+     */
+    private void addDataFlowEdges(final MethodPdg methodPdg) {
+        // This implementation reuses the legacy dataflow implementation with its {@link Edge} and {@link VariableReference}.
+        // Ideally, the analysis would use the {@link PdgNode} and {@link PdgEdge} classes so there is no need to convert
+        // between the two.
+        final ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = runAnalysis(methodPdg.getMethodCfg(), methodPdg.getPdgElements());
+        Set<Edge> edges = new HashSet<>();
+        if (analysis.getRegularExitStore() != null) {
+            edges.addAll(analysis.getRegularExitStore().getEdges());
+        }
+
+        if (analysis.getExceptionalExitStore() != null) {
+            edges.addAll(analysis.getExceptionalExitStore().getEdges());
+        }
+
+        for (final Edge edge : edges) {
+            // If the from node is a parameter, the from PDG node is the Entry node.
+            PdgNode from;
+            if (methodPdg.getMethodAst().getParameters().contains(edge.getFrom().getReference().getTree())) {
+                from = methodPdg.getStartNode();
+            } else {
+                // Otherwise, find the from node in the PDG.
+                from = methodPdg.getNode(edge.getFrom().getReference());
+            }
+            PdgNode to = methodPdg.getNode(edge.getTo().getReference());
+
+            if (from != null && to != null) {
+                PdgEdge pdgEdge = new PdgEdge(from, to, PdgEdge.Type.DATA);
+                methodPdg.addEdge(pdgEdge);
+            }
+        }
+    }
+
+    private void addNameFlowEdges() {
         // // TODO: The creation of the graph should be decoupled from printing the results
         // // 3. Run nameflow analysis and add it to the graph.
         // processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
@@ -198,34 +233,13 @@ public class PdgBuilder {
     }
 
     /**
-     * Create the CFG with dataflow edges for a given method.
-     *
-     * @param analysis               The results of the dataflow analysis
-     * @param methodControlFlowGraph The CFG of the method to visualize
-     * @param methodTree
-     * @return The visualizer object containing the PDG for the method.
-     */
-    // private static CfgTraverser runVisualization(ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis, ControlFlowGraph methodControlFlowGraph, FileProcessor processor, final MethodTree methodTree) {
-    //     Map<String, Object> args = new HashMap<>(2);
-    //     args.put("outdir", "out");
-    //     args.put("verbose", true);
-    //
-    //     UnderlyingAST underlyingAST = methodControlFlowGraph.getUnderlyingAST();
-    //     UnderlyingAST.CFGMethod method1 = ((UnderlyingAST.CFGMethod) underlyingAST);
-    //
-    //     CfgTraverser viz = new CfgTraverser(null, processor.getCfgNodeToPdgElementMaps().get(methodTree), processor.getMethodCfgs().get(methodTree));
-    //     viz.init(args);
-    //     Map<String, Object> res = viz.visualize(methodControlFlowGraph, methodControlFlowGraph.getEntryBlock(), analysis);
-    //     viz.shutdown();
-    //     return viz;
-    // }
-
-    /**
      * Runs the dataflow analysis for a given method.
+     *
      * @param methodControlFlowGraph The CFG of the method to analyze
+     * @param pdgElements
      * @return The spent dataflow analysis.
      */
-    private static ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph) {
+    private ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> runAnalysis(ControlFlowGraph methodControlFlowGraph, final Set<Tree> pdgElements) {
         ForwardAnalysis<VariableReference, DataflowStore, DataflowTransfer> analysis = new ForwardAnalysisImpl<>(new DataflowTransfer());
         analysis.performAnalysis(methodControlFlowGraph);
         return analysis;

@@ -115,21 +115,6 @@ public class MethodPdg {
     }
 
     /**
-     * Checks if the graph contains an edge with the given labels.
-     * @param fromLabel the label of the source node
-     * @param toLabel the label of the target node
-     * @return true if the graph contains an edge with the given labels, false otherwise
-     */
-    public boolean containsEdge(final String fromLabel, final String toLabel) {
-        for (PdgEdge edge : graph.edges()) {
-            if (edge.from.toString().equals(fromLabel) && edge.to.toString().equals(toLabel)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Returns the AST method tree associated with this PDG.
      * @return the AST method tree
      */
@@ -148,5 +133,13 @@ public class MethodPdg {
 
     public Set<Tree> getPdgElements() {
         return pdgElementToPdgNodeMap.keySet();
+    }
+
+    public MethodTree getMethodAst() {
+        return methodAst;
+    }
+
+    public ControlFlowGraph getMethodCfg() {
+        return methodCfg;
     }
 }

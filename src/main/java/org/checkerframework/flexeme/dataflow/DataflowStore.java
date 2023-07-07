@@ -1,6 +1,7 @@
 package org.checkerframework.flexeme.dataflow;
 
 import org.checkerframework.dataflow.analysis.Store;
+import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
@@ -63,16 +64,15 @@ public class DataflowStore implements Store<DataflowStore> {
     }
 
     /**
-     * Add a variable declaration to the store to keep track of.
-     * @param node the variable declaration
+     * Register a new assignment to a variable. The variable can be already discovered or not.
+     * @param node the assignment node
      */
-    public void addLocalVariableDeclaration(VariableDeclarationNode node) {
-        if (lastUse.containsKey(node.getName())) {
-            // Nothing to do, we already know of this variable.
-            return;
+    public void registerAssignment(final AssignmentNode node) {
+        if (node.getTarget() instanceof LocalVariableNode) {
+            // If the target is a variable already declared, we need to add an edge to it.
+            addDataflowEdge((LocalVariableNode) node.getTarget());
         }
-        // We mark that we encountered this variable for the first time.
-        lastUse.put(node.getName(), Util.newSet(new VariableReference(node)));
+        lastUse.put(node.getTarget().toString(), Util.newSet(new VariableReference(node.getTarget())));
     }
 
     /**
@@ -94,6 +94,7 @@ public class DataflowStore implements Store<DataflowStore> {
         // The last use is this reference now.
         this.lastUse.put(n.getName(), Util.newSet(value));
     }
+
 
     @Override
     public DataflowStore leastUpperBound(DataflowStore other) {
@@ -163,7 +164,7 @@ public class DataflowStore implements Store<DataflowStore> {
         sb.append(System.lineSeparator());
 
         sb.append("Edges: ");
-        sb.append(edges.stream().map(edge -> edge.getFrom().getReference().getUid() + " -> " + edge.getTo().getReference().getUid()).collect(Collectors.joining(",")));
+        sb.append(edges.stream().map(Edge::toString).collect(Collectors.joining(",")));
         return sb.toString();
     }
 
@@ -180,4 +181,5 @@ public class DataflowStore implements Store<DataflowStore> {
     public int hashCode() {
         return Objects.hash(lastUse, edges, parameters);
     }
+
 }

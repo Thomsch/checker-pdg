@@ -34,25 +34,13 @@ import java.util.List;
  *  2) Run through the graph and visualize it, not using the DOTCFGVisualizer.
  */
 public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowStore, DataflowTransfer> {
-    private final CompilationUnitTree compilationUnitTree;
-    private final Map<Node, Tree> cfgNodeToPdgElementMap;
-    private final ControlFlowGraph controlFlowGraph;
 
     Logger logger = LoggerFactory.getLogger(CfgTraverser.class);
 
-    // Stores the invocations of methods. The key is the node calling the method. The value is the accessed method signature.
-    public static Map<String, String> invocations = new HashMap<>();
-
-    // Stores the methods signature and their location in the DOT graph. The key is the method's signature. The value is the node id of the START node for the method.
-    public static Map<String, String> methods = new HashMap<>();
-
     private MethodPdg methodPdg;
 
-    public CfgTraverser(CompilationUnitTree compilationUnitTree, Map<Node, Tree> cfgNodeToPdgElementMap, final ControlFlowGraph controlFlowGraph) {
+    public CfgTraverser() {
         super();
-        this.compilationUnitTree = compilationUnitTree;
-        this.cfgNodeToPdgElementMap = cfgNodeToPdgElementMap;
-        this.controlFlowGraph = controlFlowGraph;
     }
 
     public void traverseEdges(final MethodPdg methodPdg, final ControlFlowGraph controlFlowGraph) {
@@ -142,18 +130,7 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
                 }
                 previousNode = node;
             }
-
-            System.out.println();
-
         }
-
-        // Dataflow edges
-        // StringBuilder sbDotDataflowEdges = null;
-        // if (analysis == null) {
-        //     logger.error("Analysis is null");
-        // } else {
-        //     sbDotDataflowEdges = makeDataflowDotEdges(cfg, analysis);
-        // }
         return "";
     }
 
@@ -256,32 +233,6 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         throw new UnsupportedOperationException("Use traverseEdges instead");
     }
 
-    private class Edge {
-        private final String from;
-        private final String to;
-
-        public Edge(String from, String to) {
-            this.from = from;
-            this.to = to;
-        }
-
-        public String getFrom() {
-            return from;
-        }
-
-        public String getTo() {
-            return to;
-        }
-
-        @Override
-        public String toString() {
-            return "Edge{" +
-                    "from='" + from + '\'' +
-                    ", to='" + to + '\'' +
-                    '}';
-        }
-    }
-
     private void makeStatementNodes(Set<Block> blocks, Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
         // Definition of all nodes including their labels.
         for (Block v : blocks) {
@@ -291,12 +242,6 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
 
     @Override
     public String visualizeBlockNode(Node t, @Nullable Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {
-        if (t instanceof MethodAccessNode) {
-            MethodAccessNode methodAccessNode = (MethodAccessNode) t;
-            String signature = methodSignature(methodAccessNode);
-            invocations.put("n"+ t.getUid(), signature);
-        }
-
         // This method adds more nodes to the nodeMap.
 
         // TODO Map artificial variable declaration with references using the name.
@@ -410,19 +355,5 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
         //     logger.warn("Node '" + t + "' has no tree.");
         // }
         return null;
-    }
-
-    private String methodSignature(MethodAccessNode methodAccessNode) {
-        List<String> types = methodAccessNode.getMethod().getParameters().stream()
-                .map(parameter -> parameter.asType().toString())
-                .collect(Collectors.toList());
-        return methodSignature(
-                methodAccessNode.getMethod().getSimpleName(),
-                types,
-                methodAccessNode.getMethod().getReturnType().toString());
-    }
-
-    private String methodSignature(Name name, List<String> types, String returnType) {
-        return String.format("%s %s -> %s", name, String.join(",", types), returnType == null ? "null": returnType);
     }
 }
