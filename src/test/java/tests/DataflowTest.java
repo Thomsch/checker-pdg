@@ -62,8 +62,7 @@ public class DataflowTest {
 
         DotPrinter.printPdg(methodPdg);
 
-        // TODO: Should actually be 8. The edge from "int c = 3 -> int f = c appears twice when it should appear once.
-        assertEdgeCount(9, PdgEdge.Type.DATA, methodPdg);
+        assertEdgeCount(8, PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int a = 1", "int d = a", PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int a = 1", "int z = a + b + c", PdgEdge.Type.DATA, methodPdg);
         assertContainsEdge("int b = 2", "int e = b", PdgEdge.Type.DATA, methodPdg);

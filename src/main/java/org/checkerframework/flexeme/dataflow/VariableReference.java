@@ -5,6 +5,8 @@ import org.checkerframework.dataflow.analysis.AbstractValue;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BugInCF;
 
+import java.util.Objects;
+
 /**
  * Represents a variable reference.
  */
@@ -36,7 +38,7 @@ public class VariableReference implements AbstractValue<VariableReference> {
 
     @Override
     public int hashCode() {
-        return this.reference.hashCode();
+        return Objects.hashCode(this.reference.getTree());
     }
 
     @Override
@@ -45,12 +47,12 @@ public class VariableReference implements AbstractValue<VariableReference> {
             return false;
         }
         VariableReference other = (VariableReference) obj;
-        return this.reference == other.reference && this.reference.getUid() == other.reference.getUid();
+        return Objects.equals(this.reference.getTree(), other.reference.getTree());
     }
 
     @Override
     public String toString() {
-        StringBuilder s = new StringBuilder(reference.toString());
+        StringBuilder s = new StringBuilder(reference.getTree().toString());
         s.append("[");
         s.append(reference.getClass().getSimpleName());
 
