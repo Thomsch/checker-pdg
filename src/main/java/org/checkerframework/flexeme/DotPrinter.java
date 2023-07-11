@@ -1,6 +1,5 @@
 package org.checkerframework.flexeme;
 
-import com.google.common.graph.EndpointPair;
 import org.checkerframework.flexeme.pdg.FilePdg;
 import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.checkerframework.flexeme.pdg.PdgEdge;
@@ -8,25 +7,30 @@ import org.checkerframework.flexeme.pdg.PdgNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import java.util.Set;
 
 /**
  * This class prints a Program Dependence Graph {@link MethodPdg} in the DOT format.
  */
 public class DotPrinter {
-    private static final Logger logger = LoggerFactory.getLogger(DotPrinter.class);
 
+    /**
+     * Convenience method to print the PDG of a method on System.out.
+     *
+     * @param pdg The PDG to print.
+     */
+    @SuppressWarnings("unused")
     public static void printPdg(final MethodPdg pdg) {
         final String printedPdg = new DotPrinter().printDot(new FilePdg(Set.of(pdg), Set.of()));
         System.out.println(printedPdg);
     }
 
     /**
-     * Convenience method to print the PDGs of a file.
+     * Convenience method to print the PDGs of a file on System.out.
      *
      * @param filePdg The PDGs to print.
      */
+    @SuppressWarnings("unused")
     public static void printFilePdg(final FilePdg filePdg) {
         final String printedPdg = new DotPrinter().printDot(filePdg);
         System.out.println(printedPdg);
@@ -48,7 +52,12 @@ public class DotPrinter {
             counter++;
         }
 
-        // Print local method calls
+        // Print graph edges. Flexeme expects that edges between graphs are printed separately from the cluster.
+        for (final MethodPdg graph : filePdg.getGraphs()) {
+            stringBuilder.append(printEdges(graph));
+        }
+
+        // Print edges between graphs, local method calls.
         for (final PdgEdge localCall : filePdg.getLocalCalls()) {
             stringBuilder.append(printEdge(localCall));
             stringBuilder.append(System.lineSeparator());
@@ -64,7 +73,6 @@ public class DotPrinter {
      * @param graph The PDG to print.
      * @param cluster The cluster number.
      */
-    @SuppressWarnings("UnstableApiUsage")
     public String printGraph(MethodPdg graph, int cluster) {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("subgraph " + "cluster_").append(cluster).append(" {");
@@ -78,13 +86,16 @@ public class DotPrinter {
             stringBuilder.append(System.lineSeparator());
         }
 
-        // Print edges
+        stringBuilder.append("}");
+        return stringBuilder.toString();
+    }
+
+    private String printEdges(final MethodPdg graph) {
+        StringBuilder stringBuilder = new StringBuilder();
         for (final PdgEdge edge : graph.edges()) {
             stringBuilder.append(printEdge(edge));
             stringBuilder.append(System.lineSeparator());
         }
-
-        stringBuilder.append("}");
         return stringBuilder.toString();
     }
 
