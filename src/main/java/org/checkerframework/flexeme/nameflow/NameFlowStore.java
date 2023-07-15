@@ -1,6 +1,7 @@
 package org.checkerframework.flexeme.nameflow;
 
 import org.checkerframework.dataflow.analysis.Store;
+import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.flexeme.Util;
@@ -14,19 +15,18 @@ import java.util.*;
 public class NameFlowStore implements Store<NameFlowStore> {
 
     // Store the edges between nodes representing the nameflow.
-    //
     public final Map<String, String> names;
 
     // Store the return value of the Ξ function in "RefiNym: Using Names to Refine Types".
     // The key is a variable node, the values is set of names: {(snd,v),(40,l)}
-    private final Map<String, Set<NameRecord>> xi;
+    private final Map<Node, Set<NameRecord>> xi;
 
     public NameFlowStore() {
         this.xi = new HashMap<>();
         this.names = new HashMap<>();
     }
 
-    public NameFlowStore(final Map<String, Set<NameRecord>> xi, final Map<String, String> names) {
+    public NameFlowStore(final Map<Node, Set<NameRecord>> xi, final Map<String, String> names) {
         this.xi = xi;
         this.names = names;
     }
@@ -37,13 +37,13 @@ public class NameFlowStore implements Store<NameFlowStore> {
      * @param targetName The target id
      * @param nameRecord The new nameRecord to associate
      */
-    public void add(final String uid, final String targetName, final NameRecord nameRecord) {
+    public void add(final Node uid, final String targetName, final NameRecord nameRecord) {
         xi.computeIfAbsent(uid, k -> new HashSet<>());
         xi.get(uid).add(nameRecord);
-        names.put(uid, targetName);
+        names.put(Long.toString(uid.getUid()), targetName);
     }
 
-    public Map<String, Set<NameRecord>> getXi() {
+    public Map<Node, Set<NameRecord>> getXi() {
         return xi;
     }
 
@@ -55,7 +55,7 @@ public class NameFlowStore implements Store<NameFlowStore> {
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
         // The names of each store are saved. If the names are the same, the corresponding sets are merged.
-        final Map<String, Set<NameRecord>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
+        final Map<Node, Set<NameRecord>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
         return new NameFlowStore(xiLub, this.names);
     }
 

@@ -11,6 +11,9 @@ import org.checkerframework.flexeme.dataflow.DataflowStore;
 import org.checkerframework.flexeme.dataflow.DataflowTransfer;
 import org.checkerframework.flexeme.dataflow.Edge;
 import org.checkerframework.flexeme.dataflow.VariableReference;
+import org.checkerframework.flexeme.nameflow.NameFlowStore;
+import org.checkerframework.flexeme.nameflow.NameFlowTransfer;
+import org.checkerframework.flexeme.nameflow.NameRecord;
 import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
 import org.checkerframework.org.plumelib.util.IdentityArraySet;
@@ -98,6 +101,8 @@ public class PdgBuilder {
         cfgTraverser.traverseEdges(methodPdg, methodCfg);
 
         addDataFlowEdges(methodPdg);
+
+        addNameFlowEdges(methodPdg);
 
         return methodPdg;
     }
@@ -211,25 +216,34 @@ public class PdgBuilder {
         }
     }
 
-    private void addNameFlowEdges() {
-        // // TODO: The creation of the graph should be decoupled from printing the results
-        // // 3. Run nameflow analysis and add it to the graph.
-        // processor.getMethodCfgs().forEach((methodTree, controlFlowGraph) -> {
-        //     ForwardAnalysis<NameRecord, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
-        //     analysis.performAnalysis(controlFlowGraph);
-        //
-        //     final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
-        //     exitStore.getXi().forEach((variable, names) -> {
-        //         names.forEach(nameRecord -> {
-        //             // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
-        //             if (CfgTraverser.getNodes().contains(nameRecord.getUid()) && CfgTraverser.getNodes().contains(variable)) {
-        //                 graphs.append(nameRecord.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
-        //             }
-        //         });
-        //     });
-        // });
-        //
-        // graphs.append("}");
+    private void addNameFlowEdges(final MethodPdg methodPdg) {
+        ControlFlowGraph controlFlowGraph = methodPdg.getMethodCfg();
+
+        // Perform the nameflow analysis.
+        ForwardAnalysis<NameRecord, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
+        analysis.performAnalysis(controlFlowGraph);
+
+        // Add the nameflow edges to the PDG.
+        // TODO get both regular and exceptional exit stores.
+        final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
+
+        System.out.println(exitStore);
+
+        // variable has multiple names associated to it
+        // for each name, draw an edge from the name to the variable
+        assert exitStore != null;
+        exitStore.getXi().forEach((variable, names) -> {
+            PdgNode to = methodPdg.getNode(variable);
+            names.forEach(nameRecord -> {
+                PdgNode from = methodPdg.getNode(nameRecord.getUid());
+                // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
+                if (from != null && to != null) {
+                    // graphs.append(nameRecord.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
+                    PdgEdge pdgEdge = new PdgEdge(from, to, PdgEdge.Type.NAME);
+                    methodPdg.addEdge(pdgEdge);
+                }
+            });
+        });
     }
 
     /**

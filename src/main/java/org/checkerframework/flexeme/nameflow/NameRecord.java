@@ -1,6 +1,7 @@
 package org.checkerframework.flexeme.nameflow;
 
 import org.checkerframework.dataflow.analysis.AbstractValue;
+import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.BugInCF;
 
 import java.util.Objects;
@@ -14,9 +15,9 @@ public class NameRecord implements AbstractValue<NameRecord> {
     private final String name;
     private final Kind kind;
 
-    private final String uid;
+    private final Node uid;
 
-    public NameRecord(final String name, final Kind kind, final String uid) {
+    public NameRecord(final String name, final Kind kind, final Node uid) {
         this.name = name;
         this.kind = kind;
         this.uid = uid;
@@ -45,7 +46,7 @@ public class NameRecord implements AbstractValue<NameRecord> {
         return Objects.hash(name, kind, uid);
     }
 
-    public String getUid() {
+    public Node getUid() {
         return uid;
     }
 }
