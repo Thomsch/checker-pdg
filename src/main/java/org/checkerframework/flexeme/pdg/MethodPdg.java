@@ -1,10 +1,7 @@
 package org.checkerframework.flexeme.pdg;
 
 import com.google.common.graph.*;
-import com.sun.source.tree.ClassTree;
-import com.sun.source.tree.LineMap;
-import com.sun.source.tree.MethodTree;
-import com.sun.source.tree.Tree;
+import com.sun.source.tree.*;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
@@ -142,5 +139,17 @@ public class MethodPdg {
 
     public ControlFlowGraph getMethodCfg() {
         return methodCfg;
+    }
+
+    /**
+     * Returns a list of types of the parameters of the method.
+     * @return a list of types of the parameters of the method
+     */
+    public List<String> getParametersType() {
+        final List<String> parametersType = new ArrayList<>();
+        for (final VariableTree parameter : methodAst.getParameters()) {
+            parametersType.add(parameter.getType().toString());
+        }
+        return parametersType;
     }
 }

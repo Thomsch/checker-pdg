@@ -108,6 +108,6 @@ public class DotPrinter {
     }
 
     public String printSubgraphLabel(final MethodPdg graph) {
-        return String.format("label = \"%s.%s()\";", graph.getClassName(), graph.getMethodName());
+        return String.format("label = \"%s.%s(%s)\";", graph.getClassName(), graph.getMethodName(), String.join(", ", graph.getParametersType()));
     }
 }
