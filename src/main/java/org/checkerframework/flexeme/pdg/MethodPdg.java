@@ -79,6 +79,7 @@ public class MethodPdg {
     public void registerSpecialBlock(final SpecialBlock block, final String label) {
         final PdgNode node = new PdgNode(this, nodeId, label, 0, 0);
         blockToPdgNode.put(block, node);
+        graph.addNode(node);
         nodeId++;
     }
 

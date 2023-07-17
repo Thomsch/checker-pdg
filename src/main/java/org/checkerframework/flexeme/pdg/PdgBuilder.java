@@ -89,12 +89,11 @@ public class PdgBuilder {
 
         // Add the nodes to the PDG.
         MethodPdg methodPdg = new MethodPdg(processor, classTree, methodAst, methodCfg, cfgNodesToPdgElements);
+
+        methodPdg.registerSpecialBlock(methodCfg.getEntryBlock(), "Entry");
         for (Tree pdgElement : pdgElements) {
             methodPdg.addNode(pdgElement);
         }
-
-        // Extract CFG edges and convert them to PDG edges.
-        methodPdg.registerSpecialBlock(methodCfg.getEntryBlock(), "Entry");
         methodPdg.registerSpecialBlock(methodCfg.getRegularExitBlock(), "Exit");
         methodPdg.registerSpecialBlock(methodCfg.getExceptionalExitBlock(), "ExceptionalExit");
         CfgTraverser cfgTraverser = new CfgTraverser();
