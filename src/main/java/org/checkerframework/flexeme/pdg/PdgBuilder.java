@@ -231,6 +231,17 @@ public class PdgBuilder {
         // variable has multiple names associated to it
         // for each name, draw an edge from the name to the variable
         assert exitStore != null;
+
+        PdgNode entryNode = methodPdg.getStartNode();
+        exitStore.getReturnedVariables().forEach((name, node) -> {
+            Node declarationNode = exitStore.getVariableNode(name);
+            PdgNode to = methodPdg.getNode(declarationNode);
+            if (to != null) {
+                PdgEdge pdgEdge = new PdgEdge(entryNode, to, PdgEdge.Type.NAME);
+                methodPdg.addEdge(pdgEdge);
+            }
+        });
+
         exitStore.getXi().forEach((variable, names) -> {
             PdgNode from = methodPdg.getNode(variable);
             names.forEach(nameRecord -> {
@@ -246,7 +257,6 @@ public class PdgBuilder {
                         methodPdg.addEdge(pdgEdge);
                     }
                 }
-
             });
         });
     }

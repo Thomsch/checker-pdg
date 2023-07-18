@@ -11,8 +11,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import static org.junit.Assert.fail;
-import static tests.PdgUtils.assertContainsEdge;
-import static tests.PdgUtils.assertContainsSelfEdge;
+import static tests.PdgUtils.*;
 
 /**
  * Test class for name flow analysis.
@@ -51,5 +50,14 @@ public class NameFlowTest {
         assertContainsEdge("int b = 100", "Entry", PdgEdge.Type.NAME, methodPdg); // b is assigned to a parameter later in the code
         assertContainsSelfEdge("int a = 0", PdgEdge.Type.NAME, methodPdg);
         assertContainsSelfEdge("int b = 100", PdgEdge.Type.NAME, methodPdg);
+    @Test
+    public void testBar() {
+        final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("bar"));
+        DotPrinter.printPdg(methodPdg);
+
+        assertEdgeCount(3, PdgEdge.Type.NAME, methodPdg);
+        assertContainsEdge("Entry", "int omega = w + z", PdgEdge.Type.NAME, methodPdg);
+        assertContainsEdge("int omega = w + z", "Entry", PdgEdge.Type.NAME, methodPdg); // for w
+        assertContainsEdge("int omega = w + z", "Entry", PdgEdge.Type.NAME, methodPdg); // for z
     }
 }

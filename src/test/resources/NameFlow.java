@@ -23,4 +23,10 @@ public class NameFlow {
             b -= x;
         }
     }
+
+    int bar(int w, int z) {
+        int omega = w + z;
+        omega = omega + 1;
+        return omega;
+    }
 }

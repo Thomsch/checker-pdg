@@ -82,6 +82,10 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
             // Visitor collects the names, then iterate over the list of names calling `assignM()`, `assignV()`, and `assignL()`.
             assignE(n.getTarget(), argument, transferResult.getRegularStore());
         }
+    @Override
+    public TransferResult<NameRecord, NameFlowStore> visitReturn(final ReturnNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {
+        RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitReturn(n, transferInput);
+        transferResult.getRegularStore().addReturnedVariables(n);
         return transferResult;
     }
 
