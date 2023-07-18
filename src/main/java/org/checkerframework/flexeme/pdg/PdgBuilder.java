@@ -248,11 +248,8 @@ public class PdgBuilder {
                 if (nameRecord.getName().equals(variable.toString())) {
                     return;
                 }
+
                 Node node = exitStore.getVariableNode(nameRecord.getName());
-                // if (node == null){
-                //     System.out.println("null node for " + nameRecord.getName());
-                // }
-                // TODO: Literals loop on themselves. This original implementation does already that.
                 if (node != null) {
                     PdgNode to = methodPdg.getNode(node);
                     if (from != null && to != null) {

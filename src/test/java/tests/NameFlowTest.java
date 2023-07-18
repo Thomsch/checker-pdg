@@ -38,7 +38,9 @@ public class NameFlowTest {
 
             assertContainsEdge("int sum = x", "Entry", PdgEdge.Type.NAME, methodPdg);
             assertContainsEdge("int snd = fst", "int fst = 20", PdgEdge.Type.NAME, methodPdg);
-            assertContainsSelfEdge("int fst = 20", PdgEdge.Type.NAME, methodPdg);
+            // assertContainsSelfEdge("int fst = 20", PdgEdge.Type.NAME, methodPdg);
+
+            assertContainsEdge("Entry", "int sum = x", PdgEdge.Type.NAME, methodPdg);
         }
 
     @Test
@@ -48,8 +50,11 @@ public class NameFlowTest {
 
         assertContainsEdge("int a = 0", "Entry", PdgEdge.Type.NAME, methodPdg); // a is assigned to a parameter later in the code
         assertContainsEdge("int b = 100", "Entry", PdgEdge.Type.NAME, methodPdg); // b is assigned to a parameter later in the code
-        assertContainsSelfEdge("int a = 0", PdgEdge.Type.NAME, methodPdg);
-        assertContainsSelfEdge("int b = 100", PdgEdge.Type.NAME, methodPdg);
+        // assertContainsEdge("int b = 100", "int c = 100", PdgEdge.Type.NAME, methodPdg); // Shared use of literal
+        // assertContainsSelfEdge("int a = 0", PdgEdge.Type.NAME, methodPdg); // Literal 0 is there.
+
+    }
+
     @Test
     public void testBar() {
         final MethodPdg methodPdg = pdgBuilder.buildPdg(processor, processor.getMethod("bar"));

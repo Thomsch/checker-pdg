@@ -24,6 +24,17 @@ public class NameRecord implements AbstractValue<NameRecord> {
         this.uid = uid;
     }
 
+    public Node getUid() {
+        return uid;
+    }
+
+    public String getName() {
+        return name;
+    }
+    public boolean isLiteral() {
+        return kind == Kind.Literal;
+    }
+
     @Override
     public NameRecord leastUpperBound(final NameRecord nameRecord) {
         throw new BugInCF("lub of NameRecord get called!");
@@ -47,11 +58,5 @@ public class NameRecord implements AbstractValue<NameRecord> {
         return Objects.hash(name, kind, uid);
     }
 
-    public Node getUid() {
-        return uid;
-    }
 
-    public String getName() {
-        return name;
-    }
 }
