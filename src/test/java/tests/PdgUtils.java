@@ -62,4 +62,22 @@ public class PdgUtils {
         }
         assertTrue(found);
     }
+
+    /**
+     * Checks if the graph contains a self edge with the given labels and type.
+     * @param expectedFromToLabel the expected label of the source and to node
+     * @param expectedType the expected  type of the edge
+     * @param actualMethodPdg the actual PDG
+     */
+    public static void assertContainsSelfEdge(final String expectedFromToLabel, final PdgEdge.Type expectedType, final MethodPdg actualMethodPdg) {
+        boolean found = false;
+        for (PdgEdge edge : actualMethodPdg.edges()) {
+            if (edge.from.toString().equals(expectedFromToLabel)
+                    && edge.to.toString().equals(expectedFromToLabel)
+                    && edge.type.equals(expectedType)) {
+                found = true;
+            }
+        }
+        assertTrue(found);
+    }
 }

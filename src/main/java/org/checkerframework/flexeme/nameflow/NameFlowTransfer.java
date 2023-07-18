@@ -7,6 +7,7 @@ import org.checkerframework.dataflow.analysis.TransferInput;
 import org.checkerframework.dataflow.analysis.TransferResult;
 import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.node.*;
+import org.checkerframework.javacutil.ElementUtils;
 import org.checkerframework.javacutil.TreeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,8 +27,8 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     private static final Logger logger = LoggerFactory.getLogger(NameFlowTransfer.class);
 
     @Override
-    public NameFlowStore initialStore(final UnderlyingAST underlyingAST, final List<LocalVariableNode> list) {
-        return new NameFlowStore();
+    public NameFlowStore initialStore(final UnderlyingAST underlyingAST, final List<LocalVariableNode> parameters) {
+        return new NameFlowStore(parameters);
     }
 
     @Override
@@ -35,6 +36,12 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         return new RegularTransferResult<>(null, transferInput.getRegularStore());
     }
 
+    @Override
+    public TransferResult<NameRecord, NameFlowStore> visitVariableDeclaration(final VariableDeclarationNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {
+        RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitVariableDeclaration(n, transferInput);
+        transferResult.getRegularStore().registerVariableDeclaration(n);
+        return transferResult;
+    }
 
     @Override
     public TransferResult<NameRecord, NameFlowStore> visitAssignment(final AssignmentNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {

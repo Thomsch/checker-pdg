@@ -232,15 +232,21 @@ public class PdgBuilder {
         // for each name, draw an edge from the name to the variable
         assert exitStore != null;
         exitStore.getXi().forEach((variable, names) -> {
-            PdgNode to = methodPdg.getNode(variable);
+            PdgNode from = methodPdg.getNode(variable);
             names.forEach(nameRecord -> {
-                PdgNode from = methodPdg.getNode(nameRecord.getUid());
-                // Certain nameflow edges have no corresponding nodes in the PDG (e.g., parameter bindings) so we ignore them.
-                if (from != null && to != null) {
-                    // graphs.append(nameRecord.getUid()).append(" -> ").append(variable).append(" [key=3, style=bold, color=darkorchid]").append(System.lineSeparator());
-                    PdgEdge pdgEdge = new PdgEdge(from, to, PdgEdge.Type.NAME);
-                    methodPdg.addEdge(pdgEdge);
+                Node node = exitStore.getVariableNode(nameRecord.getName());
+                // if (node == null){
+                //     System.out.println("null node for " + nameRecord.getName());
+                // }
+                // TODO: Literals loop on themselves. This original implementation does already that.
+                if (node != null) {
+                    PdgNode to = methodPdg.getNode(node);
+                    if (from != null && to != null) {
+                        PdgEdge pdgEdge = new PdgEdge(from, to, PdgEdge.Type.NAME);
+                        methodPdg.addEdge(pdgEdge);
+                    }
                 }
+
             });
         });
     }

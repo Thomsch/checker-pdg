@@ -1,7 +1,9 @@
 package org.checkerframework.flexeme.nameflow;
 
 import org.checkerframework.dataflow.analysis.Store;
+import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
+import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.flexeme.Util;
@@ -20,15 +22,23 @@ public class NameFlowStore implements Store<NameFlowStore> {
     // Store the return value of the Ξ function in "RefiNym: Using Names to Refine Types".
     // The key is a variable node, the values is set of names: {(snd,v),(40,l)}
     private final Map<Node, Set<NameRecord>> xi;
+    private final Map<String, Node> variables;
 
-    public NameFlowStore() {
+    public NameFlowStore(final List<LocalVariableNode> parameters) {
         this.xi = new HashMap<>();
         this.names = new HashMap<>();
+        this.variables = new HashMap<>();
+        parameters.forEach(this::addParameter);
     }
 
-    public NameFlowStore(final Map<Node, Set<NameRecord>> xi, final Map<String, String> names) {
+    private void addParameter(final LocalVariableNode localVariableNode) {
+        this.variables.put(localVariableNode.getName(), localVariableNode);
+    }
+
+    public NameFlowStore(final Map<Node, Set<NameRecord>> xi, final Map<String, String> names, final Map<String, Node> variables) {
         this.xi = xi;
         this.names = names;
+        this.variables = variables;
     }
 
     /**
@@ -49,14 +59,15 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     @Override
     public NameFlowStore copy() {
-        return new NameFlowStore(new HashMap<>(xi), new HashMap<>(names));
+        return new NameFlowStore(new HashMap<>(xi), new HashMap<>(names), new HashMap<>(variables));
     }
 
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
         // The names of each store are saved. If the names are the same, the corresponding sets are merged.
         final Map<Node, Set<NameRecord>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
-        return new NameFlowStore(xiLub, this.names);
+        this.variables.putAll(other.variables);
+        return new NameFlowStore(xiLub, this.names, this.variables);
     }
 
     @Override
@@ -102,6 +113,22 @@ public class NameFlowStore implements Store<NameFlowStore> {
         });
         sb.append("}");
 
+        sb.append(System.lineSeparator());
+        variables.forEach((name, node) -> {
+            sb.append(name);
+            sb.append(": ");
+            sb.append(node);
+            sb.append(System.lineSeparator());
+        });
+
         return sb.toString();
+    }
+
+    public void registerVariableDeclaration(final VariableDeclarationNode node) {
+        variables.put(node.getName(), node);
+    }
+
+    public Node getVariableNode(final String name) {
+        return variables.get(name);
     }
 }

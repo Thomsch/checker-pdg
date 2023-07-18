@@ -11,6 +11,7 @@ import java.util.Objects;
  * Also contains a unique identifier representing the node in the CFG.
  */
 public class NameRecord implements AbstractValue<NameRecord> {
+
     public enum Kind {Variable, Method, Literal}
     private final String name;
     private final Kind kind;
@@ -48,5 +49,9 @@ public class NameRecord implements AbstractValue<NameRecord> {
 
     public Node getUid() {
         return uid;
+    }
+
+    public String getName() {
+        return name;
     }
 }

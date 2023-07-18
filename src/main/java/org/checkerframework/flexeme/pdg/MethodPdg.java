@@ -6,6 +6,7 @@ import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
+import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.flexeme.FileProcessor;
 
@@ -28,6 +29,8 @@ public class MethodPdg {
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
     private final HashMap<Tree, PdgNode> pdgElementToPdgNodeMap;
 
+    private final Set<String> parameterNames;
+
     public MethodPdg(FileProcessor processor, final ClassTree classAst, final MethodTree methodAst, final ControlFlowGraph methodCfg, final Map<Node, Tree> cfgNodesToPdgElements) {
         this.processor = processor;
         this.classAst = classAst;
@@ -37,6 +40,11 @@ public class MethodPdg {
         this.pdgElementToPdgNodeMap = new HashMap<>();
         this.blockToPdgNode = new HashMap<>();
         this.cfgNodeToPdgTree = cfgNodesToPdgElements;
+        this.parameterNames = new HashSet<>();
+
+        for (final VariableTree parameter : methodAst.getParameters()) {
+            parameterNames.add(parameter.getName().toString());
+        }
     }
 
     public String getClassName() {
@@ -86,6 +94,14 @@ public class MethodPdg {
     }
 
     public PdgNode getNode(final Node node) {
+        if (node instanceof LocalVariableNode) {
+            final LocalVariableNode localVariableNode = (LocalVariableNode) node;
+
+            if (parameterNames.contains(localVariableNode.getName())) {
+                return getStartNode();
+            }
+        }
+
         final Tree tree = cfgNodeToPdgTree.get(node);
         return pdgElementToPdgNodeMap.get(tree);
     }
