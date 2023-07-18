@@ -245,6 +245,9 @@ public class PdgBuilder {
         exitStore.getXi().forEach((variable, names) -> {
             PdgNode from = methodPdg.getNode(variable);
             names.forEach(nameRecord -> {
+                if (nameRecord.getName().equals(variable.toString())) {
+                    return;
+                }
                 Node node = exitStore.getVariableNode(nameRecord.getName());
                 // if (node == null){
                 //     System.out.println("null node for " + nameRecord.getName());
