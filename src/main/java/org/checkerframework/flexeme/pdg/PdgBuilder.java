@@ -249,6 +249,10 @@ public class PdgBuilder {
                     return;
                 }
 
+                if (nameRecord.isMethod()) {
+                    return;
+                }
+
                 Node node = exitStore.getVariableNode(nameRecord.getName());
                 if (node != null) {
                     PdgNode to = methodPdg.getNode(node);

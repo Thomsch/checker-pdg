@@ -35,6 +35,10 @@ public class NameRecord implements AbstractValue<NameRecord> {
         return kind == Kind.Literal;
     }
 
+    public boolean isMethod() {
+        return kind == Kind.Method;
+    }
+
     @Override
     public NameRecord leastUpperBound(final NameRecord nameRecord) {
         throw new BugInCF("lub of NameRecord get called!");
