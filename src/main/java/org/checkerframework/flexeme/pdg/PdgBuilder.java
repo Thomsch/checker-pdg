@@ -215,6 +215,10 @@ public class PdgBuilder {
         }
     }
 
+    /**
+     * Run the name flow analysis.
+     * @param methodPdg The PDG to run the analysis on.
+     */
     private void addNameFlowEdges(final MethodPdg methodPdg) {
         ControlFlowGraph controlFlowGraph = methodPdg.getMethodCfg();
 
@@ -222,19 +226,32 @@ public class PdgBuilder {
         ForwardAnalysis<NameRecord, NameFlowStore, NameFlowTransfer> analysis = new ForwardAnalysisImpl<>(new NameFlowTransfer());
         analysis.performAnalysis(controlFlowGraph);
 
-        // Add the nameflow edges to the PDG.
-        // TODO get both regular and exceptional exit stores.
-        final NameFlowStore exitStore = analysis.getRegularExitStore() == null ? analysis.getExceptionalExitStore() : analysis.getRegularExitStore();
+        // Convert the name flow analysis results to PDG edges.
+        final Set<PdgEdge> edges = new HashSet<>();
+        if (analysis.getRegularExitStore() != null) {
+            edges.addAll(convertNameFlowStoreToPdgEdges(methodPdg, analysis.getRegularExitStore()));
+        }
+        if (analysis.getExceptionalExitStore() != null) {
+            edges.addAll(convertNameFlowStoreToPdgEdges(methodPdg, analysis.getExceptionalExitStore()));
+        }
 
-        System.out.println(exitStore);
+        // Add the PDG edges to the PDG.
+        for (final PdgEdge edge : edges) {
+            methodPdg.addEdge(edge);
+        }
+    }
 
-        // variable has multiple names associated to it
-        // for each name, draw an edge from the name to the variable
-        assert exitStore != null;
-
+    /**
+     * Converts the name flow store to a set of PDG edges.
+     * @param methodPdg The PDG where the edges will be added.
+     * @param store The name flow store to convert.
+     * @return The set of PDG edges to add to the method PDG.
+     */
+    private Set<PdgEdge> convertNameFlowStoreToPdgEdges(final MethodPdg methodPdg, final NameFlowStore store) {
+        Set<PdgEdge> edges = new HashSet<>();
         PdgNode entryNode = methodPdg.getStartNode();
-        exitStore.getReturnedVariables().forEach((name, node) -> {
-            Node declarationNode = exitStore.getVariableNode(name);
+        store.getReturnedVariables().forEach((name, node) -> {
+            Node declarationNode = store.getVariableNode(name);
             PdgNode to = methodPdg.getNode(declarationNode);
             if (to != null) {
                 PdgEdge pdgEdge = new PdgEdge(entryNode, to, PdgEdge.Type.NAME);
@@ -242,7 +259,7 @@ public class PdgBuilder {
             }
         });
 
-        exitStore.getXi().forEach((variable, names) -> {
+        store.getXi().forEach((variable, names) -> {
             PdgNode from = methodPdg.getNode(variable);
             names.forEach(nameRecord -> {
                 if (nameRecord.getName().equals(variable.toString())) {
@@ -253,7 +270,7 @@ public class PdgBuilder {
                     return;
                 }
 
-                Node node = exitStore.getVariableNode(nameRecord.getName());
+                Node node = store.getVariableNode(nameRecord.getName());
                 if (node != null) {
                     PdgNode to = methodPdg.getNode(node);
                     if (from != null && to != null) {
@@ -263,6 +280,7 @@ public class PdgBuilder {
                 }
             });
         });
+        return edges;
     }
 
     /**
