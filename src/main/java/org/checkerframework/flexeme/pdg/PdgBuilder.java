@@ -95,7 +95,9 @@ public class PdgBuilder {
             methodPdg.addNode(pdgElement);
         }
         methodPdg.registerSpecialBlock(methodCfg.getRegularExitBlock(), "Exit");
-        methodPdg.registerSpecialBlock(methodCfg.getExceptionalExitBlock(), "ExceptionalExit");
+        if (methodCfg.getExceptionalExitBlock().getPredecessors().size() > 0) {
+            methodPdg.registerSpecialBlock(methodCfg.getExceptionalExitBlock(), "ExceptionalExit");
+        }
         CfgTraverser cfgTraverser = new CfgTraverser();
         cfgTraverser.traverseEdges(methodPdg, methodCfg);
 
