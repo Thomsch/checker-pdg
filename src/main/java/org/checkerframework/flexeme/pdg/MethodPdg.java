@@ -29,7 +29,7 @@ public class MethodPdg {
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
     private final HashMap<Tree, PdgNode> pdgElementToPdgNodeMap;
 
-    private final Set<String> parameterNames;
+    public final Set<String> parameterNames;
 
     public MethodPdg(FileProcessor processor, final ClassTree classAst, final MethodTree methodAst, final ControlFlowGraph methodCfg, final Map<Node, Tree> cfgNodesToPdgElements) {
         this.processor = processor;
@@ -94,14 +94,6 @@ public class MethodPdg {
     }
 
     public PdgNode getNode(final Node node) {
-        if (node instanceof LocalVariableNode) {
-            final LocalVariableNode localVariableNode = (LocalVariableNode) node;
-
-            if (parameterNames.contains(localVariableNode.getName())) {
-                return getStartNode();
-            }
-        }
-
         final Tree tree = cfgNodeToPdgTree.get(node);
         return pdgElementToPdgNodeMap.get(tree);
     }

@@ -23,25 +23,25 @@ public class NameFlowStore implements Store<NameFlowStore> {
     // Store the return value of the Ξ function in "RefiNym: Using Names to Refine Types".
     // The key is a variable node, the values is set of names: {(snd,v),(40,l)}
     private final Map<Node, Set<NameRecord>> xi;
-    private final Map<String, Node> variables;
+    private final Map<String, Node> declaredVariables;
     private final Map<String, Node> returnedVariables;
 
     public NameFlowStore(final List<LocalVariableNode> parameters) {
         this.xi = new HashMap<>();
         this.names = new HashMap<>();
-        this.variables = new HashMap<>();
+        this.declaredVariables = new HashMap<>();
         parameters.forEach(this::addParameter);
         returnedVariables = new HashMap<>();
     }
 
     private void addParameter(final LocalVariableNode localVariableNode) {
-        this.variables.put(localVariableNode.getName(), localVariableNode);
+        this.declaredVariables.put(localVariableNode.getName(), localVariableNode);
     }
 
-    public NameFlowStore(final Map<Node, Set<NameRecord>> xi, final Map<String, String> names, final Map<String, Node> variables, final Map<String, Node> returnedVariables) {
+    public NameFlowStore(final Map<Node, Set<NameRecord>> xi, final Map<String, String> names, final Map<String, Node> declaredVariables, final Map<String, Node> returnedVariables) {
         this.xi = xi;
         this.names = names;
-        this.variables = variables;
+        this.declaredVariables = declaredVariables;
         this.returnedVariables = returnedVariables;
     }
 
@@ -63,16 +63,16 @@ public class NameFlowStore implements Store<NameFlowStore> {
 
     @Override
     public NameFlowStore copy() {
-        return new NameFlowStore(new HashMap<>(xi), new HashMap<>(names), new HashMap<>(variables), new HashMap<>(returnedVariables));
+        return new NameFlowStore(new HashMap<>(xi), new HashMap<>(names), new HashMap<>(declaredVariables), new HashMap<>(returnedVariables));
     }
 
     @Override
     public NameFlowStore leastUpperBound(final NameFlowStore other) {
         // The names of each store are saved. If the names are the same, the corresponding sets are merged.
         final Map<Node, Set<NameRecord>> xiLub = Util.mergeSetMaps(this.xi, other.xi);
-        this.variables.putAll(other.variables);
+        this.declaredVariables.putAll(other.declaredVariables);
         this.returnedVariables.putAll(other.returnedVariables);
-        return new NameFlowStore(xiLub, this.names, this.variables, this.returnedVariables);
+        return new NameFlowStore(xiLub, this.names, this.declaredVariables, this.returnedVariables);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class NameFlowStore implements Store<NameFlowStore> {
         sb.append("}");
 
         sb.append(System.lineSeparator());
-        variables.forEach((name, node) -> {
+        declaredVariables.forEach((name, node) -> {
             sb.append(name);
             sb.append(": ");
             sb.append(node);
@@ -130,11 +130,11 @@ public class NameFlowStore implements Store<NameFlowStore> {
     }
 
     public void registerVariableDeclaration(final VariableDeclarationNode node) {
-        variables.put(node.getName(), node);
+        declaredVariables.put(node.getName(), node);
     }
 
     public Node getVariableNode(final String name) {
-        return variables.get(name);
+        return declaredVariables.get(name);
     }
 
     public void addReturnedVariables(final ReturnNode n) {

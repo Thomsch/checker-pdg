@@ -5,6 +5,7 @@ import com.sun.source.util.TreeScanner;
 import org.checkerframework.dataflow.analysis.ForwardAnalysis;
 import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
+import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.flexeme.*;
 import org.checkerframework.flexeme.dataflow.DataflowStore;
@@ -65,28 +66,6 @@ public class PdgBuilder {
         final Set<Tree> pdgElements = retrievePdgElements(methodAst);
         final Map<Node, Tree> cfgNodesToPdgElements = buildCfgNodeToPdgElementMap(pdgElements, methodCfg);
 
-        // System.out.println(methodCfg.toStringDebug());
-        // System.out.println();
-        // System.out.println("PDG Elements: " + pdgElements.size());
-        // for (final Tree statement : pdgElements) {
-        //     System.out.println("    " + statement);
-        // }
-
-        // Show all the nodes associated with a statement.
-        // The map is reversed so that the statement is the key.
-        // System.out.println("PDG Elements -> Nodes");
-        // final Map<Tree, Set<Node>> collect = cfgNodesToPdgElements.entrySet().stream().collect(
-        //         Collectors.groupingBy(
-        //                 Map.Entry::getValue,
-        //                 Collectors.mapping(Map.Entry::getKey, Collectors.toSet())
-        //         )
-        // );
-        // collect.forEach((k, v) -> System.out.println(k + " -> " + v));
-        // System.out.println();
-
-        // cfgResults.put(methodAst, methodCfg);
-        // cfgNodesToPdgElementsMaps.put(methodAst, cfgNodesToPdgElements);
-
         // Add the nodes to the PDG.
         MethodPdg methodPdg = new MethodPdg(processor, classTree, methodAst, methodCfg, cfgNodesToPdgElements);
 
@@ -102,7 +81,6 @@ public class PdgBuilder {
         cfgTraverser.traverseEdges(methodPdg, methodCfg);
 
         addDataFlowEdges(methodPdg);
-
         addNameFlowEdges(methodPdg);
 
         return methodPdg;
@@ -124,9 +102,6 @@ public class PdgBuilder {
                 scanner.scan(binaryTree, found);
             }
 
-            // for (final Node node : found) {
-            //     System.out.println("Found node: " + node + " (uid:" + node.getUid() + ") -> " + pdgElement);
-            // }
             found.forEach(cfgNode -> cfgNodesToPdgElements.put(cfgNode, pdgElement));
         }
         return cfgNodesToPdgElements;
@@ -155,7 +130,6 @@ public class PdgBuilder {
             String methodName = ElementUtils.getQualifiedName(executableElement);
             methodNames.put(methodName, pdg);
         }
-
 
         for (MethodPdg methodPdg : graphs) {
             for (Tree pdgElement : methodPdg.getPdgElements()) {
@@ -252,32 +226,41 @@ public class PdgBuilder {
     private Set<PdgEdge> convertNameFlowStoreToPdgEdges(final MethodPdg methodPdg, final NameFlowStore store) {
         Set<PdgEdge> edges = new HashSet<>();
         PdgNode entryNode = methodPdg.getStartNode();
+
+        // Add the edges for the returned variables.
         store.getReturnedVariables().forEach((name, node) -> {
             Node declarationNode = store.getVariableNode(name);
             PdgNode to = methodPdg.getNode(declarationNode);
             if (to != null) {
                 PdgEdge pdgEdge = new PdgEdge(entryNode, to, PdgEdge.Type.NAME);
-                methodPdg.addEdge(pdgEdge);
+                edges.add(pdgEdge);
             }
         });
 
+        // Adds edges for the variables names.
         store.getXi().forEach((variable, names) -> {
             PdgNode from = methodPdg.getNode(variable);
             names.forEach(nameRecord -> {
-                if (nameRecord.getName().equals(variable.toString())) {
-                    return;
-                }
-
-                if (nameRecord.isMethod()) {
+                if (nameRecord.isMethod() || nameRecord.getName().equals(variable.toString())) {
                     return;
                 }
 
                 Node node = store.getVariableNode(nameRecord.getName());
                 if (node != null) {
                     PdgNode to = methodPdg.getNode(node);
+
+                    // If the 'to' node represents a parameter, point to the Entry node instead.
+                    if (node instanceof LocalVariableNode) {
+                        final LocalVariableNode localVariableNode = (LocalVariableNode) node;
+
+                        if (methodPdg.parameterNames.contains(localVariableNode.getName())) {
+                            to = entryNode;
+                        }
+                    }
+
                     if (from != null && to != null) {
                         PdgEdge pdgEdge = new PdgEdge(from, to, PdgEdge.Type.NAME);
-                        methodPdg.addEdge(pdgEdge);
+                        edges.add(pdgEdge);
                     }
                 }
             });
