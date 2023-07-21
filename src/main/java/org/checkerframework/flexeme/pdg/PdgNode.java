@@ -1,13 +1,16 @@
 package org.checkerframework.flexeme.pdg;
 
-import com.sun.source.tree.Tree;
-
+/**
+ * Represent a node in a PDG.
+ * A PDG node is a PDG element (See {@link org.checkerframework.flexeme.PdgElementScanner}) or a special entry/exit node from the CFG such as
+ * 'Entry', 'Exit', or 'ExceptionalExit'.
+ */
 public class PdgNode {
     private final MethodPdg pdg;
-    private long id;
     private final String label;
-    private long startLine;
-    private long endLine;
+    private final long id;
+    private final long startLine;
+    private final long endLine;
 
     public PdgNode(MethodPdg pdg, final long nodeId, final String label, final long lineStart, final long lineEnd) {
         this.pdg = pdg;

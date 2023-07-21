@@ -34,10 +34,6 @@ public class NameFlowStore implements Store<NameFlowStore> {
         returnedVariables = new HashMap<>();
     }
 
-    private void addParameter(final LocalVariableNode localVariableNode) {
-        this.declaredVariables.put(localVariableNode.getName(), localVariableNode);
-    }
-
     public NameFlowStore(final Map<Node, Set<NameRecord>> xi, final Map<String, String> names, final Map<String, Node> declaredVariables, final Map<String, Node> returnedVariables) {
         this.xi = xi;
         this.names = names;
@@ -45,9 +41,14 @@ public class NameFlowStore implements Store<NameFlowStore> {
         this.returnedVariables = returnedVariables;
     }
 
+    private void addParameter(final LocalVariableNode localVariableNode) {
+        this.declaredVariables.put(localVariableNode.getName(), localVariableNode);
+    }
+
     /**
      * Associate a potentially new nameRecord to a variable.
-     * @param uid The node id
+     *
+     * @param uid        The node id
      * @param targetName The target id
      * @param nameRecord The new nameRecord to associate
      */

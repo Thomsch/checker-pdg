@@ -1,16 +1,16 @@
 package org.checkerframework.flexeme;
 
 import com.sun.source.tree.MethodInvocationTree;
-import com.sun.source.util.SimpleTreeVisitor;
 import com.sun.source.util.TreeScanner;
-import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.javacutil.TreeUtils;
 
 import javax.lang.model.element.ExecutableElement;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * A scanner that retrieves method calls in a PDG element.
+ */
 public class LocalMethodCallVisitor extends TreeScanner<Set<ExecutableElement>, Void> {
 
     @Override

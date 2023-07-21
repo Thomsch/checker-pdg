@@ -3,7 +3,6 @@ package org.checkerframework.flexeme.dataflow;
 import org.checkerframework.dataflow.analysis.Store;
 import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
-import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.flexeme.Util;
@@ -37,6 +36,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Create a new DataflowStore.
+     *
      * @param parameters The parameters of the method, added at the start since they are not declared while visiting the body of the method.
      */
     public DataflowStore(List<LocalVariableNode> parameters) {
@@ -53,6 +53,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Add a parameter to the store to keep track of.
+     *
      * @param node The parameter.
      */
     private void addParameter(LocalVariableNode node) {
@@ -65,6 +66,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Register a new assignment to a variable. The variable can be already discovered or not.
+     *
      * @param node the assignment node
      */
     public void registerAssignment(final AssignmentNode node) {
@@ -77,6 +79,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Add a new dataflow edge between the last and current n.
+     *
      * @param n the variable reference
      */
     public void addDataflowEdge(LocalVariableNode n) {
@@ -158,14 +161,13 @@ public class DataflowStore implements Store<DataflowStore> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Variables: ");
-        sb.append(lastUse.keySet());
-        sb.append(System.lineSeparator());
 
-        sb.append("Edges: ");
-        sb.append(edges.stream().map(Edge::toString).collect(Collectors.joining(",")));
-        return sb.toString();
+        final String sb = "Variables: " +
+                lastUse.keySet() +
+                System.lineSeparator() +
+                "Edges: " +
+                edges.stream().map(Edge::toString).collect(Collectors.joining(","));
+        return sb;
     }
 
 

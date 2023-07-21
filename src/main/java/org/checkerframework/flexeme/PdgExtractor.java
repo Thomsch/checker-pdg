@@ -1,29 +1,14 @@
 package org.checkerframework.flexeme;
 
-import com.sun.source.tree.*;
-import com.sun.source.util.TreeScanner;
 import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.util.Context;
 import com.sun.tools.javac.util.List;
-import org.checkerframework.dataflow.analysis.ForwardAnalysis;
-import org.checkerframework.dataflow.analysis.ForwardAnalysisImpl;
-import org.checkerframework.dataflow.cfg.ControlFlowGraph;
-import org.checkerframework.dataflow.cfg.UnderlyingAST;
-import org.checkerframework.dataflow.cfg.builder.CFGBuilder;
-import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.flexeme.dataflow.DataflowStore;
-import org.checkerframework.flexeme.dataflow.DataflowTransfer;
-import org.checkerframework.flexeme.dataflow.VariableReference;
-import org.checkerframework.flexeme.pdg.*;
-import org.checkerframework.javacutil.ElementUtils;
-import org.checkerframework.javacutil.TreeUtils;
+import org.checkerframework.flexeme.pdg.FilePdg;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
 import org.checkerframework.javacutil.UserError;
-import org.checkerframework.org.plumelib.util.IdentityArraySet;
-import org.checkerframework.org.plumelib.util.UnmodifiableIdentityHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.lang.model.element.ExecutableElement;
 import javax.tools.JavaCompiler;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
@@ -32,8 +17,8 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.Collections;
 
 /**
  * Extracts a Program Dependency Graph (PDG) from a Java file using the CheckerFramework.
@@ -88,11 +73,12 @@ public class PdgExtractor {
 
     /**
      * Compiles a file and returns the processor with the compilation results.
-     * @param filepath path to the file to compile
-     * @param compile_out where to put the compiled files
+     *
+     * @param filepath        path to the file to compile
+     * @param compile_out     where to put the compiled files
      * @param compile_verbose whether to print the compilation output
-     * @param sourcePath source path for the compilation
-     * @param classPath class path for the compilation
+     * @param sourcePath      source path for the compilation
+     * @param classPath       class path for the compilation
      * @return the processor with the compilation results
      */
     public FileProcessor compileFile(String filepath, String compile_out, boolean compile_verbose, String sourcePath, String classPath) {
@@ -141,7 +127,7 @@ public class PdgExtractor {
     /**
      * Write the PDG to disk.
      *
-     * @param pdg A string representation of the PDG to write on disk.
+     * @param pdg      A string representation of the PDG to write on disk.
      * @param path_out The path where to write the PDG.
      */
     private void writePdgOnDisk(final String pdg, final String path_out) {

@@ -37,6 +37,7 @@ public class PdgBuilder {
 
     /**
      * Build the PDGs for each method in the file.
+     *
      * @param processor The processor containing the compilation results for the file
      * @return A holder object for the PDGs for the file
      */
@@ -55,6 +56,7 @@ public class PdgBuilder {
 
     /**
      * Build the PDG for a method using compilation results.
+     *
      * @param processor The processor with the compilation results.
      * @param methodAst The method AST to build the PDG for.
      * @return The PDG for the method.
@@ -117,6 +119,7 @@ public class PdgBuilder {
 
     /**
      * Find the local method calls between methods in the file.
+     *
      * @param graphs The PDGs for the methods in the file
      * @return The set of local method calls between methods in the file
      */
@@ -133,8 +136,8 @@ public class PdgBuilder {
 
         for (MethodPdg methodPdg : graphs) {
             for (Tree pdgElement : methodPdg.getPdgElements()) {
-                TreeScanner<Set<ExecutableElement>, Void> c = new LocalMethodCallVisitor();
-                Set<ExecutableElement> methodCalls = c.scan(pdgElement, null);
+                TreeScanner<Set<ExecutableElement>, Void> localMethodCallVisitor = new LocalMethodCallVisitor();
+                Set<ExecutableElement> methodCalls = localMethodCallVisitor.scan(pdgElement, null);
 
                 if (methodCalls == null) {
                     continue;
@@ -157,6 +160,7 @@ public class PdgBuilder {
 
     /**
      * Add the data flow edges to the PDG.
+     *
      * @param methodPdg The PDG to add the edges to.
      */
     private void addDataFlowEdges(final MethodPdg methodPdg) {
@@ -192,7 +196,8 @@ public class PdgBuilder {
     }
 
     /**
-     * Run the name flow analysis.
+     * Run the name flow analysis and add nameflow edges to the PDG.
+     *
      * @param methodPdg The PDG to run the analysis on.
      */
     private void addNameFlowEdges(final MethodPdg methodPdg) {
@@ -219,8 +224,9 @@ public class PdgBuilder {
 
     /**
      * Converts the name flow store to a set of PDG edges.
+     *
      * @param methodPdg The PDG where the edges will be added.
-     * @param store The name flow store to convert.
+     * @param store     The name flow store to convert.
      * @return The set of PDG edges to add to the method PDG.
      */
     private Set<PdgEdge> convertNameFlowStoreToPdgEdges(final MethodPdg methodPdg, final NameFlowStore store) {

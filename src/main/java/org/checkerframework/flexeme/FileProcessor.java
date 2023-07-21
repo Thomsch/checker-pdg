@@ -1,6 +1,9 @@
 package org.checkerframework.flexeme;
 
-import com.sun.source.tree.*;
+import com.sun.source.tree.ClassTree;
+import com.sun.source.tree.CompilationUnitTree;
+import com.sun.source.tree.LineMap;
+import com.sun.source.tree.MethodTree;
 import com.sun.source.util.TreePathScanner;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
@@ -13,7 +16,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.SupportedAnnotationTypes;
 import javax.lang.model.SourceVersion;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Processor for the file compilation. Stores the ASTs of the methods

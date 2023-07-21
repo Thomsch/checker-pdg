@@ -1,5 +1,8 @@
 package org.checkerframework.flexeme.pdg;
 
+/**
+ * Represents an edge in the PDG.
+ */
 public class PdgEdge {
 
     public final PdgNode from;

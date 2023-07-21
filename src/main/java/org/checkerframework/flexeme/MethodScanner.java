@@ -8,7 +8,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.ExecutableElement;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 public class MethodScanner extends TreePathScanner<Void, Void> {
     private static final Logger logger = LoggerFactory.getLogger(MethodScanner.class);

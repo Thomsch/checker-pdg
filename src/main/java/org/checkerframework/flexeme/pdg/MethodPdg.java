@@ -1,12 +1,12 @@
 package org.checkerframework.flexeme.pdg;
 
-import com.google.common.graph.*;
+import com.google.common.graph.MutableNetwork;
+import com.google.common.graph.NetworkBuilder;
 import com.sun.source.tree.*;
 import com.sun.tools.javac.tree.EndPosTable;
 import com.sun.tools.javac.tree.JCTree;
 import org.checkerframework.dataflow.cfg.ControlFlowGraph;
 import org.checkerframework.dataflow.cfg.block.SpecialBlock;
-import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
 import org.checkerframework.flexeme.FileProcessor;
 
@@ -17,19 +17,16 @@ import java.util.*;
  */
 @SuppressWarnings("UnstableApiUsage")
 public class MethodPdg {
+    private static long nodeId = 0; // TODO: Refactor nodeId to be a field of PdgNode
+    public final Set<String> parameterNames;
     private final FileProcessor processor;
     private final ClassTree classAst;
     private final MethodTree methodAst;
     private final ControlFlowGraph methodCfg;
-
     private final MutableNetwork<PdgNode, PdgEdge> graph;
-
-    private static long nodeId = 0; // TODO: Refactor nodeId to be a field of PdgNode
     private final HashMap<SpecialBlock, PdgNode> blockToPdgNode;
     private final Map<Node, Tree> cfgNodeToPdgTree; // Holds the mapping from CFG nodes to PDG nodes. One PDG nodes can be mapped to multiple CFG nodes.
     private final HashMap<Tree, PdgNode> pdgElementToPdgNodeMap;
-
-    public final Set<String> parameterNames;
 
     public MethodPdg(FileProcessor processor, final ClassTree classAst, final MethodTree methodAst, final ControlFlowGraph methodCfg, final Map<Node, Tree> cfgNodesToPdgElements) {
         this.processor = processor;
@@ -78,6 +75,7 @@ public class MethodPdg {
     /**
      * Registers a special block in the PDG and pre-creates a PDG node with the correct label.
      * The PDG node will be ready to use when associated with an PDG edge.
+     *
      * @param block the special block to register
      * @param label the label to use for the PDG node
      */
@@ -108,6 +106,7 @@ public class MethodPdg {
 
     /**
      * Checks if the graph contains a node with the given label.
+     *
      * @param nodeLabel the label to find
      * @return true if the graph contains a node with the given label, false otherwise
      */
@@ -122,6 +121,7 @@ public class MethodPdg {
 
     /**
      * Returns the AST method tree associated with this PDG.
+     *
      * @return the AST method tree
      */
     public MethodTree getTree() {
@@ -130,6 +130,7 @@ public class MethodPdg {
 
     /**
      * Returns the {@link PdgNode} that represents the entry point of the PDG.
+     *
      * @return the entry point of the PDG
      */
     public PdgNode getStartNode() {
@@ -151,6 +152,7 @@ public class MethodPdg {
 
     /**
      * Returns a list of types of the parameters of the method.
+     *
      * @return a list of types of the parameters of the method
      */
     public List<String> getParametersType() {

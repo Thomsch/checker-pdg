@@ -8,7 +8,7 @@ import java.util.Set;
 /**
  * Collects the elements to be included in the PDG for a method. The elements do not include meta nodes such as Entry,
  * Exit, and ExceptionalExit.
- *
+ * <p>
  * An PDG element represent nodes in the AST such as statements, and expressions. An PDG element is defined as:
  * <ul>
  *     <li>a outermost expression (e.g., a > b || c < b)</li>
@@ -17,10 +17,9 @@ import java.util.Set;
  *     <li>a method invocation (e.g., System.out.println("Hello"))</li>
  *     <li>a return statement (e.g., return a)</li>
  * </ul>
- *
+ * <p>
  * AST nodes representing control flow structures (e.g., if, for, while) are not PDG elements.
  * However, their conditional expressions and body's statements are PDG elements.
- *
  */
 public class PdgElementScanner extends TreeScanner<Void, Set<Tree>> {
 

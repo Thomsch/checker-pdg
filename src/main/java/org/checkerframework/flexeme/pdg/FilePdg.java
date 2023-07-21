@@ -20,6 +20,7 @@ public class FilePdg {
 
     /**
      * Returns the set of PDGs for the methods of a file.
+     *
      * @return the set of PDGs
      */
     public Set<MethodPdg> getGraphs() {
@@ -28,6 +29,7 @@ public class FilePdg {
 
     /**
      * Returns the set of method call edges between methods in the same class.
+     *
      * @return the set of method call
      */
     public Set<PdgEdge> getLocalCalls() {
@@ -36,9 +38,10 @@ public class FilePdg {
 
     /**
      * Returns whether the given PDG element is calling a method in the same class.
+     *
      * @param expectedFromQualifiedMethodName The PDG element's qualified method name
-     * @param expectedFromPdgElementLabel The PDG element's label
-     * @param expectedToQualifiedMethodName The expected qualified method name of the called method
+     * @param expectedFromPdgElementLabel     The PDG element's label
+     * @param expectedToQualifiedMethodName   The expected qualified method name of the called method
      * @return true if the PDG element is calling the expected method, false otherwise
      */
     public boolean containsCall(final String expectedFromQualifiedMethodName, final String expectedFromPdgElementLabel, final String expectedToQualifiedMethodName) {
@@ -55,8 +58,8 @@ public class FilePdg {
             final String toQualifiedName = ElementUtils.getQualifiedName(toElement);
 
             if (expectedFromQualifiedMethodName.equals(fromQualifiedName)
-                && expectedFromPdgElementLabel.equals(localCall.from.toString())
-                && expectedToQualifiedMethodName.equals(toQualifiedName)) {
+                    && expectedFromPdgElementLabel.equals(localCall.from.toString())
+                    && expectedToQualifiedMethodName.equals(toQualifiedName)) {
                 return true;
             }
         }

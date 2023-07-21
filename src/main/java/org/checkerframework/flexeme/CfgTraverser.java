@@ -58,12 +58,12 @@ public class CfgTraverser extends DOTCFGVisualizer<VariableReference, DataflowSt
     }
 
     /**
-     * Visualizes the nodes
+     * Adds the control flow edges to the PDG.
      *
      * @param blocks   the set of all the blocks in a control flow graph
      * @param cfg      the control flow graph
      * @param analysis the current analysis
-     * @return An empty string
+     * @return An empty string. This method is only used to add the edges to the PDGm not generate a DOT representation.
      */
     @Override
     public String visualizeNodes(Set<Block> blocks, ControlFlowGraph cfg, @Nullable Analysis<VariableReference, DataflowStore, DataflowTransfer> analysis) {

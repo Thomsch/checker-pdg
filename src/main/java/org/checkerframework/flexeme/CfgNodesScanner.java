@@ -23,17 +23,12 @@ public class CfgNodesScanner extends TreeScanner<Void, Set<Node>> {
         if (tree != null) {
             final Set<Node> nodes = cfg.getNodesCorrespondingToTree(tree);
 
-            // System.out.println("Tree: " + tree + " " + tree.getClass());
             if (nodes != null) {
-                // System.out.println("Nodes: " + nodes);
                 found.addAll(nodes);
                 for (final Node node : nodes) {
                     final Collection<Node> transitiveOperands = node.getTransitiveOperands();
                     found.addAll(transitiveOperands);
-                    // System.out.println("   Transitive:" + transitiveOperands);
                 }
-            } else {
-                // System.out.println("No nodes for tree");
             }
         }
         return super.scan(tree, found);

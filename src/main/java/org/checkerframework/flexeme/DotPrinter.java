@@ -4,8 +4,6 @@ import org.checkerframework.flexeme.pdg.FilePdg;
 import org.checkerframework.flexeme.pdg.MethodPdg;
 import org.checkerframework.flexeme.pdg.PdgEdge;
 import org.checkerframework.flexeme.pdg.PdgNode;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 
@@ -34,6 +32,10 @@ public class DotPrinter {
     public static void printFilePdg(final FilePdg filePdg) {
         final String printedPdg = new DotPrinter().printDot(filePdg);
         System.out.println(printedPdg);
+    }
+
+    public static String printEdge(final PdgEdge edge) {
+        return String.format("n%d -> n%d [key=%d, style=%s, color=%s];", edge.from.getId(), edge.to.getId(), edge.type.getKey(), edge.type.getStyle(), edge.type.getColor());
     }
 
     /**
@@ -67,10 +69,10 @@ public class DotPrinter {
         return stringBuilder.toString();
     }
 
-
     /**
      * Print a PDG as a dot subgraph.
-     * @param graph The PDG to print.
+     *
+     * @param graph   The PDG to print.
      * @param cluster The cluster number.
      */
     public String printGraph(MethodPdg graph, int cluster) {
@@ -97,10 +99,6 @@ public class DotPrinter {
             stringBuilder.append(System.lineSeparator());
         }
         return stringBuilder.toString();
-    }
-
-    public static String printEdge(final PdgEdge edge) {
-        return String.format("n%d -> n%d [key=%d, style=%s, color=%s];", edge.from.getId(), edge.to.getId(), edge.type.getKey(), edge.type.getStyle(), edge.type.getColor());
     }
 
     public String printNode(final PdgNode node) {

@@ -12,10 +12,8 @@ import java.util.Objects;
  */
 public class NameRecord implements AbstractValue<NameRecord> {
 
-    public enum Kind {Variable, Method, Literal}
     private final String name;
     private final Kind kind;
-
     private final Node uid;
 
     public NameRecord(final String name, final Kind kind, final Node uid) {
@@ -31,6 +29,7 @@ public class NameRecord implements AbstractValue<NameRecord> {
     public String getName() {
         return name;
     }
+
     public boolean isLiteral() {
         return kind == Kind.Literal;
     }
@@ -61,6 +60,8 @@ public class NameRecord implements AbstractValue<NameRecord> {
     public int hashCode() {
         return Objects.hash(name, kind, uid);
     }
+
+    public enum Kind {Variable, Method, Literal}
 
 
 }
