@@ -30,7 +30,7 @@ ext.versions = [
 
 sourceCompatibility = 1.11
 def checkerframework_local = false  // Set this variable to [true] while using local version of checker framework.
-project.setVersion("0.1.1")
+project.setVersion("0.1.2")
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
