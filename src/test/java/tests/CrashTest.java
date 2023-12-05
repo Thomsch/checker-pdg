@@ -1,12 +1,15 @@
 package tests;
 
+import org.checkerframework.flexeme.FileProcessor;
 import org.checkerframework.flexeme.PdgExtractor;
+import org.checkerframework.flexeme.pdg.PdgBuilder;
 import org.junit.Test;
 
 /**
- * General tests for the PDG extraction.
+ * Pass / Fail tests for the PDG extractor.
+ * This test class contains high-level tests that check that the PDG extractor does not crash on certain inputs.
  */
-public class PdgExtractionTest {
+public class CrashTest {
 
     @Test
     public void testSourcePath() throws Throwable {
@@ -14,7 +17,8 @@ public class PdgExtractionTest {
         String inputFile = "src/test/resources/org/a/A.java";
         String sourcepath = "src/test/resources";
 
-        PdgExtractor.compileFile(inputFile, "build/", false, sourcepath, "");
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.compileFile(inputFile, "build/", false, sourcepath, "");
     }
 
     @Test
@@ -23,16 +27,8 @@ public class PdgExtractionTest {
         String inputFile = "src/test/resources/org/C.java";
         String classpath = "src/test/resources/guava-31.1-jre.jar";
 
-        PdgExtractor.compileFile(inputFile, "build/", false, "", classpath);
-    }
-
-    @Test
-    public void testDataFlow() {
-        String inputFile1 = "src/test/resources/BasicTests.java";
-        PdgExtractor.compileFile(inputFile1, "build/", false, "", "");
-
-        String inputFile2 = "src/test/resources/DataFlowTests.java";
-        PdgExtractor.compileFile(inputFile2, "build/", false, "", "");
+        PdgExtractor extractor = new PdgExtractor();
+        extractor.compileFile(inputFile, "build/", false, "", classpath);
     }
 
     @Test
@@ -44,6 +40,14 @@ public class PdgExtractionTest {
     }
 
     @Test
+    public void testAllLanguageFeatures() {
+        PdgExtractor pdgExtractor = new PdgExtractor();
+        PdgBuilder pdgBuilder = new PdgBuilder();
+        FileProcessor processor = pdgExtractor.compileFile("src/test/resources/AllLanguageFeatures.java", "build/", false, "", "");
+        pdgBuilder.buildPdgForFile(processor);
+    }
+
+    @Test
     public void testAbstract() {
         String inputFile = "src/test/resources/MyAbstract.java";
 
@@ -52,27 +56,19 @@ public class PdgExtractionTest {
     }
 
     @Test
-    public void testAlwaysThrows() {
-        String inputFile = "src/test/resources/AlwaysThrows.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "", "", "build/AlwaysThrows.dot");
+    public void testConditional() {
+        PdgExtractor pdgExtractor = new PdgExtractor();
+        PdgBuilder pdgBuilder = new PdgBuilder();
+        FileProcessor processor = pdgExtractor.compileFile("src/test/resources/Conditional.java", "build/", false, "", "");
+        pdgBuilder.buildPdgForFile(processor);
     }
 
     @Test
-    public void testInfiniteLoop() {
-        String inputFile = "src/test/resources/Infinite.java";
+    public void testLoops() {
+        String inputFile = "src/test/resources/Loops.java";
 
         PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Infinite.dot");
-    }
-
-    @Test
-    public void testAnonymous() {
-        String inputFile = "src/test/resources/BasicTests.java";
-
-        PdgExtractor extractor = new PdgExtractor();
-        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/BasicTests.dot");
+        extractor.run(inputFile, "src/test/resources", "src/test/resources", "build/Loops.dot");
     }
 
     @Test

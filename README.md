@@ -1,6 +1,6 @@
 # Flexeme PDG Extractor
 
-`PdgExtractor` analyze a Java file and extracts a Flexeme-compatible PDG graph with dataflow and nameflow.
+`PdgExtractor` analyze a Java file and extracts a Flexeme-compatible PDG with dataflow and nameflow.
 
 ### Usage
 1. Run `./gradlew shadowJar` to build the jar file.

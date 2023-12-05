@@ -1,8 +1,8 @@
 package org.checkerframework.flexeme.dataflow;
 
 import org.checkerframework.dataflow.analysis.Store;
+import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
-import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 import org.checkerframework.dataflow.cfg.visualize.CFGVisualizer;
 import org.checkerframework.dataflow.expression.JavaExpression;
 import org.checkerframework.flexeme.Util;
@@ -36,6 +36,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Create a new DataflowStore.
+     *
      * @param parameters The parameters of the method, added at the start since they are not declared while visiting the body of the method.
      */
     public DataflowStore(List<LocalVariableNode> parameters) {
@@ -52,6 +53,7 @@ public class DataflowStore implements Store<DataflowStore> {
 
     /**
      * Add a parameter to the store to keep track of.
+     *
      * @param node The parameter.
      */
     private void addParameter(LocalVariableNode node) {
@@ -63,20 +65,21 @@ public class DataflowStore implements Store<DataflowStore> {
     }
 
     /**
-     * Add a variable declaration to the store to keep track of.
-     * @param node the variable declaration
+     * Register a new assignment to a variable. The variable can be already discovered or not.
+     *
+     * @param node the assignment node
      */
-    public void addLocalVariableDeclaration(VariableDeclarationNode node) {
-        if (lastUse.containsKey(node.getName())) {
-            // Nothing to do, we already know of this variable.
-            return;
+    public void registerAssignment(final AssignmentNode node) {
+        if (node.getTarget() instanceof LocalVariableNode) {
+            // If the target is a variable already declared, we need to add an edge to it.
+            addDataflowEdge((LocalVariableNode) node.getTarget());
         }
-        // We mark that we encountered this variable for the first time.
-        lastUse.put(node.getName(), Util.newSet(new VariableReference(node)));
+        lastUse.put(node.getTarget().toString(), Util.newSet(new VariableReference(node.getTarget())));
     }
 
     /**
      * Add a new dataflow edge between the last and current n.
+     *
      * @param n the variable reference
      */
     public void addDataflowEdge(LocalVariableNode n) {
@@ -94,6 +97,7 @@ public class DataflowStore implements Store<DataflowStore> {
         // The last use is this reference now.
         this.lastUse.put(n.getName(), Util.newSet(value));
     }
+
 
     @Override
     public DataflowStore leastUpperBound(DataflowStore other) {
@@ -157,14 +161,13 @@ public class DataflowStore implements Store<DataflowStore> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("Variables: ");
-        sb.append(lastUse.keySet());
-        sb.append(System.lineSeparator());
 
-        sb.append("Edges: ");
-        sb.append(edges.stream().map(edge -> edge.getFrom().getReference().getUid() + " -> " + edge.getTo().getReference().getUid()).collect(Collectors.joining(",")));
-        return sb.toString();
+        final String sb = "Variables: " +
+                lastUse.keySet() +
+                System.lineSeparator() +
+                "Edges: " +
+                edges.stream().map(Edge::toString).collect(Collectors.joining(","));
+        return sb;
     }
 
 
@@ -180,4 +183,5 @@ public class DataflowStore implements Store<DataflowStore> {
     public int hashCode() {
         return Objects.hash(lastUse, edges, parameters);
     }
+
 }

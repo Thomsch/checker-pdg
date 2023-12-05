@@ -30,7 +30,7 @@ ext.versions = [
 
 sourceCompatibility = 1.11
 def checkerframework_local = false  // Set this variable to [true] while using local version of checker framework.
-project.setVersion("0.1")
+project.setVersion("0.1.2")
 
 dependencies {
     // This dependency is found on compile classpath of this component and consumers.
@@ -49,6 +49,9 @@ dependencies {
 
     // JSON
     implementation 'com.google.code.gson:gson:2.10.1'
+
+    // Graph data structure
+    implementation 'com.google.guava:guava:32.0.0-jre'
 
 
     compileOnly "com.google.errorprone:javac:9+181-r4173-1"

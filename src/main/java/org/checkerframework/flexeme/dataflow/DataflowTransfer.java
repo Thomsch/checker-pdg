@@ -6,9 +6,9 @@ import org.checkerframework.dataflow.analysis.TransferInput;
 import org.checkerframework.dataflow.analysis.TransferResult;
 import org.checkerframework.dataflow.cfg.UnderlyingAST;
 import org.checkerframework.dataflow.cfg.node.AbstractNodeVisitor;
+import org.checkerframework.dataflow.cfg.node.AssignmentNode;
 import org.checkerframework.dataflow.cfg.node.LocalVariableNode;
 import org.checkerframework.dataflow.cfg.node.Node;
-import org.checkerframework.dataflow.cfg.node.VariableDeclarationNode;
 
 import java.util.List;
 
@@ -31,18 +31,18 @@ public class DataflowTransfer extends AbstractNodeVisitor<
     }
 
     @Override
-    public TransferResult<VariableReference, DataflowStore> visitVariableDeclaration(VariableDeclarationNode n, TransferInput<VariableReference, DataflowStore> p) {
+    public TransferResult<VariableReference, DataflowStore> visitAssignment(final AssignmentNode node, final TransferInput<VariableReference, DataflowStore> transferInput) {
         RegularTransferResult<VariableReference, DataflowStore> transferResult =
-                (RegularTransferResult<VariableReference, DataflowStore>) super.visitVariableDeclaration(n, p);
-        transferResult.getRegularStore().addLocalVariableDeclaration(n);
+                (RegularTransferResult<VariableReference, DataflowStore>) super.visitAssignment(node, transferInput);
+        transferResult.getRegularStore().registerAssignment(node);
         return transferResult;
     }
 
     @Override
-    public TransferResult<VariableReference, DataflowStore> visitLocalVariable(LocalVariableNode n, TransferInput<VariableReference, DataflowStore> p) {
+    public TransferResult<VariableReference, DataflowStore> visitLocalVariable(LocalVariableNode node, TransferInput<VariableReference, DataflowStore> transferInput) {
         RegularTransferResult<VariableReference, DataflowStore> transferResult =
-                (RegularTransferResult<VariableReference, DataflowStore>) super.visitLocalVariable(n, p);
-        transferResult.getRegularStore().addDataflowEdge(n);
+                (RegularTransferResult<VariableReference, DataflowStore>) super.visitLocalVariable(node, transferInput);
+        transferResult.getRegularStore().addDataflowEdge(node);
         return transferResult;
     }
 

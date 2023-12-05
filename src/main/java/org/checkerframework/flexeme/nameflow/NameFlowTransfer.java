@@ -26,13 +26,20 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     private static final Logger logger = LoggerFactory.getLogger(NameFlowTransfer.class);
 
     @Override
+    public NameFlowStore initialStore(final UnderlyingAST underlyingAST, final List<LocalVariableNode> parameters) {
+        return new NameFlowStore(parameters);
+    }
+
+    @Override
     public TransferResult<NameRecord, NameFlowStore> visitNode(final Node node, final TransferInput<NameRecord, NameFlowStore> transferInput) {
         return new RegularTransferResult<>(null, transferInput.getRegularStore());
     }
 
     @Override
-    public NameFlowStore initialStore(final UnderlyingAST underlyingAST, final List<LocalVariableNode> list) {
-        return new NameFlowStore();
+    public TransferResult<NameRecord, NameFlowStore> visitVariableDeclaration(final VariableDeclarationNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {
+        RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitVariableDeclaration(n, transferInput);
+        transferResult.getRegularStore().registerVariableDeclaration(n);
+        return transferResult;
     }
 
     @Override
@@ -77,6 +84,13 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         return transferResult;
     }
 
+    @Override
+    public TransferResult<NameRecord, NameFlowStore> visitReturn(final ReturnNode n, final TransferInput<NameRecord, NameFlowStore> transferInput) {
+        RegularTransferResult<NameRecord, NameFlowStore> transferResult = (RegularTransferResult<NameRecord, NameFlowStore>) super.visitReturn(n, transferInput);
+        transferResult.getRegularStore().addReturnedVariables(n);
+        return transferResult;
+    }
+
     /**
      * Implementation of the assignE rule from "RefiNym: Using Names to Refine Types".
      * It recursively visits the expression and stores the variable names encountered.
@@ -114,15 +128,15 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
     }
 
     private void assignM(final Node target, final MethodInvocationNode operand, final NameFlowStore store) {
-        NameRecord nameRecord = new NameRecord(operand.getTarget().toString(), NameRecord.Kind.Method, "n" + operand.getUid());
+        NameRecord nameRecord = new NameRecord(operand.getTarget().toString(), NameRecord.Kind.Method, operand);
         Element el = TreeUtils.elementFromTree(target.getTree());
-        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), nameRecord);
+        store.add(target, String.valueOf(el.getSimpleName()), nameRecord);
     }
 
     private void assignV(final Node target, final LocalVariableNode operand, final NameFlowStore store) {
         Element el = TreeUtils.elementFromTree(target.getTree());
-        NameRecord nameRecord = new NameRecord(operand.getName(), NameRecord.Kind.Variable, "n" + operand.getUid());
-        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), nameRecord);
+        NameRecord nameRecord = new NameRecord(operand.getName(), NameRecord.Kind.Variable, operand);
+        store.add(target, String.valueOf(el.getSimpleName()), nameRecord);
     }
 
     private void assignL(final Node target, final ValueLiteralNode operand, final NameFlowStore store) {
@@ -130,8 +144,8 @@ public class NameFlowTransfer extends AbstractNodeVisitor<
         if (value == null) { // If the value of the literal is null, then we use the string "null".
             value = "null";
         }
-        NameRecord nameRecord = new NameRecord(value.toString(), NameRecord.Kind.Literal, "n" + operand.getUid());
+        NameRecord nameRecord = new NameRecord(value.toString(), NameRecord.Kind.Literal, operand);
         Element el = TreeUtils.elementFromTree(target.getTree());
-        store.add("n" + target.getUid(), String.valueOf(el.getSimpleName()), nameRecord);
+        store.add(target, String.valueOf(el.getSimpleName()), nameRecord);
     }
 }

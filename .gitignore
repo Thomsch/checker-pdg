@@ -15,6 +15,6 @@ codechanges-checker-qual/src
 /src/test/**/*.class
 
 # Project
-pdg.dot
+pdgMethod.dot
 out/**
 jfreechart/**
