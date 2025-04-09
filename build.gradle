@@ -24,7 +24,7 @@ idea {
 }
 
 ext.versions = [
-    checkerFramework: "3.49.1",
+    checkerFramework: "3.49.2",
 ]
 
 
